@@ -1,9 +1,9 @@
 // Gặm Lịch nghỉ – service worker: giữ sẵn khung app để mở nhanh, dữ liệu vẫn lấy trực tiếp từ Google
-var V = 'gam-lichnghi-v1';
-var SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+var V = 'gam-lichnghi-v2';
+var SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './logo.png'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(V).then(function (c) { return c.addAll(SHELL); })); self.skipWaiting(); });
 self.addEventListener('activate', function (e) {
-  e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k !== V; }).map(function (k) { return caches.delete(k); })); }));
+  e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k !== V && k.indexOf('gam-lichnghi') === 0; }).map(function (k) { return caches.delete(k); })); }));
   self.clients.claim();
 });
 self.addEventListener('fetch', function (e) {
