@@ -1,5 +1,5 @@
 // Gặm Lịch nghỉ – service worker: giữ sẵn khung app để mở nhanh, dữ liệu vẫn lấy trực tiếp từ Google
-var V = 'gam-lichnghi-v2';
+var V = 'gam-lichnghi-v3';
 var SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './logo.png'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(V).then(function (c) { return c.addAll(SHELL); })); self.skipWaiting(); });
 self.addEventListener('activate', function (e) {

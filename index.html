@@ -159,6 +159,11 @@ ol li:before{content:counter(b);position:absolute;left:0;top:1px;width:22px;heig
   if (standalone || moLuon) {
     document.body.className = 'app';
     var frames = {};
+    /* app bên Google báo 'đã vẽ xong' thì mới bỏ màn chờ (tránh màn trắng) */
+    window.addEventListener('message', function(e){
+      var m = /^gam-ready:(pv|bep)$/.exec(String(e.data||''));
+      if (m && frames[m[1]] && frames[m[1]].load.parentNode) frames[m[1]].load.remove();
+    });
     var show = function(bp){
       if (!APPS[bp]) return;
       set(bp);
@@ -172,7 +177,7 @@ ol li:before{content:counter(b);position:absolute;left:0;top:1px;width:22px;heig
         f.src = APPS[bp].url;
         f.title = APPS[bp].ten;
         f.setAttribute('allow', 'clipboard-write; web-share; fullscreen');
-        f.onload = function(){ load.remove(); };
+        f.onload = function(){ setTimeout(function(){ load.remove(); }, 20000); };
         $('frames').appendChild(f); $('frames').appendChild(load);
         frames[bp] = { f: f, load: load };
       }
