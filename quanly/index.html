@@ -188,10 +188,16 @@ a.big{display:block;height:52px;background:var(--xanh);color:#fff;font:700 14px/
     f.src = EXEC + '?bp=' + v + '&key=' + encodeURIComponent(KEY);
     f.title = v==='pv' ? 'Quản lý phục vụ' : 'Quản lý bếp';
     f.setAttribute('allow','clipboard-write; web-share; fullscreen');
-    f.onload = function(){ load.remove(); };
+    f.onload = function(){ setTimeout(function(){ load.remove(); }, 20000); };
+    LOADS[v] = load;
     box.style.position='absolute'; box.appendChild(f); box.appendChild(load);
     frames[v] = f;
   }
+  var LOADS = {};
+  window.addEventListener('message', function(e){
+    var m = /^gam-ready:(pv|bep)$/.exec(String(e.data||''));
+    if (m && LOADS[m[1]] && LOADS[m[1]].parentNode) LOADS[m[1]].remove();
+  });
   /* mở sẵn 2 tab duyệt ở nền để bấm qua là có liền */
   function preload(){ setTimeout(function(){ mkFrame('pv'); setTimeout(function(){ mkFrame('bep'); }, 1500); }, 800); }
   function show(v){

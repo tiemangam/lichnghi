@@ -1,5 +1,5 @@
 // Gặm Quản lý nghỉ – service worker: giữ khung app + hiện thông báo; dữ liệu lấy trực tiếp từ Google
-var V = 'gam-quanly-v1b';
+var V = 'gam-quanly-v2';
 var SHELL = ['./', './index.html', './manifest.webmanifest', '../icon-ql-192.png', '../logo.png'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(V).then(function (c) { return c.addAll(SHELL); })); self.skipWaiting(); });
 self.addEventListener('activate', function (e) {
