@@ -1,0 +1,17 @@
+{
+  "name": "Gặm Quản lý nghỉ",
+  "short_name": "Gặm Quản lý",
+  "description": "Duyệt lịch nghỉ phục vụ + bếp, xem đơn mới và lịch sử gửi – Tiệm Ăn Gặm",
+  "lang": "vi",
+  "start_url": "./?mo=1",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#445803",
+  "theme_color": "#445803",
+  "icons": [
+    { "src": "../icon-ql-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "../icon-ql-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "../icon-ql-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
