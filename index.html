@@ -36,9 +36,9 @@ b,strong{color:var(--muc);font-weight:700}
 .glogo{display:block;background:var(--kem);-webkit-mask:url(logo.png) left center/contain no-repeat;mask:url(logo.png) left center/contain no-repeat}
 /* ---- chế độ app (mở từ icon) ---- */
 body.app{background-color:var(--nen);overflow:hidden}
-#app{position:fixed;left:0;right:0;bottom:0;top:0;display:none;flex-direction:column;background:var(--nen)}
+#app{position:fixed;left:0;right:0;bottom:0;top:0;display:none;flex-direction:column;background:var(--nen);padding-top:calc(68px + env(safe-area-inset-top))}
 body.app #app{display:flex}
-#bar{flex:none;display:flex;gap:8px;padding:calc(14px + env(safe-area-inset-top)) 12px 12px;background:var(--xanh);border-bottom:3px solid var(--do)}
+#bar{position:fixed;top:0;left:0;right:0;z-index:5;box-sizing:border-box;height:calc(68px + env(safe-area-inset-top));display:flex;align-items:flex-end;gap:8px;padding:0 12px 12px;background-color:#445803}
 #bar button{flex:1;min-width:0;height:42px;padding:0 4px;border:1.5px solid rgba(248,232,196,.55);border-radius:999px;background:transparent;color:var(--kem);font:700 15px/1 var(--H);text-transform:uppercase;letter-spacing:.03em;cursor:pointer;white-space:nowrap}
 #bar button.on{background:var(--kem);color:var(--xanh);border-color:var(--kem)}
 #frames{flex:1;position:relative;min-height:0}

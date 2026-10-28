@@ -1,5 +1,5 @@
 // Nhà Gặm (trước là Gặm Lịch nghỉ) – service worker: giữ sẵn khung app + quy trình để mở nhanh, đọc được cả khi mất mạng; lịch nghỉ vẫn lấy trực tiếp từ Google
-var V = 'gam-lichnghi-v9';
+var V = 'gam-lichnghi-v10';
 var SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './logo.png', './quytrinh.js', './img/qt2.png', './img/qt5.png', './img/qt7.png'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(V).then(function (c) { return c.addAll(SHELL); })); self.skipWaiting(); });
 self.addEventListener('activate', function (e) {
