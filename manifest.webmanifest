@@ -1,7 +1,7 @@
 {
-  "name": "Gặm Lịch nghỉ",
-  "short_name": "Gặm Lịch nghỉ",
-  "description": "Đăng ký lịch nghỉ ca của phục vụ và bếp – Tiệm Ăn Gặm",
+  "name": "Nhà Gặm",
+  "short_name": "Nhà Gặm",
+  "description": "App nội bộ Tiệm Ăn Gặm: đăng ký lịch nghỉ phục vụ, bếp và học quy trình",
   "lang": "vi",
   "start_url": "./?mo=1",
   "scope": "./",

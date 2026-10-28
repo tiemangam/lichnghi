@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Gặm Lịch nghỉ</title>
+<title>Nhà Gặm</title>
 <meta name="theme-color" content="#445803">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Gặm Lịch nghỉ">
-<meta name="description" content="Đăng ký lịch nghỉ ca của phục vụ và bếp – Tiệm Ăn Gặm">
-<meta property="og:title" content="Cài app Gặm Lịch nghỉ">
-<meta property="og:description" content="Bấm vào để cài app đăng ký lịch nghỉ (phục vụ + bếp) lên màn hình điện thoại">
+<meta name="apple-mobile-web-app-title" content="Nhà Gặm">
+<meta name="description" content="App nội bộ Tiệm Ăn Gặm: đăng ký lịch nghỉ phục vụ, bếp và học quy trình">
+<meta property="og:title" content="Cài app Nhà Gặm">
+<meta property="og:description" content="Bấm vào để cài app Nhà Gặm: đăng ký nghỉ (phục vụ + bếp) và học quy trình của quán">
 <meta property="og:image" content="https://tiemangam.github.io/lichnghi/icon-512.png">
 <meta property="og:url" content="https://tiemangam.github.io/lichnghi/">
 <link rel="preconnect" href="https://script.google.com">
@@ -22,56 +22,176 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lexend+Zetta:wght@600;700&family=IBM+Plex+Mono:wght@400;500;700&family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--giay:#E9E4D6;--the:#FFFCF5;--xanh:#445803;--kem:#F8E8C4;--do:#B11002;--chu:#555555;--dam:#232323;--vien:#CFC7B2;
---W:'Lexend Zetta','Be Vietnam Pro',sans-serif;--M:'IBM Plex Mono',ui-monospace,Menlo,monospace}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;border-radius:0}
-html,body{margin:0;height:100%;color:var(--chu);font:400 14px/1.7 var(--M);background:var(--giay)}
-b,strong{color:var(--dam)}
+/* Nhà Gặm – giao diện Gặm tròn (theo skill gam-brand-style, mẫu Phiếu lương): kem ấm, xanh #445803, đỏ ớt hiếm, Baloo 2 + Be Vietnam Pro */
+:root{--nen:#F5ECD7;--the:#FFFCF5;--xanh:#445803;--xanh2:#34440A;--xanhn:#EBEED8;--kem:#F8E8C4;--do:#B11002;--don:#FBE7E2;
+--muc:#2C2418;--muc2:#6E604A;--mo:#9A8C72;--vien:#E7D9B9;--vang:#C9932E;--vangn:#FBEFD2;
+--H:'Baloo 2','Be Vietnam Pro',system-ui,sans-serif;--B:'Be Vietnam Pro',system-ui,-apple-system,sans-serif;
+--bong:0 2px 12px rgba(44,36,24,.08)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;color:var(--muc);font:400 15px/1.6 var(--B);background:var(--nen)}
+body{background-image:radial-gradient(rgba(68,88,3,.06) 1px,transparent 1.3px);background-size:7px 7px}
+b,strong{color:var(--muc);font-weight:700}
 .glogo{display:block;background:var(--kem);-webkit-mask:url(logo.png) left center/contain no-repeat;mask:url(logo.png) left center/contain no-repeat}
 /* ---- chế độ app (mở từ icon) ---- */
 body.app{background:var(--xanh);overflow:hidden}
-#app{position:fixed;left:0;right:0;bottom:0;top:env(safe-area-inset-top);display:none;flex-direction:column;background:var(--giay)}
+#app{position:fixed;left:0;right:0;bottom:0;top:env(safe-area-inset-top);display:none;flex-direction:column;background:var(--nen)}
 body.app #app{display:flex}
-#bar{flex:none;display:flex;gap:6px;padding:6px 8px;background:var(--xanh);border-bottom:3px solid var(--do)}
-#bar button{flex:1;height:38px;border:1.5px solid rgba(248,232,196,.6);background:transparent;color:var(--kem);font:700 11px/1 var(--W);letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+#bar{flex:none;display:flex;gap:6px;padding:8px 10px;background:var(--xanh);border-bottom:3px solid var(--do)}
+#bar button{flex:1;min-width:0;height:40px;padding:0 4px;border:1.5px solid rgba(248,232,196,.55);border-radius:999px;background:transparent;color:var(--kem);font:700 15px/1 var(--H);text-transform:uppercase;letter-spacing:.03em;cursor:pointer;white-space:nowrap}
 #bar button.on{background:var(--kem);color:var(--xanh);border-color:var(--kem)}
-#frames{flex:1;position:relative}
-#frames iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--giay)}
+#frames{flex:1;position:relative;min-height:0}
+#frames iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--nen)}
 #frames iframe.on{display:block}
-.loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:var(--kem);background:var(--xanh);font:500 12px var(--M);letter-spacing:.06em;text-transform:uppercase;z-index:2}
+.loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:var(--kem);background:var(--xanh);font:500 14px var(--B);z-index:2}
 .loading .glogo{width:170px;height:96px}
-.spin{width:26px;height:26px;border:3px solid rgba(248,232,196,.3);border-top-color:var(--kem);border-radius:50%;animation:sp 1s linear infinite}
+.spin{width:28px;height:28px;border:3px solid rgba(248,232,196,.3);border-top-color:var(--kem);border-radius:50%;animation:sp 1s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 #pick{position:absolute;inset:0;z-index:3;background:var(--xanh);color:var(--kem);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:14px;text-align:center}
 #pick.on{display:flex}
 #pick .glogo{width:200px;height:113px;margin-bottom:6px}
-#pick h2{font:700 16px/1.6 var(--W);letter-spacing:.03em;text-transform:uppercase;margin:0}
-#pick p{font:400 13px/1.7 var(--M);opacity:.85;margin:0 0 8px}
-#pick button{width:100%;max-width:320px;height:58px;border:0;background:var(--kem);color:var(--xanh);font:700 15px/1 var(--W);letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+#pick h2{font:800 26px/1.2 var(--H);margin:0}
+#pick p{font:400 14px/1.6 var(--B);opacity:.9;margin:0 0 8px}
+#pick button{width:100%;max-width:320px;height:58px;border:0;border-radius:16px;background:var(--kem);color:var(--xanh);font:700 19px/1 var(--H);text-transform:uppercase;letter-spacing:.03em;cursor:pointer}
 #pick button:active{background:#fff}
+#pick button.ph{background:transparent;color:var(--kem);border:1.5px solid rgba(248,232,196,.6);height:50px;font-size:16px}
+
+/* ---- tab QUY TRÌNH ---- */
+#qt{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;z-index:1;background:var(--nen);background-image:radial-gradient(rgba(68,88,3,.06) 1px,transparent 1.3px);background-size:7px 7px}
+#qt.on{display:block}
+.qw{max-width:640px;margin:0 auto;padding:16px 14px 28px}
+/* đầu trang quy trình: dải xanh bo tròn */
+.qhero{position:relative;background:var(--xanh);color:var(--kem);border-radius:20px;padding:18px 18px 16px;overflow:hidden;box-shadow:var(--bong)}
+.qhero:before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(248,232,196,.08) 1px,transparent 1.3px);background-size:6px 6px;pointer-events:none}
+.qhero .glogo{width:116px;height:65px;position:relative}
+.qhero h1{position:relative;font:800 30px/1.1 var(--H);margin:10px 0 2px;color:var(--kem)}
+.qhero p{position:relative;margin:0;font-size:14.5px;line-height:1.5;color:rgba(248,232,196,.92)}
+.dau{position:absolute;right:14px;top:14px;width:70px;height:70px;border:1.5px solid rgba(248,232,196,.55);border-radius:50%;display:grid;place-items:center;text-align:center;font:700 10px/1.25 var(--B);letter-spacing:.06em;text-transform:uppercase;color:rgba(248,232,196,.8);transform:rotate(-10deg);outline:1px dashed rgba(248,232,196,.35);outline-offset:-6px}
+.tien{position:relative;display:flex;align-items:center;gap:10px;margin-top:14px;font:600 13.5px var(--B);color:var(--kem)}
+.tien .thanh{flex:1;height:8px;border-radius:99px;background:rgba(248,232,196,.25);overflow:hidden}
+.tien .thanh i{display:block;height:100%;border-radius:99px;background:var(--kem)}
+.tim{display:flex;align-items:center;gap:8px;background:var(--the);border:1.5px solid var(--vien);border-radius:16px;margin:14px 0 18px;padding:0 6px 0 14px;box-shadow:var(--bong)}
+.tim svg{flex:none;width:18px;height:18px}
+.tim input{flex:1;min-width:0;border:0;background:transparent;font:500 16px var(--B);color:var(--muc);padding:13px 0;outline:none}
+.tim input::placeholder{color:var(--mo);font-weight:400}
+.tim input::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
+.tim button{border:0;background:var(--xanhn);color:var(--xanh);width:32px;height:32px;border-radius:50%;font:700 18px/1 var(--B);cursor:pointer;display:none}
+.tim.co button{display:block}
+/* thẻ nhóm quy trình */
+.muc{display:flex;align-items:center;gap:14px;background:var(--the);border:1px solid var(--vien);border-radius:18px;padding:14px;margin:0 0 12px;text-decoration:none;color:inherit;box-shadow:var(--bong)}
+.muc:active{transform:scale(.99)}
+.muc .ic{flex:none;width:68px;height:68px;border-radius:16px;background:var(--xanh);display:grid;place-items:center;position:relative}
+.muc .ic svg{width:52px;height:auto}
+.muc .nd{flex:1;min-width:0}
+.muc h2{font:700 20px/1.2 var(--H);color:var(--xanh);margin:0 0 2px}
+.muc p{margin:0;font-size:13.5px;line-height:1.45;color:var(--muc2)}
+.muc .mt{display:flex;align-items:center;gap:8px;margin-top:8px;font:600 12px var(--B);color:var(--muc2)}
+.muc .mt .thanh{flex:1;max-width:120px;height:6px;border-radius:99px;background:var(--xanhn);overflow:hidden}
+.muc .mt .thanh i{display:block;height:100%;background:var(--xanh);border-radius:99px}
+.muc .di{flex:none;width:30px;height:30px;border-radius:50%;background:var(--kem);color:var(--xanh);display:grid;place-items:center;font:800 18px/1 var(--H)}
+.chan{background:var(--xanh);color:var(--kem);text-align:center;padding:22px 16px calc(22px + env(safe-area-inset-bottom));font:400 13px/1.6 var(--B);margin-top:10px}
+.chan .glogo{width:130px;height:73px;margin:0 auto 8px;-webkit-mask-position:center;mask-position:center}
+/* danh sách bài */
+.lui{display:inline-flex;align-items:center;gap:6px;font:600 14px var(--B);color:var(--xanh);background:var(--the);border:1px solid var(--vien);border-radius:999px;text-decoration:none;padding:7px 14px 7px 10px;margin-bottom:14px;box-shadow:var(--bong)}
+.dm-t{font:800 28px/1.15 var(--H);color:var(--xanh);margin:0}
+.dm-p{margin:4px 0 14px;font-size:14px;color:var(--muc2)}
+.nh{font:700 18px/1.3 var(--H);color:var(--xanh);margin:22px 0 4px;display:flex;align-items:center;gap:10px}
+.nh:after{content:'';flex:1;height:2px;border-radius:2px;background:var(--vien)}
+.nh-g{font-size:13.5px;line-height:1.5;margin:0 0 8px;color:var(--muc2)}
+.bai{display:flex;align-items:center;gap:12px;padding:12px 12px;margin:0 0 8px;background:var(--the);border:1px solid var(--vien);border-radius:14px;text-decoration:none;color:var(--muc);box-shadow:0 1px 4px rgba(44,36,24,.05)}
+.bai .so{flex:none;min-width:42px;height:30px;padding:0 6px;border-radius:999px;border:1.5px solid var(--xanh);color:var(--xanh);font:700 14px/27px var(--H);text-align:center}
+.bai .ten{flex:1;min-width:0;font:600 15px/1.4 var(--B)}
+.bai .ten small{display:block;font-weight:400;font-size:12.5px;color:var(--mo);margin-top:1px}
+.bai .tt{flex:none;font:700 11.5px/1 var(--B);padding:6px 9px;border-radius:999px}
+.bai .tt:empty{display:none}
+.tt.ok{color:var(--xanh);background:var(--xanhn)}
+.tt.moi{color:#fff;background:var(--do)}
+.tt.cn{color:#7d5a12;background:var(--vangn)}
+.bai.xong .so{background:var(--xanh);color:var(--kem)}
+.soan{margin-top:16px;padding:14px 16px;border:1.5px dashed var(--vang);border-radius:14px;background:var(--vangn);font-size:14px;color:#7d5a12}
+.rong{padding:28px 0;text-align:center;color:var(--muc2)}
+/* đọc bài */
+.b-so{display:inline-flex;align-items:center;gap:6px;font:700 13px/1 var(--B);color:var(--kem);background:var(--xanh);border-radius:999px;padding:6px 12px}
+.b-so i{width:6px;height:6px;border-radius:50%;background:var(--do)}
+.b-nhan{font:600 13px var(--B);color:var(--muc2);margin-left:6px}
+.b-t{font:800 27px/1.2 var(--H);color:var(--xanh);margin:10px 0 14px}
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.toc a{font:600 13px/1 var(--B);color:var(--xanh);background:var(--the);border:1.5px solid var(--xanh);border-radius:999px;padding:7px 12px;text-decoration:none}
+.bd{background:var(--the);border:1px solid var(--vien);border-radius:18px;padding:18px 16px 8px;box-shadow:var(--bong);font-size:16px;line-height:1.72;color:var(--muc);overflow-wrap:break-word}
+.bd p{margin:0 0 14px}
+.bd h3{font:700 20px/1.3 var(--H);color:var(--xanh);margin:24px 0 10px;padding-bottom:6px;border-bottom:3px solid var(--kem);scroll-margin-top:12px}
+.bd h3:first-child{margin-top:4px}
+.bd ol,.bd ul{margin:0 0 14px;padding-left:24px}
+.bd li{margin:0 0 10px}
+.bd li>ul,.bd li>ol{margin:8px 0 4px}
+.bd ol>li::marker{font:700 16px var(--H);color:var(--xanh)}
+.bd ul>li::marker{color:var(--vang)}
+.bd em{font-style:italic}
+/* câu nói mẫu: khung kem nổi rõ */
+.bd em.noi{display:block;position:relative;font-style:normal;font-weight:500;color:var(--muc);background:var(--kem);border-radius:12px;padding:10px 12px 10px 38px;margin:8px 0 6px;line-height:1.55;box-shadow:inset 0 0 0 1px rgba(201,147,46,.35)}
+.bd em.noi:before{content:'“';position:absolute;left:11px;top:2px;font:800 34px/1 var(--H);color:var(--vang)}
+.bd td em.noi,.bd th em.noi{display:inline;padding:1px 6px;margin:0;box-shadow:none;border-radius:6px}
+.bd td em.noi:before{content:none}
+.bd .lam{background:var(--xanhn);border-radius:12px;padding:10px 12px}
+.bd .lam strong{color:var(--xanh)}
+.bd .khong{background:var(--don);border-radius:12px;padding:10px 12px 2px;margin:0 0 14px}
+.bd .khong p{margin:0 0 8px}
+.bd .khong strong:first-child{color:var(--do)}
+.bd .khong ul{margin:0 0 8px}
+.bd .khong li::marker{color:var(--do)}
+.bd li.chk{list-style:none;position:relative}
+.bd li.chk:before{content:'';position:absolute;left:-24px;top:4px;width:16px;height:16px;border:2px solid var(--xanh);border-radius:5px;background:#fff}
+.bd .tbl{overflow-x:auto;margin:0 0 16px;-webkit-overflow-scrolling:touch;border-radius:12px;border:1px solid var(--vien)}
+.bd table{border-collapse:collapse;width:100%;font-size:14px;line-height:1.45}
+.bd th{font:700 12.5px/1.35 var(--B);color:var(--kem);background:var(--xanh);text-align:left;padding:9px 8px;vertical-align:bottom}
+.bd td{border-top:1px solid var(--vien);padding:9px 8px;vertical-align:top;min-width:68px}
+.bd tbody tr:nth-child(even) td{background:#FBF4E3}
+.bd td:first-child{font-weight:600}
+.bd pre{background:var(--nen);border:1.5px dashed var(--vien);border-radius:12px;padding:12px;white-space:pre-wrap;font:500 13.5px/1.6 var(--B);color:var(--muc)}
+.bd .sodo{position:relative;margin:6px 0 18px;cursor:zoom-in}
+.bd .sodo img{display:block;width:100%;height:auto;border:1px solid var(--vien);border-radius:12px;background:#fff}
+.bd .sodo:after{content:'Chạm để phóng to';position:absolute;right:8px;bottom:8px;background:var(--xanh);color:var(--kem);font:600 11.5px/1 var(--B);padding:6px 10px;border-radius:999px}
+.bd a{color:var(--xanh);font-weight:700}
+#phong{position:fixed;inset:0;z-index:20;background:rgba(44,36,24,.92);overflow:auto;-webkit-overflow-scrolling:touch;display:none}
+#phong.on{display:block}
+#phong img{display:block;width:900px;max-width:none;height:auto;background:#fff;border-radius:12px;margin:64px 12px 24px}
+#phong button{position:fixed;top:calc(12px + env(safe-area-inset-top));right:12px;width:46px;height:46px;border:0;border-radius:50%;background:var(--kem);color:var(--xanh);font:800 24px/46px var(--H);cursor:pointer}
+.doc{display:block;width:100%;height:58px;margin:18px 0 12px;border:0;border-radius:16px;background:var(--xanh);color:var(--kem);font:700 19px/58px var(--H);cursor:pointer;box-shadow:var(--bong)}
+.doc.roi{background:var(--xanhn);color:var(--xanh);box-shadow:inset 0 0 0 1.5px var(--xanh)}
+.ke{display:flex;gap:10px;margin-bottom:8px}
+.ke a{flex:1;min-width:0;border:1px solid var(--vien);border-radius:14px;background:var(--the);padding:10px 12px;text-decoration:none;color:var(--muc);font:500 13.5px/1.45 var(--B)}
+.ke a span{display:block;font:700 12px var(--B);color:var(--xanh);margin-bottom:2px}
+.ke a.sau{text-align:right}
+.kq{display:block;padding:12px 14px;margin:0 0 8px;background:var(--the);border:1px solid var(--vien);border-radius:14px;text-decoration:none;color:var(--muc2)}
+.kq b{display:block;font:600 15px/1.4 var(--B);color:var(--muc)}
+.kq small{display:block;font-size:13.5px;line-height:1.55;margin-top:2px}
+.kq mark{background:var(--kem);color:var(--muc);border-radius:4px;padding:0 2px}
+.qload{display:flex;flex-direction:column;align-items:center;gap:14px;padding:90px 0;color:var(--xanh);font:600 15px var(--B)}
+.qload .spin{border-color:rgba(68,88,3,.2);border-top-color:var(--xanh)}
+
 /* ---- trang cài đặt ---- */
 .hero{background:var(--xanh);color:var(--kem);padding:calc(26px + env(safe-area-inset-top)) 18px 24px;border-bottom:3px solid var(--do);position:relative;overflow:hidden}
 body.app .hero{display:none}
 .hero-in{max-width:520px;margin:0 auto}
 .hero .glogo{width:190px;height:107px}
-.hero h1{font:700 17px/1.7 var(--W);letter-spacing:.03em;text-transform:uppercase;margin:12px 0 0;color:var(--kem)}
-.stamp{position:absolute;right:14px;top:calc(18px + env(safe-area-inset-top));width:78px;height:78px;border:1.5px solid rgba(248,232,196,.55);border-radius:50%;display:grid;place-items:center;text-align:center;font:600 9.5px/1.35 var(--M);letter-spacing:.08em;color:rgba(248,232,196,.75);transform:rotate(-10deg);outline:1px dashed rgba(248,232,196,.35);outline-offset:-6px}
-#cai{max-width:520px;margin:0 auto;padding:26px 18px 40px}
+.hero h1{font:800 28px/1.15 var(--H);margin:12px 0 0;color:var(--kem)}
+.hero h1 small{display:block;font:500 15px/1.5 var(--B);opacity:.9;margin-top:4px}
+.stamp{position:absolute;right:14px;top:calc(18px + env(safe-area-inset-top));width:78px;height:78px;border:1.5px solid rgba(248,232,196,.55);border-radius:50%;display:grid;place-items:center;text-align:center;font:700 10px/1.3 var(--B);letter-spacing:.06em;color:rgba(248,232,196,.8);transform:rotate(-10deg);outline:1px dashed rgba(248,232,196,.35);outline-offset:-6px}
+#cai{max-width:520px;margin:0 auto;padding:22px 16px 40px}
 body.app #cai{display:none}
-.sub{margin:0 0 22px}
-.card{background:var(--the);border:1px solid var(--vien);padding:16px 16px 10px;margin-bottom:16px}
-.card h2{font:700 13px/1.6 var(--W);letter-spacing:.03em;text-transform:uppercase;margin:0 0 8px;color:var(--xanh)}
-ol{margin:0;padding-left:0;list-style:none;counter-reset:b}
-ol li{margin:10px 0;padding-left:34px;position:relative;counter-increment:b}
-ol li:before{content:counter(b);position:absolute;left:0;top:1px;width:22px;height:22px;background:var(--xanh);color:#fff;font:700 12px/22px var(--M);text-align:center}
-.k{display:inline-block;background:#fff;border:1px solid var(--dam);padding:0 6px;font:700 12.5px/1.6 var(--M);white-space:nowrap;color:var(--dam)}
-.btn{display:block;width:100%;height:52px;border:0;background:var(--xanh);color:#fff;font:700 14px/52px var(--M);letter-spacing:.06em;text-transform:uppercase;text-align:center;text-decoration:none;margin-top:12px;cursor:pointer}
-.btn.ph{background:transparent;border:1.5px solid var(--xanh);color:var(--xanh);line-height:49px}
-.warn{border-left:3px solid var(--do)}
+.sub{margin:0 0 18px;font-size:15.5px}
+.card{background:var(--the);border:1px solid var(--vien);border-radius:16px;padding:16px 16px 10px;margin-bottom:14px;box-shadow:var(--bong)}
+.card h2{font:700 20px/1.25 var(--H);margin:0 0 6px;color:var(--xanh)}
+#cai ol{margin:0;padding-left:0;list-style:none;counter-reset:b}
+#cai ol li{margin:10px 0;padding-left:36px;position:relative;counter-increment:b}
+#cai ol li:before{content:counter(b);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--xanh);color:var(--kem);font:700 14px/26px var(--H);text-align:center}
+.k{display:inline-block;background:#fff;border:1px solid var(--vien);border-radius:6px;padding:0 6px;font:600 13px/1.6 var(--B);white-space:nowrap;color:var(--muc)}
+.btn{display:block;width:100%;height:54px;border:0;border-radius:14px;background:var(--xanh);color:var(--kem);font:700 18px/54px var(--H);text-align:center;text-decoration:none;margin-top:12px;cursor:pointer}
+.btn.ph{background:transparent;border:1.5px solid var(--xanh);color:var(--xanh);line-height:51px}
+.warn{border-left:4px solid var(--do)}
 .warn h2{color:var(--do)}
-.foot{margin-top:30px;background:var(--xanh);color:#fff;font:400 12px/20px var(--M);padding:18px;text-align:center}
+.foot{margin-top:28px;background:var(--xanh);color:var(--kem);font:400 13px/1.6 var(--B);padding:18px;text-align:center;border-radius:16px}
 .hide{display:none}
 </style>
 </head>
@@ -80,14 +200,17 @@ ol li:before{content:counter(b);position:absolute;left:0;top:1px;width:22px;heig
   <div id="bar">
     <button data-bp="pv">Phục vụ</button>
     <button data-bp="bep">Bếp</button>
+    <button data-bp="qt">Quy trình</button>
   </div>
   <div id="frames">
+    <div id="qt"></div>
     <div id="pick">
       <div class="glogo" role="img" aria-label="Gặm"></div>
       <h2>Bạn làm ở đâu?</h2>
-      <p>Chọn 1 lần, lần sau mở app là vào thẳng.<br>Muốn đổi thì bấm nút trên thanh xanh.</p>
+      <p>Chọn 1 lần, lần sau mở app là vào thẳng trang xin nghỉ.<br>Muốn đổi thì bấm nút trên thanh xanh.</p>
       <button data-bp="pv">Phục vụ</button>
       <button data-bp="bep">Bếp</button>
+      <button data-bp="qt" class="ph">Chỉ đọc quy trình</button>
     </div>
   </div>
 </div>
@@ -96,11 +219,11 @@ ol li:before{content:counter(b);position:absolute;left:0;top:1px;width:22px;heig
   <div class="stamp">TỪ NĂM<br>2015</div>
   <div class="hero-in">
     <div class="glogo" role="img" aria-label="Gặm – Nơi có hương vị ký ức"></div>
-    <h1>Lịch nghỉ ca<br>phục vụ · bếp</h1>
+    <h1>Nhà Gặm<small>Lịch nghỉ · Quy trình</small></h1>
   </div>
 </header>
 <div id="cai">
-  <p class="sub">Đăng ký nghỉ cho cả <b>Phục vụ</b> và <b>Bếp</b> trong 1 app. Cài 1 lần, lần sau bấm icon <b>Gặm Lịch nghỉ</b> trên màn hình là vào liền.</p>
+  <p class="sub">Đăng ký nghỉ cho <b>Phục vụ</b> và <b>Bếp</b>, và học <b>Quy trình</b> của Gặm trong 1 app. Cài 1 lần, lần sau bấm icon <b>Nhà Gặm</b> trên màn hình là vào liền.</p>
 
   <div class="card warn hide" id="zalo">
     <h2>① Mở bằng trình duyệt trước</h2>
@@ -116,23 +239,23 @@ ol li:before{content:counter(b);position:absolute;left:0;top:1px;width:22px;heig
     <ol>
       <li>Bấm nút <span class="k">Chia sẻ ⬆</span> (thanh dưới cùng của Safari)</li>
       <li>Kéo xuống, chọn <b>Thêm vào MH chính</b></li>
-      <li>Bấm <b>Thêm</b> ở góc trên → icon <b>Gặm Lịch nghỉ</b> hiện trên màn hình</li>
+      <li>Bấm <b>Thêm</b> ở góc trên → icon <b>Nhà Gặm</b> hiện trên màn hình</li>
     </ol>
   </div>
 
   <div class="card hide" id="android">
     <h2><span id="andStep">②</span> Cài app (Android)</h2>
-    <button class="btn hide" id="install">Cài app Gặm Lịch nghỉ</button>
+    <button class="btn hide" id="install">Cài app Nhà Gặm</button>
     <ol id="andManual">
       <li>Bấm nút <span class="k">⋮</span> ở góc trên bên phải Chrome</li>
       <li>Chọn <b>Cài đặt ứng dụng</b> hoặc <b>Thêm vào màn hình chính</b></li>
-      <li>Bấm <b>Cài đặt / Thêm</b> → icon <b>Gặm Lịch nghỉ</b> hiện trên màn hình</li>
+      <li>Bấm <b>Cài đặt / Thêm</b> → icon <b>Nhà Gặm</b> hiện trên màn hình</li>
     </ol>
   </div>
 
   <div class="card hide" id="done">
     <h2>✓ Đã cài xong</h2>
-    Ra màn hình chính, bấm icon <b>Gặm Lịch nghỉ</b> để mở app.
+    Ra màn hình chính, bấm icon <b>Nhà Gặm</b> để mở app.
   </div>
 
   <a class="btn ph" href="?mo=1" id="openNow">Mở app luôn (không cài)</a>
@@ -151,24 +274,35 @@ ol li:before{content:counter(b);position:absolute;left:0;top:1px;width:22px;heig
   var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
   var moLuon = /[?&]mo=1/.test(location.search);
   var $ = function(id){ return document.getElementById(id); };
-  var get = function(){ try { return localStorage.getItem(KEY) || ''; } catch(e){ return ''; } };
-  var set = function(v){ try { localStorage.setItem(KEY, v); } catch(e){} };
+  var get = function(k){ try { return localStorage.getItem(k || KEY) || ''; } catch(e){ return ''; } };
+  var set = function(k, v){ try { localStorage.setItem(k, v); } catch(e){} };
 
   if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function(){}); }
 
   if (standalone || moLuon) {
     document.body.className = 'app';
     var frames = {};
+    var cur = '';
     /* app bên Google báo 'đã vẽ xong' thì mới bỏ màn chờ (tránh màn trắng) */
     window.addEventListener('message', function(e){
       var m = /^gam-ready:(pv|bep)$/.exec(String(e.data||''));
       if (m && frames[m[1]] && frames[m[1]].load.parentNode) frames[m[1]].load.remove();
     });
-    var show = function(bp){
-      if (!APPS[bp]) return;
-      set(bp);
+    var tabs = function(bp){
+      cur = bp;
       $('pick').classList.remove('on');
       [].forEach.call(document.querySelectorAll('#bar button'), function(b){ b.classList.toggle('on', b.getAttribute('data-bp') === bp); });
+      $('qt').classList.toggle('on', bp === 'qt');
+      for (var k in frames) {
+        frames[k].f.classList.toggle('on', k === bp);
+        if (frames[k].load.parentNode) frames[k].load.style.display = k === bp ? 'flex' : 'none';
+      }
+    };
+    var show = function(bp){
+      if (bp === 'qt') { if (!/^#qt/.test(location.hash)) location.hash = '#qt'; else QT.route(); return; }
+      if (!APPS[bp]) return;
+      set(KEY, bp);
+      if (/^#qt/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
       if (!frames[bp]) {
         var load = document.createElement('div');
         load.className = 'loading';
@@ -181,15 +315,190 @@ ol li:before{content:counter(b);position:absolute;left:0;top:1px;width:22px;heig
         $('frames').appendChild(f); $('frames').appendChild(load);
         frames[bp] = { f: f, load: load };
       }
-      for (var k in frames) {
-        frames[k].f.classList.toggle('on', k === bp);
-        if (frames[k].load.parentNode) frames[k].load.style.display = k === bp ? 'flex' : 'none';
-      }
+      tabs(bp);
     };
     [].forEach.call(document.querySelectorAll('[data-bp]'), function(b){
       b.onclick = function(){ show(b.getAttribute('data-bp')); };
     });
+
+    /* ================= TAB QUY TRÌNH ================= */
+    var QT = (function(){
+      var D = null, dang = false, el = $('qt');
+      var cuon = {};
+      var docMap = {}, seen = null;
+      try { docMap = JSON.parse(get('gam_qt_doc') || '{}'); } catch(e){}
+      try { seen = JSON.parse(get('gam_qt_seen') || 'null'); } catch(e){}
+      var luu = function(){ set('gam_qt_doc', JSON.stringify(docMap)); set('gam_qt_seen', JSON.stringify(seen)); };
+      var esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+      var bo = function(s){ return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd'); };
+      var ICON = {
+        khay: '<svg viewBox="0 0 120 90" fill="none" stroke="#F8E8C4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 62h92"/><path d="M22 62c0-21 17-38 38-38s38 17 38 38"/><path d="M60 24v-6"/><circle cx="60" cy="14" r="4"/><path d="M38 46c3-7 9-12 16-14"/><path d="M8 72h104"/></svg>',
+        ly: '<svg viewBox="0 0 120 90" fill="none" stroke="#F8E8C4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 24h32l-4 54H26z"/><path d="M24 44h28"/><path d="M78 12h10v12c8 4 12 10 12 18v36H66V42c0-8 4-14 12-18z"/><path d="M66 56h34"/></svg>',
+        noi: '<svg viewBox="0 0 120 90" fill="none" stroke="#F8E8C4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 42h66v24c0 7-6 12-13 12H27c-7 0-13-5-13-12z"/><path d="M8 42h78"/><path d="M36 30c0-4 4-4 4-8M50 30c0-4 4-4 4-8"/><circle cx="96" cy="28" r="15"/><path d="M96 20v8l6 4"/></svg>',
+        loi: '<svg viewBox="0 0 120 90" fill="none" stroke="#F8E8C4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12h58v34H34l-12 10V46H10z"/><path d="M78 32h32v30h-8v10l-12-10H54V54"/><path d="M24 25h30M24 34h18"/></svg>',
+        bang: '<svg viewBox="0 0 120 90" fill="none" stroke="#F8E8C4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M32 12h56v68H32z"/><path d="M50 8h20v9H50z"/><path d="M42 34l5 5 8-9M64 35h14"/><path d="M42 54l5 5 8-9M64 55h14"/></svg>'
+      };
+      var KINH = '<svg viewBox="0 0 24 24" fill="none" stroke="#445803" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5l5 5"/></svg>';
+      var tt = function(id){
+        var b = D.bai[id];
+        if (docMap[id] === b.h) return 'ok';
+        if (docMap[id]) return 'cn';
+        if (seen && !(id in seen)) return 'moi';
+        return '';
+      };
+      var nhanTT = { ok: '✓ Đã đọc', cn: 'Có cập nhật', moi: 'Mới', '': '' };
+      var dsBai = function(dm){ var a = []; dm.nhom.forEach(function(g){ a = a.concat(g.bai); }); return a; };
+      var dem = function(ids){ var n = 0; ids.forEach(function(i){ if (tt(i) === 'ok') n++; }); return n; };
+      var tatCa = function(){ return Object.keys(D.bai); };
+      var dmCua = function(id){ for (var i = 0; i < D.dm.length; i++) if (dsBai(D.dm[i]).indexOf(id) >= 0) return D.dm[i]; return D.dm[0]; };
+      var timDm = function(cid){ for (var i = 0; i < D.dm.length; i++) if (D.dm[i].id === cid) return D.dm[i]; return null; };
+      var chan = '<div class="chan"><div class="glogo" role="img" aria-label="Gặm"></div>Tiệm Ăn Gặm · từ năm 2015<br>8/10 Nguyễn Thiện Thuật, Bình Thạnh</div>';
+      var dmTruoc = '';
+
+      var veHome = function(q){
+        var ids = tatCa(), n = dem(ids), pct = Math.round(n * 100 / ids.length);
+        var h = '<div class="qw"><div class="qhero"><div class="dau">Từ năm<br>2015</div><div class="glogo" role="img" aria-label="Gặm"></div>' +
+          '<h1>Quy trình Gặm</h1><p>Học từng bài. Đọc xong nhớ bấm “Em đã đọc” nha.</p>' +
+          '<div class="tien"><span>Đã đọc ' + n + '/' + ids.length + ' bài</span><span class="thanh"><i style="width:' + pct + '%"></i></span></div></div>';
+        h += '<div class="tim' + (q ? ' co' : '') + '">' + KINH + '<input id="qtq" type="search" placeholder="Tìm bài: bill, xoài, trễ món…" value="' + esc(q || '') + '" autocomplete="off"><button id="qtx" aria-label="Xoá">×</button></div>';
+        h += '<div id="qtkq">' + (q ? veKq(q) : veMuc()) + '</div></div>' + chan;
+        el.innerHTML = h;
+        var inp = $('qtq'), t = null;
+        inp.oninput = function(){
+          clearTimeout(t);
+          t = setTimeout(function(){
+            var v = inp.value.trim();
+            $('qtkq').innerHTML = v ? veKq(v) : veMuc();
+            inp.parentNode.classList.toggle('co', !!v);
+            history.replaceState(null, '', v ? '#qt/tim/' + encodeURIComponent(v) : '#qt');
+          }, 160);
+        };
+        $('qtx').onclick = function(){ inp.value = ''; inp.oninput(); inp.focus(); };
+      };
+      var veMuc = function(){
+        return D.dm.map(function(dm){
+          var ids = dsBai(dm), n = dem(ids), pct = Math.round(n * 100 / ids.length);
+          return '<a class="muc" href="#qt/c/' + dm.id + '"><span class="ic">' + ICON[dm.icon] + '</span>' +
+            '<span class="nd"><h2>' + esc(dm.ten) + '</h2><p>' + esc(dm.nhan) + '</p>' +
+            '<span class="mt"><span>' + n + '/' + ids.length + ' bài</span><span class="thanh"><i style="width:' + pct + '%"></i></span></span></span>' +
+            '<span class="di">›</span></a>';
+        }).join('');
+      };
+      var veKq = function(q){
+        var k = bo(q).split(/\s+/).filter(Boolean), kq = [];
+        tatCa().forEach(function(id){
+          var b = D.bai[id], t = bo(b.ten), x = bo(b.text), diem = 0, ok = true;
+          k.forEach(function(w){
+            if (t.indexOf(w) >= 0) diem += 3; else if (x.indexOf(w) >= 0) diem += 1; else ok = false;
+          });
+          if (ok) kq.push({ id: id, d: diem });
+        });
+        kq.sort(function(a, b){ return b.d - a.d; });
+        if (!kq.length) return '<div class="rong">Không thấy bài nào có “' + esc(q) + '”.</div>';
+        return kq.slice(0, 40).map(function(r){
+          var b = D.bai[r.id], x = bo(b.text), i = x.indexOf(k[0]);
+          var s = Math.max(0, i - 40), doan = b.text.substr(s, 130);
+          var di = bo(doan).indexOf(k[0]);
+          var hl = di >= 0 ? esc(doan.substr(0, di)) + '<mark>' + esc(doan.substr(di, k[0].length)) + '</mark>' + esc(doan.substr(di + k[0].length)) : esc(doan);
+          return '<a class="kq" href="#qt/b/' + r.id + '"><b>' + esc(b.so) + ' · ' + esc(b.ten) + '</b><small>' + (s > 0 ? '…' : '') + hl + '…</small></a>';
+        }).join('');
+      };
+      var veDm = function(cid){
+        var dm = timDm(cid); if (!dm) return veHome();
+        dmTruoc = cid;
+        var h = '<div class="qw"><a class="lui" href="#qt">‹ Quy trình</a><h1 class="dm-t">' + esc(dm.ten) + '</h1><p class="dm-p">' + esc(dm.nhan) + '</p>';
+        dm.nhom.forEach(function(g){
+          if (g.ten) h += '<div class="nh">' + esc(g.ten) + '</div>' + (g.gioi ? '<div class="nh-g">' + esc(g.gioi) + '</div>' : '');
+          g.bai.forEach(function(id){
+            var b = D.bai[id], s = tt(id);
+            h += '<a class="bai' + (s === 'ok' ? ' xong' : '') + '" href="#qt/b/' + id + '"><span class="so">' + esc(b.so) + '</span><span class="ten">' + esc(b.ten) + (b.nhan ? '<small>' + esc(b.nhan) + '</small>' : '') + '</span><span class="tt ' + s + '">' + nhanTT[s] + '</span></a>';
+          });
+        });
+        if (dm.soan) h += '<div class="soan">✎ ' + esc(dm.soan) + '</div>';
+        el.innerHTML = h + '</div>' + chan;
+      };
+      var veBai = function(id){
+        var b = D.bai[id]; if (!b) return veHome();
+        var dm = (dmTruoc && timDm(dmTruoc) && dsBai(timDm(dmTruoc)).indexOf(id) >= 0) ? timDm(dmTruoc) : dmCua(id);
+        dmTruoc = dm.id;
+        if (seen) { seen[id] = b.h; luu(); }
+        var ds = dsBai(dm), i = ds.indexOf(id), truoc = ds[i - 1], sau = ds[i + 1];
+        var h = '<div class="qw"><a class="lui" href="#qt/c/' + dm.id + '">‹ ' + esc(dm.ten) + '</a><div>';
+        h += '<span class="b-so"><i></i>' + esc(b.so) + '</span>' + (b.nhan ? '<span class="b-nhan">' + esc(b.nhan) + '</span>' : '') + '</div><h1 class="b-t">' + esc(b.ten) + '</h1>';
+        if (b.toc.length > 1) h += '<div class="toc">' + b.toc.map(function(t, j){ return '<a href="#" data-m="m' + (j + 1) + '">' + esc(t) + '</a>'; }).join('') + '</div>';
+        h += '<div class="bd">' + b.html + '</div>';
+        var roi = docMap[id] === b.h;
+        h += '<button class="doc' + (roi ? ' roi' : '') + '" id="qtdoc">' + (roi ? '✓ Em đã đọc bài này' : 'Em đã đọc xong ✓') + '</button>';
+        h += '<div class="ke">' + (truoc ? '<a href="#qt/b/' + truoc + '"><span>‹ Bài trước</span>' + esc(D.bai[truoc].ten) + '</a>' : '') +
+             (sau ? '<a class="sau" href="#qt/b/' + sau + '"><span>Bài sau ›</span>' + esc(D.bai[sau].ten) + '</a>' : '') + '</div>';
+        el.innerHTML = h + '</div>' + chan;
+        $('qtdoc').onclick = function(){
+          if (docMap[id] === b.h) delete docMap[id]; else docMap[id] = b.h;
+          luu();
+          var r = docMap[id] === b.h;
+          this.className = 'doc' + (r ? ' roi' : '');
+          this.textContent = r ? '✓ Em đã đọc bài này' : 'Em đã đọc xong ✓';
+          if (r && sau) setTimeout(function(){ location.hash = '#qt/b/' + sau; }, 350);
+        };
+        [].forEach.call(el.querySelectorAll('.sodo'), function(f){
+          f.onclick = function(){
+            var o = $('phong');
+            if (!o) {
+              o = document.createElement('div'); o.id = 'phong'; o.innerHTML = '<button aria-label="Đóng">×</button><img alt="">'; document.body.appendChild(o);
+              o.onclick = function(e){ if (e.target.tagName !== 'IMG' && o.classList.contains('on')) history.back(); };
+              window.addEventListener('popstate', function(){ o.classList.remove('on'); });
+            }
+            o.querySelector('img').src = f.querySelector('img').src;
+            o.classList.add('on'); o.scrollTop = 0; o.scrollLeft = 0;
+            history.pushState({ phong: 1 }, '', location.href);
+          };
+        });
+        [].forEach.call(el.querySelectorAll('.toc a'), function(a){
+          a.onclick = function(e){ e.preventDefault(); var t = $(a.getAttribute('data-m')); if (t) t.scrollIntoView({ behavior: 'smooth' }); };
+        });
+      };
+      var napDuLieu = function(cb){
+        if (D) return cb();
+        el.innerHTML = '<div class="qload"><div class="spin"></div>Đang mở quy trình…</div>';
+        if (dang) return;
+        dang = true;
+        var s = document.createElement('script');
+        s.src = 'quytrinh.js';
+        s.onload = function(){
+          D = window.GAM_QT;
+          if (!seen) { seen = {}; Object.keys(D.bai).forEach(function(k){ seen[k] = D.bai[k].h; }); luu(); }
+          cb();
+        };
+        s.onerror = function(){ dang = false; el.innerHTML = '<div class="qw rong">Chưa tải được quy trình. Kiểm tra mạng rồi bấm lại nút Quy trình nhé.</div>'; };
+        document.head.appendChild(s);
+      };
+      var routeHt = '';
+      var route = function(){
+        var hs = location.hash || '#qt';
+        if (!/^#qt/.test(hs)) return;
+        tabs('qt');
+        var ph = $('phong'); if (ph) ph.classList.remove('on');
+        if (routeHt) cuon[routeHt] = el.scrollTop;
+        napDuLieu(function(){
+          var p = hs.replace(/^#qt\/?/, '').split('/');
+          if (p[0] === 'c') veDm(p[1]);
+          else if (p[0] === 'b') veBai(p[1]);
+          else if (p[0] === 'tim') veHome(decodeURIComponent(p.slice(1).join('/')));
+          else veHome();
+          el.scrollTop = (p[0] === 'b') ? 0 : (cuon[hs] || 0);
+          routeHt = hs;
+        });
+      };
+      return { route: route };
+    })();
+
+    window.addEventListener('hashchange', function(){
+      if (/^#qt/.test(location.hash)) QT.route();
+      else if (cur === 'qt') { var g = get(); if (APPS[g]) show(g); else { tabs(''); $('pick').classList.add('on'); } }
+    });
+
     var hash = (location.hash || '').replace('#', '');
+    if (/^qt/.test(hash)) { QT.route(); return; }
     var first = APPS[hash] ? hash : get();
     if (APPS[first]) show(first); else $('pick').classList.add('on');
     return;
