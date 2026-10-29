@@ -210,7 +210,9 @@ textarea.vin{min-height:64px;resize:vertical}
         <div class="vchips" id="vGoiY" style="margin-top:6px"><button class="vchip sm" data-t="Giảm 5% tổng hóa đơn">+ Giảm 5%</button><button class="vchip sm" data-t="Giảm 10% tổng hóa đơn">+ Giảm 10%</button><button class="vchip sm" data-t="Giảm 15% tổng hóa đơn">+ Giảm 15%</button><button class="vchip sm" data-t="Tặng 1 phần ">+ Tặng 1 món…</button></div>
         <span class="vlb">Khách <small>(không bắt buộc)</small></span>
         <div class="vr3"><input class="vin" id="vTen" maxlength="40" placeholder="Tên"><input class="vin" id="vSdt" maxlength="20" inputmode="tel" placeholder="SĐT"><input class="vin" id="vBan" maxlength="10" placeholder="Bàn"></div>
-        <div class="vhsd">Hạn dùng <b>1 tháng</b> → tới <b id="vHan">–</b>
+        <div class="vhsd"><span class="vlb" style="margin:0 0 6px">Hạn dùng</span>
+          <div class="vchips" id="vHanChon"><button class="vchip on" data-t="1">1 tháng</button><button class="vchip" data-t="2">2 tháng</button><button class="vchip" data-t="3">3 tháng</button></div>
+          <div style="margin-top:6px">→ dùng được tới hết ngày <b id="vHan">–</b></div>
           <span class="vlb" style="margin:9px 0 0">Người xuất <em>*</em></span>
           <input class="vin" id="vNguoi" maxlength="30" list="vcNguoi" placeholder="Tên quản lý"></div>
         <button class="vbtn" id="vXuat" style="margin-top:14px">Xuất mã voucher</button>
@@ -393,7 +395,9 @@ textarea.vin{min-height:64px;resize:vertical}
   function ymd(d){ return d.getFullYear()+'-'+d2(d.getMonth()+1)+'-'+d2(d.getDate()); }
   function dmy(s){ var p=String(s||'').split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : String(s||''); }
   function dm(s){ return dmy(s).slice(0,5); }
-  function hanMoi(){ var d=new Date(); d.setDate(d.getDate()+30); return ymd(d); }
+  function hanMoi(){ var d=new Date(); d.setDate(d.getDate()+30*(VC.thangHan||1)); return ymd(d); }
+  function vcHanChon(n){ VC.thangHan=n; [].forEach.call(document.querySelectorAll('#vHanChon .vchip'), function(x){ x.classList.toggle('on', +x.getAttribute('data-t')===n); }); $('vHan').textContent = dmy(hanMoi()); }
+  [].forEach.call(document.querySelectorAll('#vHanChon .vchip'), function(b){ b.onclick=function(){ vcHanChon(+b.getAttribute('data-t')); }; });
   function nguoi(){ return ls.get('gam_vc_nguoi'); }
   function vcSeg(s){
     VC.seg = s;
@@ -419,10 +423,11 @@ textarea.vin{min-height:64px;resize:vertical}
   function vcXoaForm(){
     VC.nhom=''; [].forEach.call(document.querySelectorAll('#vNhom .vchip'), function(x){ x.classList.remove('on'); });
     ['vMoTa','vMon','vXuLy','vUuDai','vTen','vSdt','vBan'].forEach(function(id){ $(id).value=''; });
+    vcHanChon(1);
   }
   $('vXuat').onclick = function(){
     var d = { api:'vc_xuat', nhom:VC.nhom, mota:$('vMoTa').value.trim(), mon:$('vMon').value.trim(), xuly:$('vXuLy').value.trim(),
-      uudai:$('vUuDai').value.trim(), ten:$('vTen').value.trim(), sdt:$('vSdt').value.trim(), ban:$('vBan').value.trim(), nguoi:$('vNguoi').value.trim() };
+      uudai:$('vUuDai').value.trim(), ten:$('vTen').value.trim(), sdt:$('vSdt').value.trim(), ban:$('vBan').value.trim(), nguoi:$('vNguoi').value.trim(), thanghan:VC.thangHan||1 };
     if (!d.nhom) return toast('Chọn lý do sự cố trước nhé.');
     if (d.nhom==='Khác' && !d.mota) return toast('Lý do "Khác" thì ghi rõ chuyện gì nhé.');
     if (!d.uudai) return toast('Ghi ưu đãi cho khách nhé.');
