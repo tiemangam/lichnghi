@@ -1,7 +1,7 @@
 {
-  "name": "Gặm Quản lý nghỉ",
+  "name": "Gặm Quản lý",
   "short_name": "Gặm Quản lý",
-  "description": "Duyệt lịch nghỉ phục vụ + bếp, xem đơn mới và lịch sử gửi – Tiệm Ăn Gặm",
+  "description": "Duyệt lịch nghỉ phục vụ + bếp, xem đơn mới, lịch sử gửi, voucher sự cố – Tiệm Ăn Gặm",
   "lang": "vi",
   "start_url": "./?mo=1",
   "scope": "./",

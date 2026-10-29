@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Gặm Quản lý nghỉ</title>
+<title>Gặm Quản lý</title>
 <meta name="theme-color" content="#445803">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -36,8 +36,8 @@ body.app #app{display:flex}
 #top .glogo{width:74px;height:42px}
 #top .t{font:700 9.5px/1.5 var(--W);letter-spacing:.04em;text-transform:uppercase;border-left:2px solid var(--do);padding-left:8px;flex:1}
 #bell{border:1.5px solid rgba(248,232,196,.6);background:transparent;color:var(--kem);font:700 11px var(--M);padding:5px 8px;cursor:pointer}
-#bar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:6px 8px 7px;background:var(--xanh);border-bottom:3px solid var(--do)}
-#bar button{position:relative;height:40px;border:1.5px solid rgba(248,232,196,.6);background:transparent;color:var(--kem);font:700 9.5px/1.25 var(--W);letter-spacing:.03em;text-transform:uppercase;cursor:pointer;padding:0 2px}
+#bar{flex:none;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:6px 7px 7px;background:var(--xanh);border-bottom:3px solid var(--do)}
+#bar button{position:relative;height:40px;border:1.5px solid rgba(248,232,196,.6);background:transparent;color:var(--kem);font:700 8.2px/1.25 var(--W);letter-spacing:.02em;text-transform:uppercase;cursor:pointer;padding:0 1px}
 #bar button.on{background:var(--kem);color:var(--xanh);border-color:var(--kem)}
 #bar .n{position:absolute;top:-7px;right:-4px;min-width:19px;height:19px;padding:0 5px;background:var(--do);color:#fff;font:700 11px/19px var(--M);border-radius:10px;text-align:center}
 #bar .n:empty{display:none}
@@ -62,6 +62,7 @@ h2{font:700 13px/1.6 var(--W);letter-spacing:.03em;text-transform:uppercase;colo
 .item:first-child{border-top:0}
 .tag{align-self:start;font:700 9px/1 var(--W);letter-spacing:.04em;text-transform:uppercase;padding:5px 6px;color:#fff;background:var(--xanh);white-space:nowrap}
 .tag.bep{background:var(--vang)}
+.tag.vc{background:var(--do)}
 .item .tt{min-width:0}
 .item .tt b{font-weight:700}
 .item .ct{font-size:12.5px;color:var(--chu);word-break:break-word}
@@ -100,15 +101,86 @@ ol li{margin:10px 0;padding-left:34px;position:relative;counter-increment:b}
 ol li:before{content:counter(b);position:absolute;left:0;top:1px;width:22px;height:22px;background:var(--xanh);color:#fff;font:700 12px/22px var(--M);text-align:center}
 .k{display:inline-block;background:#fff;border:1px solid var(--dam);padding:0 6px;font:700 12.5px/1.6 var(--M);white-space:nowrap;color:var(--dam)}
 a.big{display:block;height:52px;background:var(--xanh);color:#fff;font:700 14px/52px var(--M);letter-spacing:.06em;text-transform:uppercase;text-align:center;text-decoration:none;margin-top:12px}
+/* ---- VOUCHER ---- */
+#v-vc.on{display:flex;flex-direction:column}
+.vseg{flex:none;display:grid;grid-template-columns:repeat(3,1fr);background:var(--the);border-bottom:1px solid var(--vien)}
+.vseg button{border:0;background:transparent;font:700 9px/1.3 var(--W);letter-spacing:.03em;text-transform:uppercase;padding:12px 2px 9px;color:var(--mo);border-bottom:3px solid transparent;cursor:pointer}
+.vseg button.on{color:var(--xanh);border-bottom-color:var(--xanh)}
+.vpane{flex:1;min-height:0;position:relative;display:none}
+.vpane.on{display:block}
+#v-vc .scroll{padding:12px 14px 60px}
+.vlb{font:700 9px/1.4 var(--W);letter-spacing:.04em;text-transform:uppercase;color:var(--xanh);margin:14px 0 6px;display:block}
+.vlb:first-child{margin-top:2px}
+.vlb em{color:var(--do);font-style:normal}
+.vlb small{font:400 11px var(--M);color:var(--mo);text-transform:none;letter-spacing:0}
+.vchips{display:flex;flex-wrap:wrap;gap:6px}
+.vchip{border:1.5px solid var(--vien);background:#fff;padding:6px 10px;font:500 13.5px/1.3 'Be Vietnam Pro',sans-serif;color:var(--dam);cursor:pointer}
+.vchip.on{background:var(--xanh);border-color:var(--xanh);color:#fff}
+.vchip.sm{font-size:12px;padding:4px 9px;border-style:dashed;color:var(--xanh);background:transparent;border-color:var(--xanh)}
+.vin{display:block;width:100%;border:1px solid var(--vien);background:#fff;padding:9px 10px;font:400 15px/1.45 'Be Vietnam Pro',sans-serif;color:var(--dam);border-radius:0;-webkit-appearance:none;appearance:none}
+.vin:focus{outline:2px solid var(--xanh);outline-offset:-1px}
+textarea.vin{min-height:64px;resize:vertical}
+.vr3{display:grid;grid-template-columns:1.3fr 1.3fr .7fr;gap:6px}
+.vhsd{margin-top:14px;background:var(--the);border-left:3px solid var(--vang);padding:9px 12px;font-size:13px}
+.vhsd .vin{margin-top:6px}
+.vbtn{display:block;width:100%;border:0;background:var(--xanh);color:#fff;font:700 13px/1 var(--M);letter-spacing:.06em;text-transform:uppercase;padding:16px;cursor:pointer;text-align:center}
+.vbtn.do{background:var(--do)} .vbtn.vang{background:var(--vang)}
+.vbtn.ph{background:transparent;border:1.5px solid var(--xanh);color:var(--xanh);padding:14.5px}
+.vbtn:disabled{opacity:.55}
+.vtwo{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.vnote{font:400 12px/1.5 'Be Vietnam Pro',sans-serif;color:var(--mo);margin:7px 0 0;text-align:center}
+.vdim{position:absolute;inset:0;z-index:8;background:rgba(35,35,35,.62);display:flex;align-items:center;justify-content:center;padding:18px}
+.vmodal{background:var(--the);width:100%;max-width:420px;border-top:5px solid var(--xanh);padding:20px 16px 16px;text-align:center}
+.vok{font:700 11px/1.5 var(--W);letter-spacing:.04em;text-transform:uppercase;color:var(--xanh)}
+.vcode{display:flex;justify-content:center;gap:9px;margin:14px 0 10px}
+.vcode b{width:60px;height:72px;border:2.5px solid var(--dam);background:#fff;font:700 44px/67px var(--M);color:var(--dam);text-align:center}
+.vmodal p{font:400 13.5px/1.55 'Be Vietnam Pro',sans-serif;color:var(--chu);margin:0}
+.vkv{text-align:left;background:#fff;border:1px dashed var(--vien);padding:9px 11px;margin:12px 0;font-size:12.5px;line-height:1.7}
+.vtra{display:flex;gap:8px}
+.vtra input{flex:1;min-width:0;height:58px;border:2.5px solid var(--dam);background:#fff;font:700 32px/1 var(--M);letter-spacing:.5em;text-indent:.5em;text-align:center;text-transform:uppercase;color:var(--dam);border-radius:0;-webkit-appearance:none}
+.vtra input:focus{outline:none;border-color:var(--xanh)}
+.vtra button{flex:none;border:0;background:var(--xanh);color:#fff;font:700 11px/1.2 var(--M);letter-spacing:.05em;text-transform:uppercase;padding:0 14px;cursor:pointer}
+.vcard{background:var(--the);border:1px solid var(--vien);margin-top:12px}
+.vst{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;color:#fff;font:700 11px/1.3 var(--W);letter-spacing:.04em;text-transform:uppercase}
+.vst small{font:500 12px var(--M);text-transform:none;letter-spacing:0}
+.vst.cho{background:var(--xanh)} .vst.het{background:var(--vang)} .vst.dung,.vst.khong{background:var(--do)}
+.vbody{padding:10px 12px 12px;font:400 14px/1.6 'Be Vietnam Pro',sans-serif;color:var(--chu)}
+.vbody .vk{display:block;font:700 8.5px/1.4 var(--W);letter-spacing:.04em;text-transform:uppercase;color:var(--mo);margin-top:9px}
+.vbody .vk:first-child{margin-top:0}
+.vbody b{color:var(--dam);font-weight:600}
+.vuu{font:700 17px/1.4 'Be Vietnam Pro',sans-serif;color:var(--do)}
+.vwarn{background:#FFF3D6;border:2px solid var(--vang);padding:10px 12px;margin:12px 0;font:400 14px/1.5 'Be Vietnam Pro',sans-serif;color:var(--dam)}
+.vwarn .t{font:700 9px/1.4 var(--W);letter-spacing:.04em;text-transform:uppercase;color:#8a5a00;display:block;margin-bottom:3px}
+.vmon{display:flex;justify-content:space-between;align-items:center;background:var(--the);border:1px solid var(--vien);margin-bottom:10px}
+.vmon button{border:0;background:transparent;color:var(--xanh);font:700 20px var(--M);padding:6px 16px;cursor:pointer}
+.vmon span{font:700 10.5px var(--W);letter-spacing:.04em;text-transform:uppercase;color:var(--dam)}
+.vtiles{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
+.vtile{background:var(--the);border:1px solid var(--vien);padding:9px 11px}
+.vtile small{display:block;font:700 8px/1.4 var(--W);letter-spacing:.04em;text-transform:uppercase;color:var(--xanh)}
+.vtile b{font:700 26px/1.25 var(--M);color:var(--dam)}
+.vtile b i{font:500 12.5px var(--M);font-style:normal;color:var(--mo)}
+.vtile.g b{color:var(--xanh)} .vtile.r b{color:var(--do)}
+.vbars div{display:grid;grid-template-columns:130px 1fr 22px;gap:8px;align-items:center;font:400 13px/2 'Be Vietnam Pro',sans-serif;color:var(--dam)}
+.vbars u{display:block;height:10px;background:var(--xanh);text-decoration:none;min-width:2px}
+.vbars em{font:700 12px var(--M);font-style:normal;text-align:right}
+.vi{display:grid;grid-template-columns:64px 1fr;gap:2px 10px;padding:10px 0;border-top:1px dashed var(--vien);cursor:pointer}
+.vi .cd{font:700 15px/1.3 var(--M);color:var(--dam);letter-spacing:.06em}
+.vi .tg{font:700 7.8px/1 var(--W);letter-spacing:.03em;text-transform:uppercase;padding:5px 2px;color:#fff;text-align:center;margin-top:4px;white-space:nowrap}
+.tg.dung{background:var(--xanh)} .tg.cho{color:var(--xanh);border:1px solid var(--xanh)} .tg.het{background:var(--vang)}
+.vi .ct{font:400 13.5px/1.45 'Be Vietnam Pro',sans-serif;color:var(--dam);word-break:break-word}
+.vi .tm{font:400 11.5px/1.5 var(--M);color:var(--mo)}
+.vi .tm b{color:var(--xanh)}
+
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="top"><div class="glogo"></div><div class="t">Quản lý<br>lịch nghỉ</div><button id="bell">🔔 Thông báo</button></div>
+  <div id="top"><div class="glogo"></div><div class="t">Quản lý<br>Nhà Gặm</div><button id="bell">🔔 Thông báo</button></div>
   <div id="bar">
     <button data-v="moi">Đơn mới<span class="n" id="nMoi"></span></button>
     <button data-v="pv">Phục vụ<span class="n" id="nPV"></span></button>
     <button data-v="bep">Bếp<span class="n" id="nBep"></span></button>
+    <button data-v="vc">Voucher</button>
     <button data-v="ls">Lịch sử</button>
   </div>
   <div id="views">
@@ -123,10 +195,48 @@ a.big{display:block;height:52px;background:var(--xanh);color:#fff;font:700 14px/
     </div></div></div>
     <div class="view" id="v-pv"></div>
     <div class="view" id="v-bep"></div>
+    <div class="view" id="v-vc">
+      <div class="vseg"><button data-s="xuat" class="on">Xuất mã</button><button data-s="tra">Kiểm tra mã</button><button data-s="so">Sổ voucher</button></div>
+      <div class="vpane on" id="vp-xuat"><div class="scroll"><div class="wrap">
+        <span class="vlb">Lý do sự cố <em>*</em></span>
+        <div class="vchips" id="vNhom"><button class="vchip">Món ra trễ</button><button class="vchip">Món bị lỗi</button><button class="vchip">Rớt đồ trúng khách</button><button class="vchip">Phục vụ chưa tốt</button><button class="vchip">Khác</button></div>
+        <textarea class="vin" id="vMoTa" style="margin-top:7px" maxlength="300" placeholder="Chuyện gì xảy ra? vd: Gà đốt bị sống bên trong"></textarea>
+        <span class="vlb">Món liên quan <small>(nếu có)</small></span>
+        <input class="vin" id="vMon" maxlength="60" placeholder="vd: Gà đốt">
+        <span class="vlb">Đã xử lý tại chỗ</span>
+        <input class="vin" id="vXuLy" maxlength="200" placeholder="vd: Xin lỗi, đổi phần mới, không tính tiền">
+        <span class="vlb">Ưu đãi lần sau <em>*</em> <small>– gõ tự do</small></span>
+        <input class="vin" id="vUuDai" maxlength="120" placeholder="vd: Giảm 10% tổng hóa đơn">
+        <div class="vchips" id="vGoiY" style="margin-top:6px"><button class="vchip sm" data-t="Giảm 5% tổng hóa đơn">+ Giảm 5%</button><button class="vchip sm" data-t="Giảm 10% tổng hóa đơn">+ Giảm 10%</button><button class="vchip sm" data-t="Giảm 15% tổng hóa đơn">+ Giảm 15%</button><button class="vchip sm" data-t="Tặng 1 phần ">+ Tặng 1 món…</button></div>
+        <span class="vlb">Khách <small>(không bắt buộc)</small></span>
+        <div class="vr3"><input class="vin" id="vTen" maxlength="40" placeholder="Tên"><input class="vin" id="vSdt" maxlength="20" inputmode="tel" placeholder="SĐT"><input class="vin" id="vBan" maxlength="10" placeholder="Bàn"></div>
+        <div class="vhsd">Hạn dùng <b>1 tháng</b> → tới <b id="vHan">–</b>
+          <span class="vlb" style="margin:9px 0 0">Người xuất <em>*</em></span>
+          <input class="vin" id="vNguoi" maxlength="30" list="vcNguoi" placeholder="Tên quản lý"></div>
+        <button class="vbtn" id="vXuat" style="margin-top:14px">Xuất mã voucher</button>
+      </div></div></div>
+      <div class="vpane" id="vp-tra"><div class="scroll"><div class="wrap">
+        <span class="vlb">Nhập mã trên phiếu voucher</span>
+        <div class="vtra"><input id="vMa" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="····"><button id="vTra">Kiểm tra</button></div>
+        <div id="vKq"></div>
+      </div></div></div>
+      <div class="vpane" id="vp-so"><div class="scroll"><div class="wrap">
+        <div class="vmon"><button id="vTruoc">‹</button><span id="vThang">–</span><button id="vSau">›</button></div>
+        <div id="vSo"><p class="empty">Đang tải…</p></div>
+      </div></div></div>
+      <div class="vdim hide" id="vModal"><div class="vmodal">
+        <div class="vok">✓ Đã xuất voucher</div>
+        <div class="vcode" id="vCode"></div>
+        <p>Ghi mã này lên <b>phiếu voucher giấy</b> đưa khách.<br>Mã chỉ dùng được <b>1 lần</b>.</p>
+        <div class="vkv" id="vKv"></div>
+        <div class="vtwo"><button class="vbtn ph" id="vChep">Chép mã</button><button class="vbtn" id="vXong">Xong</button></div>
+      </div></div>
+      <datalist id="vcNguoi"><option value="Sơn"><option value="Đạt"></datalist>
+    </div>
     <div class="view" id="v-ls"><div class="scroll"><div class="wrap">
       <h2>Lịch sử gửi &amp; duyệt</h2>
       <div class="filters">
-        <select id="fBp"><option value="">Cả 2 bộ phận</option><option>Phục vụ</option><option>Bếp</option></select>
+        <select id="fBp"><option value="">Tất cả</option><option>Phục vụ</option><option>Bếp</option><option>Voucher</option></select>
         <select id="fAi"><option value="NV">Nhân viên gửi</option><option value="QL">Quản lý làm</option><option value="">Tất cả</option></select>
         <input id="fTen" type="search" placeholder="Tìm tên (vd: Huyền)">
       </div>
@@ -147,11 +257,11 @@ a.big{display:block;height:52px;background:var(--xanh);color:#fff;font:700 14px/
 <header class="hero">
   <div class="hero-in">
     <div class="glogo" role="img" aria-label="Gặm"></div>
-    <h1>App quản lý<br>lịch nghỉ</h1>
+    <h1>App quản lý<br>Nhà Gặm</h1>
   </div>
 </header>
 <div id="cai">
-  <p>App riêng cho <b>anh Đạt và quản lý</b>: duyệt nghỉ phục vụ + bếp, xem đơn mới gửi và lịch sử giờ gửi. <b>Không gửi link này vào nhóm nhân viên.</b></p>
+  <p>App riêng cho <b>anh Đạt và quản lý</b>: duyệt nghỉ phục vụ + bếp, xem đơn mới gửi, lịch sử giờ gửi và xuất / kiểm tra voucher sự cố. <b>Không gửi link này vào nhóm nhân viên.</b></p>
   <div class="card"><h2>iPhone</h2><ol>
     <li>Mở link này bằng <b>Safari</b></li>
     <li>Bấm <span class="k">Chia sẻ ⬆</span> → <b>Thêm vào MH chính</b> → <b>Thêm</b></li>
@@ -178,7 +288,7 @@ a.big{display:block;height:52px;background:var(--xanh);color:#fff;font:700 14px/
   function toast(m, ms){ var t=$('toast'); t.textContent=m; t.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(function(){t.style.display='none'}, ms||3000); }
   function api(q){ return fetch(EXEC + '?' + q + '&key=' + encodeURIComponent(KEY) + '&_=' + Date.now()).then(function(r){ return r.json(); }).then(function(j){ if(!j.ok) throw new Error(j.error||'Lỗi'); return j; }); }
   function ago(ms){ var s=(Date.now()-ms)/1000; if(s<60) return 'vừa xong'; if(s<3600) return Math.floor(s/60)+' phút trước'; if(s<86400) return Math.floor(s/3600)+' giờ trước'; return Math.floor(s/86400)+' ngày trước'; }
-  function bpKey(bp){ return bp==='Bếp' ? 'bep' : 'pv'; }
+  function bpKey(bp){ return bp==='Bếp' ? 'bep' : bp==='Voucher' ? 'vc' : 'pv'; }
 
   function mkFrame(v){
     if (frames[v]) return;
@@ -206,6 +316,7 @@ a.big{display:block;height:52px;background:var(--xanh);color:#fff;font:700 14px/
     [].forEach.call(document.querySelectorAll('.view'), function(el){ el.classList.toggle('on', el.id==='v-'+v); });
     if (v==='pv'||v==='bep') mkFrame(v);
     if (v==='ls') loadLS();
+    if (v==='vc' && window.vcShow) vcShow();
     ls.set('gam_ql_view', v);
   }
   [].forEach.call(document.querySelectorAll('#bar button'), function(b){ b.onclick=function(){ show(b.getAttribute('data-v')); }; });
@@ -226,7 +337,7 @@ a.big{display:block;height:52px;background:var(--xanh);color:#fff;font:700 14px/
     }).join('') : '<p class="empty">Chưa có lần gửi nào.</p>';
     [].forEach.call(document.querySelectorAll('#moiList .item'), function(el){ el.onclick=function(){ show(el.getAttribute('data-go')); }; });
     var total = moi.length;
-    document.title = (total ? '('+total+') ' : '') + 'Gặm Quản lý nghỉ';
+    document.title = (total ? '('+total+') ' : '') + 'Gặm Quản lý';
     try { if (navigator.setAppBadge) { total ? navigator.setAppBadge(total) : navigator.clearAppBadge(); } } catch(e){}
   }
   function bao(moiMoi){
@@ -266,19 +377,183 @@ a.big{display:block;height:52px;background:var(--xanh);color:#fff;font:700 14px/
     ds.forEach(function(r){
       var d = r.luc.slice(0,10);
       if (d!==ngay){ ngay=d; h+='<div class="day">Ngày '+esc(d)+'</div>'; }
-      h += '<div class="item'+(r.ai==='QL'?' ql':'')+'" data-go="'+bpKey(r.bp)+'"><span class="tag '+bpKey(r.bp)+'">'+esc(r.bp)+'</span><div class="tt"><b>'+esc(r.ten)+'</b> · '+esc(r.hd)+(r.ai==='QL'?' <span class="tm">(quản lý)</span>':'')+
+      h += '<div class="item'+(r.ai==='QL'&&r.bp!=='Voucher'?' ql':'')+'" data-go="'+bpKey(r.bp)+'" data-ma="'+esc(r.bp==='Voucher'?r.ten:'')+'"><span class="tag '+bpKey(r.bp)+'">'+esc(r.bp)+'</span><div class="tt"><b>'+esc(r.ten)+'</b> · '+esc(r.hd)+(r.ai==='QL'?' <span class="tm">(quản lý)</span>':'')+
         '<div class="ct">'+esc(r.ct)+'</div><div class="tm">lúc '+esc(r.luc.slice(11,16))+'</div></div></div>';
     });
     $('lsList').innerHTML = h || '<p class="empty">Không có dòng nào.</p>';
-    [].forEach.call(document.querySelectorAll('#lsList .item'), function(el){ el.onclick=function(){ show(el.getAttribute('data-go')); }; });
+    [].forEach.call(document.querySelectorAll('#lsList .item'), function(el){ el.onclick=function(){ var ma=el.getAttribute('data-ma'); if (ma && window.vcOpen) return vcOpen(ma); show(el.getAttribute('data-go')); }; });
   }
   ['fBp','fAi'].forEach(function(id){ $(id).onchange = renderLS; });
   $('fTen').oninput = renderLS;
 
+  /* ---------- VOUCHER sự cố ---------- */
+  var VC = { seg: 'xuat', nhom: '', thang: '', so: null, loc: '', v: null, ma: '' };
+  function q(o){ return Object.keys(o).map(function(k){ return k + '=' + encodeURIComponent(o[k]==null?'':o[k]); }).join('&'); }
+  function d2(n){ return ('0'+n).slice(-2); }
+  function ymd(d){ return d.getFullYear()+'-'+d2(d.getMonth()+1)+'-'+d2(d.getDate()); }
+  function dmy(s){ var p=String(s||'').split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : String(s||''); }
+  function dm(s){ return dmy(s).slice(0,5); }
+  function hanMoi(){ var d=new Date(); d.setDate(d.getDate()+30); return ymd(d); }
+  function nguoi(){ return ls.get('gam_vc_nguoi'); }
+  function vcSeg(s){
+    VC.seg = s;
+    [].forEach.call(document.querySelectorAll('.vseg button'), function(b){ b.classList.toggle('on', b.getAttribute('data-s')===s); });
+    [].forEach.call(document.querySelectorAll('.vpane'), function(p){ p.classList.toggle('on', p.id==='vp-'+s); });
+    if (s==='so') vcLoadSo();
+    if (s==='tra' && !VC.v) setTimeout(function(){ try{$('vMa').focus()}catch(e){} }, 50);
+  }
+  [].forEach.call(document.querySelectorAll('.vseg button'), function(b){ b.onclick=function(){ vcSeg(b.getAttribute('data-s')); }; });
+  window.vcShow = function(){ $('vHan').textContent = dmy(hanMoi()); if (!$('vNguoi').value) $('vNguoi').value = nguoi(); if (VC.seg==='so') vcLoadSo(); };
+  window.vcOpen = function(ma){ show('vc'); vcSeg('tra'); $('vMa').value = ma; vcTra(); };
+
+  /* -- xuất mã -- */
+  [].forEach.call(document.querySelectorAll('#vNhom .vchip'), function(b){
+    b.onclick = function(){
+      VC.nhom = VC.nhom===b.textContent ? '' : b.textContent;
+      [].forEach.call(document.querySelectorAll('#vNhom .vchip'), function(x){ x.classList.toggle('on', x.textContent===VC.nhom); });
+    };
+  });
+  [].forEach.call(document.querySelectorAll('#vGoiY .vchip'), function(b){
+    b.onclick = function(){ var el=$('vUuDai'); el.value = b.getAttribute('data-t'); el.focus(); try{ el.setSelectionRange(el.value.length, el.value.length); }catch(e){} };
+  });
+  function vcXoaForm(){
+    VC.nhom=''; [].forEach.call(document.querySelectorAll('#vNhom .vchip'), function(x){ x.classList.remove('on'); });
+    ['vMoTa','vMon','vXuLy','vUuDai','vTen','vSdt','vBan'].forEach(function(id){ $(id).value=''; });
+  }
+  $('vXuat').onclick = function(){
+    var d = { api:'vc_xuat', nhom:VC.nhom, mota:$('vMoTa').value.trim(), mon:$('vMon').value.trim(), xuly:$('vXuLy').value.trim(),
+      uudai:$('vUuDai').value.trim(), ten:$('vTen').value.trim(), sdt:$('vSdt').value.trim(), ban:$('vBan').value.trim(), nguoi:$('vNguoi').value.trim() };
+    if (!d.nhom) return toast('Chọn lý do sự cố trước nhé.');
+    if (d.nhom==='Khác' && !d.mota) return toast('Lý do "Khác" thì ghi rõ chuyện gì nhé.');
+    if (!d.uudai) return toast('Ghi ưu đãi cho khách nhé.');
+    if (!d.nguoi) return toast('Ghi tên người xuất nhé.');
+    ls.set('gam_vc_nguoi', d.nguoi);
+    var b=$('vXuat'); b.disabled=true; b.textContent='Đang xuất…';
+    api(q(d)).then(function(j){
+      var v=j.v; VC.so=null;
+      $('vCode').innerHTML = v.ma.split('').map(function(c){ return '<b>'+c+'</b>'; }).join('');
+      $('vKv').innerHTML = 'Ưu đãi: <b>'+esc(v.uuDai)+'</b><br>Hạn dùng: <b>tới '+dmy(v.han)+'</b><br>Lý do: '+esc(v.nhom)+(v.moTa?' – '+esc(v.moTa):'')+
+        (v.tenKhach||v.sdt||v.ban ? '<br>Khách: '+esc([v.tenKhach,v.sdt,v.ban?'bàn '+v.ban:''].filter(String).join(' · ')) : '');
+      VC.moi = v.ma;
+      $('vModal').classList.remove('hide');
+      vcXoaForm();
+    }).catch(function(e){ toast('Chưa xuất được: '+e.message, 5000); })
+      .then(function(){ b.disabled=false; b.textContent='Xuất mã voucher'; });
+  };
+  $('vChep').onclick = function(){
+    var t = VC.moi || '';
+    try { navigator.clipboard.writeText(t).then(function(){ toast('Đã chép mã '+t); }, function(){ toast('Mã: '+t); }); } catch(e){ toast('Mã: '+t); }
+  };
+  $('vXong').onclick = function(){ $('vModal').classList.add('hide'); };
+
+  /* -- kiểm tra mã -- */
+  $('vMa').oninput = function(){
+    var el=$('vMa'), v=el.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,4);
+    if (el.value!==v) el.value=v;
+    if (v.length===4 && v!==VC.ma) vcTra();
+  };
+  $('vMa').onkeydown = function(e){ if (e.key==='Enter') vcTra(); };
+  $('vTra').onclick = function(){ vcTra(); };
+  function vcTra(){
+    var ma=$('vMa').value.toUpperCase().replace(/[^A-Z]/g,'');
+    if (ma.length!==4) return toast('Mã gồm 4 chữ cái.');
+    VC.ma=ma; VC.v=null; $('vKq').innerHTML='<p class="empty">Đang kiểm tra '+ma+'…</p>';
+    try{ $('vMa').blur(); }catch(e){}
+    api(q({api:'vc_tra', ma:ma})).then(function(j){ VC.v=j.v; vcKq(j.v, ma); })
+      .catch(function(e){ VC.ma=''; $('vKq').innerHTML='<p class="empty">Chưa kiểm tra được: '+esc(e.message)+'</p>'; });
+  }
+  function luuY(v){
+    var mon = v.mon ? '<b>'+esc(v.mon)+'</b>' : '';
+    if (v.nhom==='Món bị lỗi') return 'Lần trước '+(mon?'món '+mon:'món ăn')+' bị lỗi. Nếu hôm nay khách gọi lại → báo bếp làm kỹ, kiểm tra trước khi ra món.';
+    if (v.nhom==='Món ra trễ') return 'Lần trước khách chờ món lâu'+(mon?' ('+mon+')':'')+'. Hôm nay báo bếp ưu tiên bàn này, ra món đúng giờ.';
+    if (v.nhom==='Rớt đồ trúng khách') return 'Lần trước có sự cố rớt đồ trúng khách. Hôm nay phục vụ bàn này thật cẩn thận.'+(mon?' Món liên quan: '+mon+'.':'');
+    if (v.nhom==='Phục vụ chưa tốt') return 'Lần trước khách chưa hài lòng phục vụ. Hôm nay chăm bàn này kỹ hơn.'+(mon?' Món liên quan: '+mon+'.':'');
+    return mon ? 'Lần trước có vấn đề với món '+mon+'. Nếu hôm nay khách gọi lại → báo bếp lưu ý.' : '';
+  }
+  function vcKq(v, ma){
+    if (!v) { $('vKq').innerHTML = '<div class="vcard"><div class="vst khong">Không có mã '+esc(ma)+'</div><div class="vbody">Kiểm tra lại chữ trên phiếu – có thể ghi hoặc đọc nhầm. Mã voucher không có chữ <b>I, L, O, Q, U, V</b>.</div></div>'; return; }
+    var st = v.tt==='cho' ? '<div class="vst cho">Còn hạn <small>'+(v.conLai>0?'còn '+v.conLai+' ngày':'hết hạn cuối ngày hôm nay')+'</small></div>'
+      : v.tt==='het' ? '<div class="vst het">Đã hết hạn <small>quá '+v.quaHan+' ngày</small></div>'
+      : '<div class="vst dung">Đã dùng – không áp dụng được</div>';
+    var khach = [v.tenKhach, v.sdt, v.ban?'bàn '+v.ban:''].filter(String).join(' · ');
+    var h = '<div class="vcard">'+st+'<div class="vbody">';
+    if (v.tt==='dung') h += '<span class="vk">Đã duyệt</span><b>'+esc(v.duyetLuc)+'</b> · bởi '+esc(v.nguoiDuyet)+(v.duyetHetHan?' <i>(duyệt khi đã hết hạn)</i>':'')+
+      (v.ghiChu?'<span class="vk">Ghi chú khi duyệt</span>'+esc(v.ghiChu):'')+'<span class="vk">Ưu đãi đã dùng</span>'+esc(v.uuDai);
+    else h += '<span class="vk">Ưu đãi</span><span class="vuu">'+esc(v.uuDai)+'</span>';
+    h += '<span class="vk">Xuất ngày'+(v.tt!=='cho'?' · hạn':'')+'</span><b>'+esc(v.xuatLuc)+'</b> · bởi '+esc(v.nguoiXuat)+(v.tt!=='cho'?' · hạn '+dmy(v.han):' · hạn tới '+dmy(v.han))+
+      (v.tt==='dung'&&v.quayLaiSau!=null?' · khách quay lại sau <b>'+v.quayLaiSau+' ngày</b>':'')+
+      '<span class="vk">Lý do lần trước</span><b>'+esc(v.nhom)+'</b>'+(v.moTa?' – '+esc(v.moTa):'')+
+      (v.mon?'<span class="vk">Món liên quan</span>'+esc(v.mon):'')+
+      (v.xuLy?'<span class="vk">Đã xử lý lúc đó</span>'+esc(v.xuLy):'')+
+      (khach?'<span class="vk">Khách</span>'+esc(khach):'')+'</div></div>';
+    var ly = v.tt!=='dung' ? luuY(v) : '';
+    if (ly) h += '<div class="vwarn"><span class="t">⚠ Lưu ý báo bếp / phục vụ</span>'+ly+'</div>';
+    if (v.tt!=='dung') {
+      h += '<span class="vlb">Ghi chú hôm nay <small>(không bắt buộc)</small></span><input class="vin" id="vGhiChu" maxlength="200" placeholder="vd: Khách gọi lại gà đốt, đã báo bếp">'+
+        '<span class="vlb">Người duyệt <em>*</em></span><input class="vin" id="vNguoiDuyet" maxlength="30" list="vcNguoi" value="'+esc(nguoi())+'" placeholder="Tên quản lý">';
+      h += v.tt==='cho' ? '<button class="vbtn do" id="vDuyet" style="margin-top:12px">Duyệt – áp dụng voucher</button><p class="vnote">Duyệt xong mã '+esc(v.ma)+' hết tác dụng, nhập lại sẽ báo “đã dùng”.</p>'
+        : '<div class="vtwo" style="margin-top:12px"><button class="vbtn ph" id="vKhong">Không áp dụng</button><button class="vbtn vang" id="vDuyet">Vẫn duyệt</button></div><p class="vnote">“Vẫn duyệt” để chiều khách – app ghi lại là duyệt khi đã hết hạn.</p>';
+    }
+    $('vKq').innerHTML = h;
+    if ($('vKhong')) $('vKhong').onclick = function(){ $('vMa').value=''; VC.ma=''; VC.v=null; $('vKq').innerHTML=''; toast('Đã bỏ qua, mã vẫn giữ nguyên trạng thái hết hạn.'); };
+    if ($('vDuyet')) $('vDuyet').onclick = function(){ vcDuyet(v); };
+  }
+  function vcDuyet(v){
+    var ng=$('vNguoiDuyet').value.trim(); if (!ng) return toast('Ghi tên người duyệt nhé.');
+    if (!confirm('Duyệt voucher '+v.ma+' ('+v.uuDai+')?\nDuyệt xong mã không dùng lại được nữa.')) return;
+    ls.set('gam_vc_nguoi', ng);
+    var b=$('vDuyet'); b.disabled=true; b.textContent='Đang duyệt…';
+    api(q({api:'vc_duyet', ma:v.ma, nguoi:ng, ghichu:$('vGhiChu').value.trim(), hethan:v.tt==='het'?'1':''}))
+      .then(function(j){ VC.v=j.v; VC.so=null; vcKq(j.v, v.ma); toast('✓ Đã duyệt voucher '+v.ma); try{ navigator.vibrate && navigator.vibrate(80); }catch(e){} })
+      .catch(function(e){ toast('Chưa duyệt được: '+e.message, 5000); b.disabled=false; b.textContent='Thử duyệt lại'; });
+  }
+
+  /* -- sổ voucher -- */
+  function thangNay(){ var d=new Date(); return d.getFullYear()+'-'+d2(d.getMonth()+1); }
+  function doiThang(n){ var p=(VC.thang||thangNay()).split('-'), d=new Date(+p[0], +p[1]-1+n, 1); VC.thang=d.getFullYear()+'-'+d2(d.getMonth()+1); VC.so=null; vcLoadSo(); }
+  $('vTruoc').onclick = function(){ doiThang(-1); };
+  $('vSau').onclick = function(){ doiThang(1); };
+  function vcLoadSo(){
+    VC.thang = VC.thang || thangNay();
+    var p=VC.thang.split('-'); $('vThang').textContent='Tháng '+p[1]+'/'+p[0];
+    if (VC.so && VC.so.thang===VC.thang) return vcRenderSo();
+    $('vSo').innerHTML='<p class="empty">Đang tải…</p>';
+    var t=VC.thang;
+    api(q({api:'vc_so', thang:t})).then(function(j){ if (t!==VC.thang) return; VC.so=j; vcRenderSo(); })
+      .catch(function(e){ $('vSo').innerHTML='<p class="empty">Chưa tải được: '+esc(e.message)+'</p>'; });
+  }
+  function vcRenderSo(){
+    var j=VC.so, tk=j.tk, max=0;
+    Object.keys(j.nhom).forEach(function(k){ max=Math.max(max, j.nhom[k]); });
+    var pct = tk.xuat ? Math.round(tk.dung*100/tk.xuat) : 0;
+    var h = '<div class="vtiles"><div class="vtile"><small>Đã xuất</small><b>'+tk.xuat+'</b></div>'+
+      '<div class="vtile g"><small>Khách quay lại dùng</small><b>'+tk.dung+' <i>/ '+tk.xuat+' · '+pct+'%</i></b></div>'+
+      '<div class="vtile"><small>Còn hạn, chờ khách</small><b>'+tk.cho+'</b></div>'+
+      '<div class="vtile r"><small>Hết hạn, không quay lại</small><b>'+tk.het+'</b></div></div>';
+    if (tk.xuat) {
+      h += '<span class="vlb" style="margin-top:0">Lý do xuất</span><div class="vbars">'+Object.keys(j.nhom).filter(function(k){ return j.nhom[k]; }).map(function(k){
+        return '<div>'+esc(k)+'<u style="width:'+Math.round(j.nhom[k]*100/max)+'%"></u><em>'+j.nhom[k]+'</em></div>'; }).join('')+'</div>';
+    }
+    if (tk.dungTrongThang) h += '<p class="vnote" style="text-align:left">Trong tháng này có <b>'+tk.dungTrongThang+'</b> voucher được dùng (tính cả mã xuất tháng trước).</p>';
+    var locs=[['','Tất cả'],['cho','Chờ khách'],['dung','Đã dùng'],['het','Hết hạn']];
+    h += '<div class="vchips" id="vLoc" style="margin:12px 0 4px">'+locs.map(function(l){ return '<button class="vchip'+(VC.loc===l[0]?' on':'')+'" data-l="'+l[0]+'">'+l[1]+'</button>'; }).join('')+'</div>';
+    var ds = j.ds.filter(function(v){ return !VC.loc || v.tt===VC.loc; });
+    var ten = {cho:'Chờ', dung:'Đã dùng', het:'Hết hạn'};
+    h += ds.length ? ds.map(function(v){
+      var tm = 'Xuất '+dm(v.xuatNgay)+' · ' + (v.tt==='dung' ? 'dùng '+esc(v.duyetLuc.slice(0,5))+(v.quayLaiSau!=null?' · <b>quay lại sau '+v.quayLaiSau+' ngày</b>':'')
+        : v.tt==='het' ? 'hết hạn '+dm(v.han) : 'còn '+v.conLai+' ngày') + (v.tenKhach||v.ban ? ' · '+esc([v.tenKhach, v.ban?'bàn '+v.ban:''].filter(String).join(' ')) : '');
+      return '<div class="vi" data-ma="'+esc(v.ma)+'"><div><div class="cd">'+esc(v.ma)+'</div><div class="tg '+v.tt+'">'+ten[v.tt]+'</div></div><div><div class="ct">'+
+        esc(v.moTa||v.nhom)+' · <b>'+esc(v.uuDai)+'</b></div><div class="tm">'+tm+'</div></div></div>';
+    }).join('') : '<p class="empty">'+(tk.xuat?'Không có mã nào ở mục này.':'Tháng này chưa xuất voucher nào.')+'</p>';
+    $('vSo').innerHTML = h;
+    [].forEach.call(document.querySelectorAll('#vLoc .vchip'), function(b){ b.onclick=function(){ VC.loc=b.getAttribute('data-l'); vcRenderSo(); }; });
+    [].forEach.call(document.querySelectorAll('#vSo .vi'), function(el){ el.onclick=function(){ vcOpen(el.getAttribute('data-ma')); }; });
+  }
+
   /* ---------- mã quản lý ---------- */
   function start(){
     $('login').classList.remove('on');
-    var v = ls.get('gam_ql_view'); show(v==='pv'||v==='bep'||v==='ls' ? v : 'moi');
+    var v = ls.get('gam_ql_view'); show(v==='pv'||v==='bep'||v==='ls'||v==='vc' ? v : 'moi');
     poll(); preload(); setInterval(function(){ if (!document.hidden) poll(); }, 30000);
     document.addEventListener('visibilitychange', function(){ if (!document.hidden) poll(); });
   }
