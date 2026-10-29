@@ -196,6 +196,36 @@ body.app #cai{display:none}
 .warn h2{color:var(--do)}
 .foot{margin-top:28px;background:var(--xanh);color:var(--kem);font:400 13px/1.6 var(--B);padding:18px;text-align:center;border-radius:16px}
 .hide{display:none}
+
+/* sửa bài trong app */
+.sua-w{display:flex;align-items:center;gap:10px;justify-content:center;margin:18px 0 4px;flex-wrap:wrap}
+.sua-w button{border:1.5px dashed var(--vien);background:transparent;color:var(--muc2);border-radius:999px;padding:7px 16px;font:600 13.5px/1 var(--B);cursor:pointer}
+.sua-w span{font:500 12.5px/1.3 var(--B);color:var(--vang)}
+.dangsua .bd{outline:2.5px solid var(--vang);outline-offset:3px;caret-color:var(--do)}
+.dangsua .b-t{outline:2px dashed var(--vang);outline-offset:4px;border-radius:8px}
+.dangsua .doc,.dangsua .ke,.dangsua .sua-w,.dangsua .toc{display:none}
+.dangsua{padding-bottom:120px}
+#qtthanh{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:30;background:var(--the);border:1.5px solid var(--vien);border-radius:18px;box-shadow:0 8px 28px rgba(44,36,24,.22);padding:10px;display:flex;flex-direction:column;gap:8px}
+#qtthanh .tt-c{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#qtthanh .tt-c span{font:700 12px/1 var(--B);color:var(--vang);text-transform:uppercase;letter-spacing:.05em;margin-right:2px}
+#qtthanh button{border:1.5px solid var(--vien);background:var(--nen);color:var(--muc);border-radius:999px;padding:8px 12px;font:600 14px/1 var(--B);cursor:pointer}
+#qtthanh .goc{color:var(--do);border-color:#EDCFC3;background:#FFFAF2}
+#qtthanh .tt-n{display:flex;gap:8px}
+#qtthanh .tt-n button{flex:1;padding:12px;font:700 16px/1 var(--H)}
+#qtthanh .luu{background:var(--xanh);border-color:var(--xanh);color:var(--kem)}
+#qtthanh button:disabled{opacity:.6}
+#qtpin{position:fixed;inset:0;z-index:40;background:rgba(44,36,24,.55);display:grid;place-items:center;padding:20px}
+#qtpin .pin-h{background:var(--the);border-radius:22px;padding:22px 20px 18px;width:100%;max-width:330px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+#qtpin b{display:block;font:700 20px/1.3 var(--H);color:var(--xanh)}
+#qtpin p{margin:4px 0 0;font:400 13.5px/1.4 var(--B);color:var(--muc2)}
+#qtpin input{display:block;width:170px;margin:16px auto 4px;text-align:center;font:700 30px/1 var(--H);letter-spacing:.4em;padding:10px 0 8px .4em;border:2px solid var(--vien);border-radius:14px;background:var(--nen);color:var(--muc);outline:none}
+#qtpin input:focus{border-color:var(--xanh)}
+#qtpin .loi{color:var(--do);min-height:20px;font-weight:600}
+#qtpin .pin-n{display:flex;gap:8px;margin-top:8px}
+#qtpin .pin-n button{flex:1;border:1.5px solid var(--vien);background:var(--nen);color:var(--muc);border-radius:999px;padding:12px;font:700 15px/1 var(--H);cursor:pointer}
+#qtpin .pin-n .ok{background:var(--xanh);border-color:var(--xanh);color:var(--kem)}
+#qtbao{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;z-index:50;background:var(--muc);color:var(--kem);border-radius:999px;padding:10px 18px;font:600 14px/1.3 var(--B);max-width:90vw;text-align:center;transition:all .25s;pointer-events:none}
+#qtbao.on{opacity:1;transform:translate(-50%,0)}
 </style>
 </head>
 <body>
@@ -358,6 +388,117 @@ body.app #cai{display:none}
       var chan = '<div class="chan"><div class="glogo" role="img" aria-label="Gặm"></div>Tiệm Ăn Gặm · từ năm 2015<br>8/10 Nguyễn Thiện Thuật, Bình Thạnh</div>';
       var dmTruoc = '';
 
+
+      /* ----- SỬA BÀI NGAY TRONG APP (cần mã PIN, lưu lên Google Sheet tab QuyTrinhSua) ----- */
+      var GOC = {}, SUA = {}, dangSua = '';
+      try { SUA = JSON.parse(get('gam_qt_sua') || '{}') || {}; } catch(e){ SUA = {}; }
+      var lamSach = function(html){
+        var d = document.createElement('div'); d.innerHTML = html;
+        [].forEach.call(d.querySelectorAll('script,style,iframe,object,embed,link,meta'), function(x){ x.parentNode.removeChild(x); });
+        [].forEach.call(d.querySelectorAll('*'), function(x){
+          [].slice.call(x.attributes).forEach(function(a){ if (/^on/i.test(a.name) || a.name === 'contenteditable' || a.name === 'style' && x.tagName !== 'IMG') x.removeAttribute(a.name); });
+        });
+        var n = 0; [].forEach.call(d.querySelectorAll('h3'), function(x){ x.id = 'm' + (++n); });
+        return d;
+      };
+      var apSua = function(){
+        Object.keys(D.bai).forEach(function(id){
+          var b = D.bai[id];
+          if (!GOC[id]) GOC[id] = { ten: b.ten, html: b.html, text: b.text, toc: b.toc, h: b.h };
+          var g = GOC[id], s = SUA[id];
+          if (s && s.html) {
+            var d = lamSach(s.html);
+            b.html = d.innerHTML; b.ten = s.ten || g.ten;
+            b.text = (d.textContent || '').replace(/\s+/g, ' ').trim();
+            b.toc = [].map.call(d.querySelectorAll('h3'), function(x){ return x.textContent; });
+            b.h = 's' + (s.ms || 1);
+          } else { b.ten = g.ten; b.html = g.html; b.text = g.text; b.toc = g.toc; b.h = g.h; }
+        });
+      };
+      var goiQT = function(o){
+        return fetch(EXEC, { method: 'POST', body: JSON.stringify(o) }).then(function(r){ return r.json(); });
+      };
+      var taiSua = function(){
+        fetch(EXEC + '?api=qt_ds&t=' + Date.now()).then(function(r){ return r.json(); }).then(function(r){
+          if (!r || !r.ok || !r.ds) return;
+          var moi = JSON.stringify(r.ds);
+          if (moi === JSON.stringify(SUA)) return;
+          SUA = r.ds; set('gam_qt_sua', moi); apSua();
+          if (!dangSua && /^#qt/.test(location.hash || '#qt')) { var st = el.scrollTop; route(); el.scrollTop = st; }
+        }).catch(function(){});
+      };
+      var bao = function(t){
+        var b = $('qtbao'); if (!b) { b = document.createElement('div'); b.id = 'qtbao'; document.body.appendChild(b); }
+        b.textContent = t; b.className = 'on'; clearTimeout(b._t); b._t = setTimeout(function(){ b.className = ''; }, 3200);
+      };
+      var hoiPin = function(xong){
+        var pin = ''; try { pin = sessionStorage.getItem('gam_qt_pin') || ''; } catch(e){}
+        if (pin) return xong(pin);
+        var o = document.createElement('div'); o.id = 'qtpin';
+        o.innerHTML = '<div class="pin-h"><b>Nhập mã PIN để sửa bài</b><p>Chỉ người có mã mới sửa được.</p>' +
+          '<input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••">' +
+          '<p class="loi"></p><div class="pin-n"><button class="huy">Huỷ</button><button class="ok">Mở khoá</button></div></div>';
+        document.body.appendChild(o);
+        var inp = o.querySelector('input'), loi = o.querySelector('.loi'), ok = o.querySelector('.ok');
+        var dong = function(){ if (o.parentNode) o.parentNode.removeChild(o); };
+        var thu = function(){
+          var v = inp.value.replace(/\D/g, '');
+          if (v.length !== 4) { loi.textContent = 'Mã PIN gồm 4 số.'; return; }
+          ok.disabled = true; ok.textContent = 'Đang kiểm tra…'; loi.textContent = '';
+          goiQT({ qt: 'pin', pin: v }).then(function(r){
+            if (r && r.ok) { try { sessionStorage.setItem('gam_qt_pin', v); } catch(e){} dong(); xong(v); }
+            else { loi.textContent = 'Sai mã PIN.'; inp.value = ''; inp.focus(); ok.disabled = false; ok.textContent = 'Mở khoá'; }
+          }).catch(function(){ loi.textContent = 'Không kết nối được. Kiểm tra mạng rồi thử lại.'; ok.disabled = false; ok.textContent = 'Mở khoá'; });
+        };
+        inp.oninput = function(){ if (inp.value.replace(/\D/g, '').length === 4) thu(); };
+        ok.onclick = thu;
+        o.querySelector('.huy').onclick = dong;
+        setTimeout(function(){ inp.focus(); }, 50);
+      };
+      var batSua = function(id, pin){
+        var bd = el.querySelector('.bd'), tt = el.querySelector('.b-t');
+        if (!bd) return;
+        dangSua = id;
+        el.querySelector('.qw').classList.add('dangsua');
+        bd.contentEditable = 'true'; tt.contentEditable = 'true';
+        var thanh = document.createElement('div'); thanh.id = 'qtthanh';
+        thanh.innerHTML = '<div class="tt-c"><span>Đang sửa</span><button data-l="dam"><b>B</b> Đậm</button><button data-l="noi">“ Câu nói</button>' +
+          (SUA[id] ? '<button data-l="goc" class="goc">Về bản gốc</button>' : '') + '</div>' +
+          '<div class="tt-n"><button data-l="huy" class="huy">Huỷ</button><button data-l="luu" class="luu">Lưu</button></div>';
+        document.body.appendChild(thanh);
+        var thoat = function(){ dangSua = ''; if (thanh.parentNode) thanh.parentNode.removeChild(thanh); };
+        var gui = function(o, tb){
+          var nut = thanh.querySelector('.luu'); nut.disabled = true; nut.textContent = 'Đang lưu…';
+          goiQT(o).then(function(r){
+            if (!r || !r.ok) {
+              if (r && /PIN/.test(r.error || '')) { try { sessionStorage.removeItem('gam_qt_pin'); } catch(e){} }
+              throw new Error((r && r.error) || 'Lỗi');
+            }
+            if (o.qt === 'xoa') delete SUA[id]; else SUA[id] = { ten: o.ten, html: o.html, goc: o.goc, ms: r.ms || Date.now() };
+            set('gam_qt_sua', JSON.stringify(SUA)); apSua(); thoat(); veBai(id); bao(tb);
+          }).catch(function(e){ nut.disabled = false; nut.textContent = 'Lưu'; bao('Chưa lưu được: ' + e.message); });
+        };
+        [].forEach.call(thanh.querySelectorAll('button'), function(n){
+          n.onmousedown = function(e){ e.preventDefault(); };
+          n.onclick = function(){
+            var l = n.getAttribute('data-l');
+            if (l === 'dam') document.execCommand('bold');
+            else if (l === 'noi') {
+              var sel = window.getSelection(), t = sel.rangeCount ? String(sel) : '';
+              var em = '<em class="noi">' + esc(t ? t.replace(/^["“\s]+|["”\s]+$/g, '') : 'Dạ …') + '</em>';
+              document.execCommand('insertHTML', false, em);
+            }
+            else if (l === 'huy') { thoat(); veBai(id); }
+            else if (l === 'goc') { if (confirm('Bỏ hết chỗ đã sửa, trả bài này về bản gốc?')) gui({ qt: 'xoa', pin: pin, id: id }, 'Đã trả bài về bản gốc.'); }
+            else if (l === 'luu') {
+              var d = lamSach(bd.innerHTML), ten = tt.textContent.replace(/\s+/g, ' ').trim();
+              gui({ qt: 'luu', pin: pin, id: id, ten: ten === GOC[id].ten ? '' : ten, html: d.innerHTML, goc: GOC[id].h }, 'Đã lưu. Ai mở bài này sẽ thấy bản mới.');
+            }
+          };
+        });
+        bd.focus();
+      };
+
       var veHome = function(q){
         var ids = tatCa(), n = dem(ids), pct = Math.round(n * 100 / ids.length);
         var h = '<div class="qw"><div class="qhero"><div class="dau">Từ năm<br>2015</div><div class="glogo" role="img" aria-label="Gặm"></div>' +
@@ -434,7 +575,9 @@ body.app #cai{display:none}
         h += '<button class="doc' + (roi ? ' roi' : '') + '" id="qtdoc">' + (roi ? '✓ Em đã đọc bài này' : 'Em đã đọc xong ✓') + '</button>';
         h += '<div class="ke">' + (truoc ? '<a href="#qt/b/' + truoc + '"><span>‹ Bài trước</span>' + esc(D.bai[truoc].ten) + '</a>' : '') +
              (sau ? '<a class="sau" href="#qt/b/' + sau + '"><span>Bài sau ›</span>' + esc(D.bai[sau].ten) + '</a>' : '') + '</div>';
+        h += '<div class="sua-w"><button id="qtsua">✎ Sửa bài</button>' + (SUA[id] ? '<span>Bài này đã sửa trong app</span>' : '') + '</div>';
         el.innerHTML = h + '</div>' + chan;
+        $('qtsua').onclick = function(){ hoiPin(function(pin){ batSua(id, pin); }); };
         $('qtdoc').onclick = function(){
           if (docMap[id] === b.h) delete docMap[id]; else docMap[id] = b.h;
           luu();
@@ -469,8 +612,10 @@ body.app #cai{display:none}
         s.src = 'quytrinh.js';
         s.onload = function(){
           D = window.GAM_QT;
+          apSua();
           if (!seen) { seen = {}; Object.keys(D.bai).forEach(function(k){ seen[k] = D.bai[k].h; }); luu(); }
           cb();
+          taiSua();
         };
         s.onerror = function(){ dang = false; el.innerHTML = '<div class="qw rong">Chưa tải được quy trình. Kiểm tra mạng rồi bấm lại nút Quy trình nhé.</div>'; };
         document.head.appendChild(s);
@@ -481,6 +626,7 @@ body.app #cai{display:none}
         if (!/^#qt/.test(hs)) return;
         tabs('qt');
         var ph = $('phong'); if (ph) ph.classList.remove('on');
+        var tb = $('qtthanh'); if (tb) { tb.parentNode.removeChild(tb); dangSua = ''; }
         if (routeHt) cuon[routeHt] = el.scrollTop;
         napDuLieu(function(){
           var p = hs.replace(/^#qt\/?/, '').split('/');
