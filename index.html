@@ -39,7 +39,7 @@ body.app{background-color:var(--nen);overflow:hidden}
 #app{position:fixed;left:0;right:0;bottom:0;top:0;display:none;flex-direction:column;background:var(--nen);padding-top:calc(68px + env(safe-area-inset-top))}
 body.app #app{display:flex}
 #bar{position:fixed;top:0;left:0;right:0;z-index:5;box-sizing:border-box;height:calc(68px + env(safe-area-inset-top));display:flex;align-items:flex-end;gap:8px;padding:0 12px 12px;background-color:#445803}
-#bar button{flex:1;min-width:0;height:42px;padding:0 4px;border:1.5px solid rgba(248,232,196,.55);border-radius:999px;background:transparent;color:var(--kem);font:700 15px/1 var(--H);text-transform:uppercase;letter-spacing:.03em;cursor:pointer;white-space:nowrap}
+#bar button{flex:1;min-width:0;height:42px;padding:0 4px;border:1.5px solid rgba(248,232,196,.55);border-radius:999px;background:transparent;color:var(--kem);font:700 13.5px/1 var(--H);text-transform:uppercase;letter-spacing:.01em;cursor:pointer;white-space:nowrap}
 #bar button.on{background:var(--kem);color:var(--xanh);border-color:var(--kem)}
 #frames{flex:1;position:relative;min-height:0}
 #frames iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--nen)}
@@ -233,6 +233,7 @@ body.app #cai{display:none}
   <div id="bar">
     <button data-bp="pv">Phục vụ</button>
     <button data-bp="bep">Bếp</button>
+    <button data-bp="sq">Sổ quán</button>
     <button data-bp="qt">Quy trình</button>
   </div>
   <div id="frames">
@@ -243,6 +244,7 @@ body.app #cai{display:none}
       <p>Chọn 1 lần, lần sau mở app là vào thẳng trang xin nghỉ.<br>Muốn đổi thì bấm nút trên thanh xanh.</p>
       <button data-bp="pv">Phục vụ</button>
       <button data-bp="bep">Bếp</button>
+      <button data-bp="sq">Sổ quán</button>
       <button data-bp="qt" class="ph">Chỉ đọc quy trình</button>
     </div>
   </div>
@@ -252,7 +254,7 @@ body.app #cai{display:none}
   <div class="stamp">TỪ NĂM<br>2015</div>
   <div class="hero-in">
     <div class="glogo" role="img" aria-label="Gặm – Nơi có hương vị ký ức"></div>
-    <h1>Nhà Gặm<small>Lịch nghỉ · Quy trình</small></h1>
+    <h1>Nhà Gặm<small>Lịch nghỉ · Sổ quán · Quy trình</small></h1>
   </div>
 </header>
 <div id="cai">
@@ -300,7 +302,8 @@ body.app #cai{display:none}
   var EXEC = 'https://script.google.com/macros/s/AKfycbyn5RT0xOX4pNvnxKIBuAvgvbvzNL4oj7eI-rMSK8OC87kALr5XgXsE7GiDbiqFGSop/exec';
   var APPS = {
     pv:  { url: EXEC + '?bp=pv', ten: 'lịch nghỉ phục vụ' },
-    bep: { url: EXEC + '?bp=bep', ten: 'lịch nghỉ bếp' }
+    bep: { url: EXEC + '?bp=bep', ten: 'lịch nghỉ bếp' },
+    sq:  { url: 'soquan/', ten: 'sổ quán' }
   };
   var KEY = 'gam_lichnghi_bp';
   var ua = navigator.userAgent || '';
@@ -318,7 +321,7 @@ body.app #cai{display:none}
     var cur = '';
     /* app bên Google báo 'đã vẽ xong' thì mới bỏ màn chờ (tránh màn trắng) */
     window.addEventListener('message', function(e){
-      var m = /^gam-ready:(pv|bep)$/.exec(String(e.data||''));
+      var m = /^gam-ready:(pv|bep|sq)$/.exec(String(e.data||''));
       if (m && frames[m[1]] && frames[m[1]].load.parentNode) frames[m[1]].load.remove();
     });
     var tabs = function(bp){

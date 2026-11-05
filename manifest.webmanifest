@@ -1,7 +1,7 @@
 {
   "name": "Nhà Gặm",
   "short_name": "Nhà Gặm",
-  "description": "App nội bộ Tiệm Ăn Gặm: đăng ký lịch nghỉ phục vụ, bếp và học quy trình",
+  "description": "App nội bộ Tiệm Ăn Gặm: đăng ký lịch nghỉ, sổ quán (hóa đơn, đi chợ) và học quy trình",
   "lang": "vi",
   "start_url": "./?mo=1",
   "scope": "./",
