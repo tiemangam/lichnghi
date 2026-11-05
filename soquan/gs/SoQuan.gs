@@ -262,13 +262,8 @@ function sqDocAnh_(p) {
     },
     required: ['dong']
   };
-  var res = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent', {
-    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
-    headers: { 'x-goog-api-key': key },
-    payload: JSON.stringify({ contents: [{ role: 'user', parts: parts }], generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: schema } })
-  });
-  var code = res.getResponseCode(), body = res.getContentText();
-  if (code !== 200) throw new Error('Gemini báo lỗi ' + code + ': ' + body.slice(0, 300));
+  var body = sqGoiGemini_(key, model, parts, schema), dung = body.model;
+  body = body.body;
   var j = JSON.parse(body), txt = '';
   try { txt = j.candidates[0].content.parts.map(function (x) { return x.text || ''; }).join(''); } catch (e) { throw new Error('Gemini không trả kết quả.'); }
   var doc = sqJ_(txt, null);
@@ -276,7 +271,37 @@ function sqDocAnh_(p) {
   // 3. áp tên gọi khác + đối chiếu danh mục
   doc.dong = (doc.dong || []).map(function (d) { return sqChuanDong_(d, alias, tenDm); });
   if (!moi && doc.moi) moi = doc.moi;
-  return { fids: fids, moi: moi, ngay: /^\d{4}-\d{2}-\d{2}$/.test(doc.ngay || '') ? doc.ngay : '', tongAnh: so_(doc.tongTrenAnh), dong: doc.dong, model: model };
+  return { fids: fids, moi: moi, ngay: /^\d{4}-\d{2}-\d{2}$/.test(doc.ngay || '') ? doc.ngay : '', tongAnh: so_(doc.tongTrenAnh), dong: doc.dong, model: dung };
+}
+// Gọi Gemini: thử lại khi Google quá tải (429/500/503), rồi chuyển sang model nhẹ hơn.
+var SQ_MODEL_DU_PHONG = ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-flash-latest'];
+function sqGoiGemini_(key, model, parts, schema) {
+  var ds = [model].concat(SQ_MODEL_DU_PHONG.filter(function (m) { return m !== model; }));
+  var batDau = Date.now(), loiCuoi = '', quaTai = false;
+  for (var i = 0; i < ds.length; i++) {
+    var gc = { temperature: 0, responseMimeType: 'application/json', responseSchema: schema, thinkingConfig: { thinkingLevel: 'low' } };
+    for (var lan = 0; lan < 2; lan++) {
+      if (Date.now() - batDau > 100000) break; // tối đa ~100 giây
+      var res = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + ds[i] + ':generateContent', {
+        method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+        headers: { 'x-goog-api-key': key },
+        payload: JSON.stringify({ contents: [{ role: 'user', parts: parts }], generationConfig: gc })
+      });
+      var code = res.getResponseCode(), body = res.getContentText();
+      if (code === 200) return { body: body, model: ds[i] };
+      loiCuoi = code + ': ' + body.slice(0, 200);
+      if (code === 400 && gc.thinkingConfig && /thinking/i.test(body)) { delete gc.thinkingConfig; lan--; continue; }
+      if (code === 400 || code === 401 || code === 403) {
+        if (/API key|API_KEY|PERMISSION/i.test(body)) throw new Error('Mã Gemini (GEMINI_KEY) không dùng được, anh Đạt kiểm tra lại giúp.');
+        break; // model này không nhận, thử model khác
+      }
+      if (code === 404) break;
+      if (code === 429 || code >= 500) { quaTai = true; Utilities.sleep(lan === 0 ? 1500 : 3000); continue; }
+      break;
+    }
+  }
+  if (quaTai) throw new Error('Máy đọc hóa đơn của Google đang quá tải. Đợi 1–2 phút rồi bấm đọc lại nhé (ảnh không bị mất).');
+  throw new Error('Gemini báo lỗi ' + loiCuoi);
 }
 function sqChuanDong_(d, alias, tenDm) {
   var o = {
