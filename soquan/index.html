@@ -479,11 +479,11 @@ function nen(file){
   return new Promise(function(ok, fail){
     var url = URL.createObjectURL(file), img = new Image();
     img.onload = function(){
-      var max = 1700, w = img.naturalWidth, h = img.naturalHeight, s = Math.min(1, max/Math.max(w,h));
+      var max = 1500, w = img.naturalWidth, h = img.naturalHeight, s = Math.min(1, max/Math.max(w,h));
       var c = document.createElement('canvas'); c.width = Math.round(w*s); c.height = Math.round(h*s);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(url);
-      var du = c.toDataURL('image/jpeg', 0.82);
+      var du = c.toDataURL('image/jpeg', 0.8);
       ok({ url: du, b64: du.split(',')[1], mime: 'image/jpeg', w: c.width, h: c.height });
     };
     img.onerror = function(){ URL.revokeObjectURL(url); fail(new Error('Không mở được ảnh')); };
@@ -534,7 +534,7 @@ function veAnh(){
 }
 $('docBtn').onclick = function(){
   if (!HD.anh.length) return;
-  var done = busy('App đang đọc hóa đơn…\nKhoảng 5–15 giây');
+  var done = busy('App đang đọc hóa đơn…\nKhoảng 10–30 giây, đừng tắt màn hình');
   api('nv_doc', { moi: HD.moi, anh: HD.anh.map(function(a){ return { b64:a.b64, mime:a.mime }; }) }).then(function(j){
     done();
     HD.fids = j.fids; HD.ai = { moi:j.moi, ngay:j.ngay, tongAnh:j.tongAnh, dong:j.dong, model:j.model };
@@ -543,7 +543,7 @@ $('docBtn').onclick = function(){
     HD.tongAnh = j.tongAnh || '';
     HD.dong = j.dong.map(function(d){ return Object.assign({}, d, { sua:false, aiTen:d.ten, aiSl:d.sl, aiGia:d.gia, aiTien:d.tien }); });
     veHD2(); show('hd2');
-  }).catch(function(e){ done(); toast(e.message, 5000); });
+  }).catch(function(e){ done(); toast(e.message, 9000); });
 };
 $('hdDocLai').onclick = function(){ if (!HD.anh.length) { toast('Phiếu sửa lại không có ảnh trên máy, chụp lại từ đầu nhé'); return; } history.back(); };
 function veHD2(){
