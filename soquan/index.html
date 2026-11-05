@@ -596,7 +596,7 @@ function suaDong(i){
     '<div class="lbl">Tên món (chọn trong danh mục)</div><input class="in" id="sTen" autocomplete="off" value="'+esc(d.ten)+'" placeholder="Gõ vài chữ, vd: chan ga"><div class="sug" id="sSug"></div>'+
     '<div class="f3"><div><label>Số lượng</label><input class="in num" id="sSl" inputmode="decimal" value="'+soVN(d.sl)+'"></div><div><label>Đơn vị</label><input class="in" id="sDv" value="'+esc(d.dv||'')+'" list="dlDv"></div><div><label>Đơn giá (nghìn)</label><input class="in num" id="sGia" inputmode="decimal" value="'+k(d.gia)+'"></div></div>'+
     '<div class="hint" id="sHint"></div>'+
-    '<div class="lbl" style="margin-top:8px">Thành tiền (nghìn)</div><input class="in num" id="sTien" inputmode="decimal" value="'+k(d.tien)+'">'+
+    '<div class="lbl" style="margin-top:8px">Thành tiền (nghìn) <small style="font-weight:500;text-transform:none;letter-spacing:0;opacity:.75">· gõ tổng là app tự chia ra đơn giá</small></div><input class="in num" id="sTien" inputmode="decimal" value="'+k(d.tien)+'">'+
     '<div class="tot"><span>Thành tiền</span><b class="num" id="sTot"></b></div>'+
     '<label class="chk hide" id="sNhoW"><input type="checkbox" id="sNho" checked><span id="sNhoTxt"></span></label>'+
     '<div class="row2" style="margin-top:12px"><button class="btn o" id="sXoa" style="flex:1">🗑 Xóa dòng</button><button class="btn" id="sOk" style="flex:2">✓ Lưu dòng này</button></div></div>'+
@@ -605,7 +605,7 @@ function suaDong(i){
   dim.onclick = function(e){ if (e.target===dim) dim.remove(); };
   var q = function(s){ return dim.querySelector(s); };
   if (q('#sCrop')) ve_crop(q('#sCrop'), d);
-  var tienTay = false;
+  var che = '';  // ô người dùng gõ sau cùng: 'gia' (đơn giá → tính thành tiền) hoặc 'tien' (thành tiền → chia ra đơn giá)
   function veSug(){
     var ds = goiY(q('#sTen').value);
     q('#sSug').innerHTML = ds.map(function(x){ return '<button data-t="'+esc(x.ten)+'" class="'+(kd(x.ten)===kd(q('#sTen').value)?'on':'')+'"><span>'+esc(x.ten)+'</span><small>'+(x.gia?'lần trước '+tien(x.gia)+'/'+esc(x.dv||'đv'):'')+'</small></button>'; }).join('');
@@ -624,15 +624,17 @@ function suaDong(i){
     if (hien) q('#sNhoTxt').innerHTML = 'Nhớ lần sau: trên hóa đơn của <b>'+esc(HD.moi)+'</b>, chữ "'+esc(d.chu)+'" là <b>'+esc(t)+'</b>';
   }
   function tinh(){
-    var sl = soLuong(q('#sSl').value), gia = nghin(q('#sGia').value);
-    if (!tienTay && sl!=='' && gia!=='') q('#sTien').value = k(sl*gia);
-    var t = nghin(q('#sTien').value);
+    var sl = soLuong(q('#sSl').value), gia = nghin(q('#sGia').value), t = nghin(q('#sTien').value);
+    if (che === 'tien') { if (sl !== '' && sl > 0 && t !== '') { gia = Math.round(t / sl); q('#sGia').value = k(gia); } }
+    else if (che === 'gia') { if (sl !== '' && gia !== '') { t = Math.round(sl * gia); q('#sTien').value = k(t); } }
     q('#sTot').textContent = tien(t||0);
-    q('#sHint').textContent = gia!=='' ? '= ' + tien(gia) + ' / ' + (q('#sDv').value||'đv') : '';
+    q('#sHint').textContent = gia!=='' ? '= ' + tien(gia) + ' / ' + (q('#sDv').value||'đv') + (che==='tien' && sl>1 ? '  (tự chia từ thành tiền)' : '') : '';
   }
   q('#sTen').oninput = function(){ veSug(); veNho(); };
-  q('#sSl').oninput = tinh; q('#sGia').oninput = tinh; q('#sDv').oninput = tinh;
-  q('#sTien').oninput = function(){ tienTay = true; tinh(); };
+  q('#sSl').oninput = function(){ if (!che) che = 'gia'; tinh(); };
+  q('#sDv').oninput = tinh;
+  q('#sGia').oninput = function(){ che = 'gia'; tinh(); };
+  q('#sTien').oninput = function(){ che = 'tien'; tinh(); };
   veSug(); veNho(); tinh();
   q('#sXoa').onclick = function(){ HD.dong.splice(i,1); dim.remove(); veHD2(); };
   q('#sOk').onclick = function(){
