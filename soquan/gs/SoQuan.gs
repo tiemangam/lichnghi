@@ -174,6 +174,7 @@ function sqNhoAlias_(moi, ds, nguoi) {
 
 /* ======================= DỮ LIỆU CHO APP NHÂN VIÊN ======================= */
 function sqDuLieuNV_(nv) {
+  sqDungTongHopNeuCan_();
   var dm = docDanhMuc_();
   var gop = {};
   dm.forEach(function (d) {
@@ -342,6 +343,22 @@ function sqGiuDuyet_(cu, nv) {
   return cu ? (cu.tt === TT.HOI ? TT.TRALOI : cu.tt === TT.TUCHOI ? TT.TRALOI : TT.CHO) : TT.CHO;
 }
 
+// Lưu phiếu vào Phieu/ChiTiet bằng apiLuu của app đi chợ, nhưng KHÔNG dựng lại tab TongHopNgay ngay
+// (việc này đọc cả tab Phieu và ghi lại cả bảng, tốn vài giây). Đánh dấu để dựng lại lúc app tải dữ liệu nền.
+function sqApiLuu_(p) {
+  var co = typeof dungTongHop_ === 'function', goc = co ? dungTongHop_ : null;
+  if (co) dungTongHop_ = function () { };
+  try { return apiLuu(p); }
+  finally {
+    if (co) { dungTongHop_ = goc; PropertiesService.getScriptProperties().setProperty('SQ_TONGHOP_CU', '1'); }
+  }
+}
+function sqDungTongHopNeuCan_() {
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty('SQ_TONGHOP_CU') !== '1' || typeof dungTongHop_ !== 'function') return;
+  try { khoa_(function () { dungTongHop_(layFile_()); }); props.deleteProperty('SQ_TONGHOP_CU'); } catch (e) { }
+}
+
 function sqLuuHD_(nv, p) {
   var id = sqKiemId_(p.id), ngay = sqKiemNgay_(p.ngay);
   var moi = chu_(p.moi, 60) || 'Chưa rõ mối';
@@ -350,7 +367,7 @@ function sqLuuHD_(nv, p) {
   return khoa_(function () {
     var cu = sqTimMeta_(id), tt = sqGiuDuyet_(cu, nv);
     var cong = dong.reduce(function (s, d) { return s + d.tien; }, 0);
-    apiLuu({ id: id, ngay: ngay, nhom: 'HĐ ' + moi, nguoiMua: nv.ten, ghiChu: chu_(p.ghiChu, 200),
+    sqApiLuu_({ id: id, ngay: ngay, nhom: 'HĐ ' + moi, nguoiMua: nv.ten, ghiChu: chu_(p.ghiChu, 200),
       mon: dong.map(function (d) { return { ten: d.ten, sl: d.sl, dv: d.dv, gia: d.gia, tien: d.tien }; }) });
     var o = {
       id: id, loai: LOAI.HD, ngay: ngay, nguoi: nv.ten, moi: moi, anh: (p.fids || []).filter(function (x) { return /^[\w-]{10,}$/.test(x); }),
@@ -374,7 +391,7 @@ function sqLuuTuDat_(nv, p) {
     var cu = sqTimMeta_(id), tt = sqGiuDuyet_(cu, nv);
     var cong = dong.reduce(function (s, d) { return s + d.tien; }, 0);
     var ghiChu = [moi, traLien ? 'Trả liền' : 'Ghi nợ mối', chu_(p.ghiChu, 150)].filter(String).join(' · ');
-    apiLuu({ id: id, ngay: ngay, nhom: NHOM_TU_DAT, nguoiMua: nv.ten, ghiChu: ghiChu,
+    sqApiLuu_({ id: id, ngay: ngay, nhom: NHOM_TU_DAT, nguoiMua: nv.ten, ghiChu: ghiChu,
       mon: dong.map(function (d) { return { ten: d.ten, sl: d.sl, dv: d.dv, gia: d.gia, tien: d.tien }; }) });
     sqGhiMeta_({ id: id, loai: LOAI.TD, ngay: ngay, nguoi: nv.ten, moi: moi, dong: dong, cong: cong, ghiChu: chu_(p.ghiChu, 150),
       tt: tt, hoi: cu ? cu.hoi : '', traLoi: cu ? cu.traLoi : '', taoLuc: cu ? cu.taoLuc : bayGio_(), them: { traLien: traLien, suaLuc: bayGio_() }, tong: cong });
