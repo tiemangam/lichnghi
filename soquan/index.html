@@ -289,8 +289,8 @@ h2{font-size:22px;color:var(--xanh)}
 
 <!-- ĐÃ LƯU -->
 <section id="v-xong" class="v hide">
-  <div class="top"><div class="sp"><b>Đã lưu ✓</b><small id="xongSub"></small></div></div>
-  <div class="pg"><div id="ticket"></div><div class="sub" style="margin-top:10px;text-align:center">Phiếu đã chuyển qua cho anh Đạt duyệt.</div></div>
+  <div class="top"><div class="sp"><b id="xongTit">Đã lưu ✓</b><small id="xongSub"></small></div></div>
+  <div class="pg"><div id="ticket"></div><div class="sub" id="xongNote" style="margin-top:10px;text-align:center">Phiếu đã chuyển qua cho anh Đạt duyệt.</div></div>
   <div class="foot"><div class="row2"><button class="btn o" id="xongVe" style="flex:1">‹ Về</button><button class="btn" id="xongHinh" style="flex:2">⬇ Lưu hình gửi Zalo</button></div></div>
 </section>
 
@@ -654,13 +654,10 @@ $('hdLuu').onclick = function(){
   if (!HD.dong.length) { toast('Chưa có dòng nào'); return; }
   var conVang = HD.dong.filter(function(d){ return !d.sua && !d.chacChan; }).length;
   if (conVang && !confirm('Còn '+conVang+' dòng tô vàng chưa kiểm tra. Vẫn lưu?')) return;
-  var b = this; b.disabled = true; var done = busy('Đang lưu hóa đơn…');
   var body = { id:HD.id, ngay:HD.ngay, moi:HD.moi, fids:HD.fids||[], ai:HD.ai, tongAnh:HD.tongAnh, ghiChu:$('hdGhiChu').value.trim(), nho:HD.nho,
     dong: HD.dong.map(function(d){ return { ten:d.ten, chu:d.chu, sl:d.sl, dv:d.dv, gia:d.gia, tien:d.tien, sua:!!d.sua, aiTen:d.aiTen, aiSl:d.aiSl, aiGia:d.aiGia, aiTien:d.aiTien, anh:d.anh, vung:d.vung }; }) };
-  api('nv_luu_hd', body).then(function(j){
-    done(); b.disabled = false;
-    xong({ loai:'HÓA ĐƠN MỐI', ten: HD.moi || 'Hóa đơn', sub: 'Lập bởi '+S.ten+' · '+HD.dong.length+' dòng', ngay: HD.ngay, id: j.id, dong: HD.dong, tong: j.tong, tt: j.tt });
-  }).catch(function(e){ done(); b.disabled = false; toast(e.message, 5000); });
+  var tong = HD.dong.reduce(function(s,d){ return s + (+d.tien||0); }, 0);
+  luuNen('hd2', this, 'nv_luu_hd', body, { loai:'HÓA ĐƠN MỐI', ten: HD.moi || 'Hóa đơn', sub: 'Lập bởi '+S.ten+' · '+HD.dong.length+' dòng', ngay: HD.ngay, id: HD.id, dong: HD.dong.slice(), tong: tong, tt: '' });
 };
 
 /* ---------- HÀNG TỰ ĐẶT ---------- */
@@ -729,11 +726,9 @@ $('tdLuu').onclick = function(){
   if (!mon.length) { toast('Chưa có món nào'); return; }
   var thieu = mon.filter(function(m){ return m.sl===''||m.gia===''; });
   if (thieu.length) { toast('Món "'+thieu[0].ten+'" thiếu số lượng hoặc giá'); return; }
-  var b = this; b.disabled = true; var done = busy('Đang lưu phiếu…');
-  api('nv_luu_tudat', { id:TD.id, ngay:$('tdNgay').value||homNay(), moi:moi, mon:mon, traLien:traLien, ghiChu:$('tdGhiChu').value.trim() }).then(function(j){
-    done(); b.disabled = false;
-    xong({ loai:'PHIẾU HÀNG TỰ ĐẶT', ten: moi, sub: 'Lập bởi '+S.ten+' · '+(traLien?'Trả liền':'Ghi nợ mối'), ngay: $('tdNgay').value||homNay(), id: j.id, dong: mon, tong: j.tong, tt: j.tt });
-  }).catch(function(e){ done(); b.disabled = false; toast(e.message, 5000); });
+  var ngTD = $('tdNgay').value||homNay(), tongTD = mon.reduce(function(s,m){ return s + (+m.tien||0); }, 0);
+  luuNen('td', this, 'nv_luu_tudat', { id:TD.id, ngay:ngTD, moi:moi, mon:mon, traLien:traLien, ghiChu:$('tdGhiChu').value.trim() },
+    { loai:'PHIẾU HÀNG TỰ ĐẶT', ten: moi, sub: 'Lập bởi '+S.ten+' · '+(traLien?'Trả liền':'Ghi nợ mối'), ngay: ngTD, id: TD.id, dong: mon, tong: tongTD, tt: '' });
 };
 
 /* ---------- BILL KHÔNG TÍNH TIỀN ---------- */
@@ -778,13 +773,10 @@ $('blLuu').onclick = function(){
   if (!mon.length) { toast('Chưa có món nào'); return; }
   if (mon.some(function(m){ return m.gia===''; })) { toast('Có món chưa ghi giá bán'); return; }
   if (!BL.anh && !BL.coAnh && !confirm('Chưa chụp bill Sapo. Vẫn lưu?')) return;
-  var b = this; b.disabled = true; var done = busy('Đang lưu phiếu…');
-  var ngay = $('blNgay').value||homNay();
-  api('nv_luu_bill', { id:BL.id, ngay:ngay, lyDo:BL.lyDo, choPhep:BL.choPhep, ban:$('blBan').value.trim(), soHD:$('blSoHD').value.trim(), khach:$('blKhach').value.trim(), ghiChu:$('blGhiChu').value.trim(), mon:mon,
-    anhBill: BL.anh ? { b64:BL.anh.b64, mime:BL.anh.mime } : null }).then(function(j){
-    done(); b.disabled = false;
-    xong({ loai:'BILL KHÔNG TÍNH TIỀN', ten: BL.lyDo, sub: 'Cho phép: '+BL.choPhep+($('blBan').value?' · Bàn '+$('blBan').value:'')+' · lập bởi '+S.ten, ngay: ngay, id: j.id, dong: mon, tong: j.tong, tt: j.tt, nhan:'GIÁ TRỊ BILL TẶNG' });
-  }).catch(function(e){ done(); b.disabled = false; toast(e.message, 5000); });
+  var ngay = $('blNgay').value||homNay(), tongBL = mon.reduce(function(s,m){ return s + (+m.tien||0); }, 0);
+  luuNen('bill', this, 'nv_luu_bill', { id:BL.id, ngay:ngay, lyDo:BL.lyDo, choPhep:BL.choPhep, ban:$('blBan').value.trim(), soHD:$('blSoHD').value.trim(), khach:$('blKhach').value.trim(), ghiChu:$('blGhiChu').value.trim(), mon:mon,
+    anhBill: BL.anh ? { b64:BL.anh.b64, mime:BL.anh.mime } : null },
+    { loai:'BILL KHÔNG TÍNH TIỀN', ten: BL.lyDo, sub: 'Cho phép: '+BL.choPhep+($('blBan').value?' · Bàn '+$('blBan').value:'')+' · lập bởi '+S.ten, ngay: ngay, id: BL.id, dong: mon, tong: tongBL, tt: '', nhan:'GIÁ TRỊ BILL TẶNG' });
 };
 
 
@@ -862,12 +854,9 @@ $('huyLuu').onclick = function(){
     dong.push({ ten:ten, sl:sl, dv:dv, lyDo: ly==='Khác' ? 'Khác: '+gc : ly, ghiChu: gc });
   }
   if (!HUY.anh.length) { toast('Phải chụp ảnh đồ hủy nhé'); return; }
-  var b = this; b.disabled = true; var done = busy('Đang lưu phiếu hủy…');
   var ngay = $('huyNgay').value || homNay();
-  api('nv_huy_luu', { id:HUY.id, ngay:ngay, ca:HUY.ca, dong:dong, anh: HUY.anh.map(function(a){ return { b64:a.b64, mime:a.mime }; }) }).then(function(j){
-    done(); b.disabled = false;
-    xong({ huy:true, loai:'PHIẾU HỦY HÀNG', ten:'Hủy hàng · '+HUY.ca, sub:'Ghi bởi '+S.ten+' · '+dong.length+' món', ngay:ngay, id:j.id, dong:dong, anh:HUY.anh });
-  }).catch(function(e){ done(); b.disabled = false; toast(e.message, 5000); });
+  luuNen('huy', this, 'nv_huy_luu', { id:HUY.id, ngay:ngay, ca:HUY.ca, dong:dong, anh: HUY.anh.map(function(a){ return { b64:a.b64, mime:a.mime }; }) },
+    { huy:true, loai:'PHIẾU HỦY HÀNG', ten:'Hủy hàng · '+HUY.ca, sub:'Ghi bởi '+S.ten+' · '+dong.length+' món', ngay:ngay, id:HUY.id, dong:dong, anh:HUY.anh });
 };
 
 /* ---------- ĐÃ LƯU: hình phiếu ---------- */
@@ -882,8 +871,26 @@ function xong(p){
     : p.dong.map(function(d){ return '<div class="tl"><span>'+esc(d.ten)+(d.sl!==''&&d.sl!=null?'<small>'+soVN(d.sl)+' '+esc(d.dv||'')+(d.gia?' × '+tien(d.gia):'')+'</small>':'')+'</span><span>'+tien(d.tien).replace('đ','')+'</span></div>'; }).join('')+
     '<div class="big"><div><small>'+esc(p.nhan||'TỔNG PHIẾU')+'</small><span class="sub">'+p.dong.length+' món</span></div><b class="num">'+tien(p.tong)+'</b></div></div>')+
     '<div class="tf"><span class="st"><i></i>'+(p.huy?'Đã ghi sổ hủy':p.tt==='Đã trả lời'?'Đã sửa, chờ anh xem lại':'Chờ anh Đạt duyệt')+'</span><span>Gặm · '+p.ngay.slice(5,7)+'/'+p.ngay.slice(0,4)+'</span></div></div>';
-  show('xong');
-  taiDuLieu();
+  var dang = !!p.dangLuu;
+  $('xongTit').textContent = dang ? 'Đang lưu…' : 'Đã lưu ✓';
+  $('xongNote').textContent = dang ? 'Đang gửi phiếu lên, xem lại phiếu trong lúc chờ nhé…' : (p.huy ? 'Đã ghi vào sổ hủy hàng.' : 'Phiếu đã chuyển qua cho anh Đạt duyệt.');
+  $('xongVe').disabled = dang; $('xongHinh').disabled = dang;
+  $('xongHinh').textContent = dang ? 'Đang lưu…' : '⬇ Lưu hình gửi Zalo';
+  if (S.view !== 'xong') show('xong');
+  if (!dang) taiDuLieu();
+}
+// Hiện phiếu ngay, lưu lên máy chủ ở nền. Lỗi thì quay lại màn nhập (dữ liệu còn nguyên).
+function luuNen(view, nut, ten, body, p){
+  nut.disabled = true; p.dangLuu = true; xong(p);
+  api(ten, body).then(function(j){
+    nut.disabled = false; p.dangLuu = false;
+    if (j.id) p.id = j.id; if (j.tong != null) p.tong = j.tong; if (j.tt) p.tt = j.tt;
+    if (S.view === 'xong' && XONG === p) xong(p); else { toast('Đã lưu phiếu ✓'); taiDuLieu(); }
+  }).catch(function(e){
+    nut.disabled = false; p.dangLuu = false;
+    if (S.view === 'xong' && XONG === p) show(view);
+    toast('Chưa lưu được: ' + e.message + ' – bấm lưu lại nhé', 9000);
+  });
 }
 $('xongVe').onclick = function(){ vaoHome(); };
 $('xongHinh').onclick = function(){
