@@ -41,6 +41,8 @@ body.app #app{display:flex}
 #bar button.on{background:var(--kem);color:var(--xanh);border-color:var(--kem)}
 #bar .n{position:absolute;top:-7px;right:-4px;min-width:19px;height:19px;padding:0 5px;background:var(--do);color:#fff;font:700 11px/19px var(--M);border-radius:10px;text-align:center}
 #bar .n:empty{display:none}
+#bar.chu{grid-template-columns:repeat(6,1fr)}
+#bar button.hide{display:none}
 #views{flex:1;position:relative;overflow:hidden}
 .view{position:absolute;inset:0;display:none}
 .view.on{display:block}
@@ -182,6 +184,7 @@ textarea.vin{min-height:64px;resize:vertical}
     <button data-v="bep">Bếp<span class="n" id="nBep"></span></button>
     <button data-v="vc">Voucher</button>
     <button data-v="ls">Lịch sử</button>
+    <button data-v="dh" id="btnDH" class="hide">Điều hành</button>
   </div>
   <div id="views">
     <div class="view" id="v-moi"><div class="scroll"><div class="wrap">
@@ -244,11 +247,11 @@ textarea.vin{min-height:64px;resize:vertical}
       </div>
       <div id="lsList"><p class="empty">Đang tải…</p></div>
     </div></div></div>
+    <div class="view" id="v-dh"></div>
     <div id="login">
       <div class="glogo"></div>
-      <h2>Nhập mã quản lý</h2>
-      <p>Mã nằm trong link quản lý (phần sau <b style="color:inherit">?key=</b>). Nhập 1 lần, máy sẽ nhớ.</p>
-      <input id="kIn" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="••••••••">
+      <h2>Nhập mã</h2>
+      <input id="kIn" type="password" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="••••••••">
       <button id="kOk">Vào</button>
       <p id="kErr"></p>
     </div>
@@ -280,6 +283,9 @@ textarea.vin{min-height:64px;resize:vertical}
   var EXEC = 'https://script.google.com/macros/s/AKfycbyn5RT0xOX4pNvnxKIBuAvgvbvzNL4oj7eI-rMSK8OC87kALr5XgXsE7GiDbiqFGSop/exec';
   var $ = function(id){ return document.getElementById(id); };
   var ls = { get:function(k){ try{return localStorage.getItem(k)||''}catch(e){return ''} }, set:function(k,v){ try{localStorage.setItem(k,v)}catch(e){} } };
+  /* Sổ Quán (app đi chợ + hóa đơn): mật khẩu anh Đạt mở thêm phần Điều hành */
+  var SQ_EXEC = ls.get('gam_sq_exec') || 'https://script.google.com/macros/s/AKfycbyuPUKFDtEW-Trp-Ycwkv4lC7eoYnUEA_WL0p0veag0qSTb5xisMXHqURxYKUC36CZs/exec';
+  function mkDH(){ var box = $('v-dh'); if (box.firstChild) return; var f = document.createElement('iframe'); f.src = 'dieuhanh.html'; f.title = 'Điều hành'; box.appendChild(f); }
   var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
   if (!standalone && !/[?&]mo=1/.test(location.search)) return;
@@ -318,6 +324,7 @@ textarea.vin{min-height:64px;resize:vertical}
     [].forEach.call(document.querySelectorAll('.view'), function(el){ el.classList.toggle('on', el.id==='v-'+v); });
     if (v==='pv'||v==='bep') mkFrame(v);
     if (v==='ls') loadLS();
+    if (v==='dh') mkDH();
     if (v==='vc' && window.vcShow) vcShow();
     ls.set('gam_ql_view', v);
   }
@@ -558,19 +565,28 @@ textarea.vin{min-height:64px;resize:vertical}
   /* ---------- mã quản lý ---------- */
   function start(){
     $('login').classList.remove('on');
-    var v = ls.get('gam_ql_view'); show(v==='pv'||v==='bep'||v==='ls'||v==='vc' ? v : 'moi');
+    var chu = !!ls.get('gam_chu_pass');
+    $('btnDH').classList.toggle('hide', !chu); $('bar').classList.toggle('chu', chu);
+    if (!KEY) { show('dh'); return; }
+    var v = ls.get('gam_ql_view'); show(v==='pv'||v==='bep'||v==='ls'||v==='vc'||(v==='dh'&&chu) ? v : 'moi');
     poll(); preload(); setInterval(function(){ if (!document.hidden) poll(); }, 30000);
     document.addEventListener('visibilitychange', function(){ if (!document.hidden) poll(); });
   }
   $('kOk').onclick = function(){
-    var k = $('kIn').value.trim().replace(/[^A-Za-z0-9]/g,''); if (!k) return;
-    $('kErr').textContent = 'Đang kiểm tra…'; KEY = k;
-    api('api=kiemtra').then(function(){ ls.set('gam_ql_key', k); start(); }).catch(function(e){ KEY=''; $('kErr').textContent = e.message==='Sai mã quản lý.' ? 'Sai mã, kiểm tra lại nhé.' : ('Lỗi: '+e.message); });
+    var raw = $('kIn').value.trim(); if (!raw) return;
+    var k = raw.replace(/[^A-Za-z0-9]/g,'');
+    $('kErr').textContent = 'Đang kiểm tra…';
+    fetch(SQ_EXEC, { method:'POST', body: JSON.stringify({ api:'chu_vao', pass: raw }) }).then(function(r){ return r.json(); }).catch(function(){ return { ok:false }; }).then(function(j){
+      if (j && j.ok) { ls.set('gam_chu_pass', raw); KEY = j.qlKey || ''; if (KEY) ls.set('gam_ql_key', KEY); $('kErr').textContent=''; start(); return; }
+      if (!k) { $('kErr').textContent = 'Sai mã, kiểm tra lại nhé.'; return; }
+      KEY = k;
+      api('api=kiemtra').then(function(){ ls.set('gam_ql_key', k); start(); }).catch(function(e){ KEY=''; $('kErr').textContent = e.message==='Sai mã quản lý.' ? 'Sai mã, kiểm tra lại nhé.' : ('Lỗi: '+e.message); });
+    });
   };
   $('kIn').onkeydown = function(e){ if (e.key==='Enter') $('kOk').click(); };
   var m = location.hash.match(/key=([A-Za-z0-9]+)/);
   if (m) { $('kIn').value = m[1]; history.replaceState(null,'',location.pathname+location.search); $('login').classList.add('on'); $('kOk').click(); }
-  else if (KEY) start(); else $('login').classList.add('on');
+  else if (KEY || ls.get('gam_chu_pass')) start(); else $('login').classList.add('on');
 })();
 </script>
 </body>
