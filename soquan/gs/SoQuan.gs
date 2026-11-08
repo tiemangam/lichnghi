@@ -821,6 +821,7 @@ function sqDocNen_(ids) {
   var dm = docDanhMuc_(), tenDm = {}, ds = [];
   dm.forEach(function (d) { var k = khongDau_(d.ten); if (!tenDm[k]) { tenDm[k] = d.ten; ds.push(d.ten); } });
   var alias = sqAlias_(), hoc = sqHoc_(), moiBiet = sqMoiBiet_(sqMetaRows_());
+  hoc.forEach(function (h) { if (h.moi && moiBiet.indexOf(h.moi) < 0) moiBiet.push(h.moi); });
   var prompt = sqPromptHD_(ds, alias, hoc, moiBiet), schema = sqSchemaHD_();
   var partsDs = viec.map(function (m) {
     var parts = [{ text: prompt }];
