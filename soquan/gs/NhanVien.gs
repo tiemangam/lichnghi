@@ -54,6 +54,7 @@ function sqNVLuu_(p) {
     var vals = [[ten, pin, vai, p.nghi ? 'x' : '', cn.join(','), bayGio_()]];
     if (row >= 2 && ds.some(function (x) { return x.row === row; })) sh.getRange(row, 1, 1, H_SQ_NV.length).setValues(vals);
     else { row = sh.getLastRow() + 1; sh.getRange(row, 1, 1, H_SQ_NV.length).setValues(vals); }
+    sqCacheXoa_('sq_nv');
     return { row: row };
   });
 }

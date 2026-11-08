@@ -118,7 +118,8 @@ var SQ_API = {
 function sqNV_(pin) {
   pin = String(pin || '').trim();
   if (!/^\d{4,6}$/.test(pin)) throw new Error('Sai mã PIN.');
-  var rows = layFile_().getSheetByName(SQ_NV).getDataRange().getValues();
+  var rows = sqCacheGet_('sq_nv');
+  if (!rows) { rows = layFile_().getSheetByName(SQ_NV).getDataRange().getValues().map(function (r) { return r.map(String); }); sqCachePut_('sq_nv', rows, 300); }
   for (var i = 1; i < rows.length; i++) {
     if (String(rows[i][1]).trim() === pin && !/x/i.test(String(rows[i][3]))) return { ten: String(rows[i][0]).trim(), vai: String(rows[i][2]).trim(), chucNang: sqTachCN_(rows[i][4], rows[i][2]) };
   }
@@ -131,11 +132,20 @@ function sqChu_(pass) {
 }
 
 /* ======================= ĐỌC / GHI TAB ======================= */
+// Đọc tab SQ_Phieu 1 lần mỗi lượt gọi (nhớ tạm trong lượt), ghi xong thì đọc lại
+var _SQ_META = null;
+function sqMetaMoi_() { _SQ_META = null; }
 function sqMetaRows_() {
+  if (_SQ_META) return _SQ_META;
   var sh = layFile_().getSheetByName(SQ_META);
   var v = sh.getDataRange().getValues();
-  return v.slice(1).map(function (r, i) { var o = sqMetaObj_(r); o._row = i + 2; return o; }).filter(function (o) { return o.id; });
+  return _SQ_META = v.slice(1).map(function (r, i) { var o = sqMetaObj_(r); o._row = i + 2; return o; }).filter(function (o) { return o.id; });
 }
+// Bộ nhớ đệm của Google (CacheService) cho dữ liệu ít đổi: danh sách nhân viên, danh mục món
+function sqCache_() { try { return CacheService.getScriptCache(); } catch (e) { return null; } }
+function sqCacheGet_(k) { var c = sqCache_(); if (!c) return null; try { var v = c.get(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+function sqCachePut_(k, v, giay) { var c = sqCache_(); if (!c) return; try { var s = JSON.stringify(v); if (s.length < 95000) c.put(k, s, giay || 300); } catch (e) { } }
+function sqCacheXoa_(k) { var c = sqCache_(); if (c) try { c.remove(k); } catch (e) { } }
 function sqJ_(s, d) { try { return s ? JSON.parse(s) : d; } catch (e) { return d; } }
 function sqMetaObj_(r) {
   return {
@@ -160,6 +170,7 @@ function sqGhiMeta_(o) {
   var row = timDong_(sh, o.id);
   if (row < 0) row = sh.getLastRow() + 1;
   sh.getRange(row, 1, 1, H_SQ_META.length).setValues([sqMetaRow_(o)]);
+  sqMetaMoi_();
 }
 function sqTimMeta_(id) {
   var ds = sqMetaRows_();
@@ -184,14 +195,22 @@ function sqNhoAlias_(moi, ds, nguoi) {
 }
 
 /* ======================= DỮ LIỆU CHO APP NHÂN VIÊN ======================= */
-function sqDuLieuNV_(nv) {
-  sqDungTongHopNeuCan_();
-  var dm = docDanhMuc_();
-  var gop = {};
+function sqDanhMucGon_() {
+  var c = sqCacheGet_('sq_dm');
+  if (c) return c;
+  var dm = docDanhMuc_(), gop = {};
   dm.forEach(function (d) {
     var k = khongDau_(d.ten);
     if (!gop[k] || d.ngay > gop[k].ngay) gop[k] = { ten: d.ten, dv: d.dv, gia: d.gia, ngay: d.ngay, nhom: d.nhom, lan: d.lan };
   });
+  var out = { danhMuc: Object.keys(gop).map(function (k) { return gop[k]; }),
+    tuDat: dm.filter(function (d) { return d.nhom === NHOM_TU_DAT; }).sort(function (a, b) { return b.lan - a.lan; }).slice(0, 24) };
+  sqCachePut_('sq_dm', out, 600);
+  return out;
+}
+function sqDuLieuNV_(nv) {
+  sqDungTongHopNeuCan_();
+  var dmg = sqDanhMucGon_();
   var metas = sqMetaRows_();
   var moiSet = {};
   metas.forEach(function (m) { if (m.moi) moiSet[m.moi] = (moiSet[m.moi] || 0) + 1; });
@@ -211,8 +230,8 @@ function sqDuLieuNV_(nv) {
     ten: nv.ten, vai: nv.vai, chucNang: nv.chucNang, homNay: homNay_(),
     huy: sqHuyChoNV_(nv),
     tuDatMoi: Object.keys(tuDatMoi).map(function (k) { return tuDatMoi[k]; }).sort(function (a, b) { return a.ngay < b.ngay ? 1 : -1; }).slice(0, 20),
-    danhMuc: Object.keys(gop).map(function (k) { return gop[k]; }),
-    tuDat: dm.filter(function (d) { return d.nhom === NHOM_TU_DAT; }).sort(function (a, b) { return b.lan - a.lan; }).slice(0, 24),
+    danhMuc: dmg.danhMuc,
+    tuDat: dmg.tuDat,
     alias: sqAlias_(),
     moi: Object.keys(moiSet).sort(function (a, b) { return moiSet[b] - moiSet[a]; }).slice(0, 20),
     cuaToi: cuaToi,
@@ -361,6 +380,7 @@ function sqGiuDuyet_(cu, nv) {
 function sqApiLuu_(p) {
   var co = typeof dungTongHop_ === 'function', goc = co ? dungTongHop_ : null;
   if (co) dungTongHop_ = function () { };
+  sqCacheXoa_('sq_dm');
   try { return apiLuu(p); }
   finally {
     if (co) { dungTongHop_ = goc; PropertiesService.getScriptProperties().setProperty('SQ_TONGHOP_CU', '1'); }
@@ -792,8 +812,10 @@ function sqGuiHD_(nv, p) {
     var sh = layFile_().getSheetByName(SQ_META);
     var moi = rows.filter(function (o) { return timDong_(sh, o.id) < 0; });
     if (moi.length) sh.getRange(sh.getLastRow() + 1, 1, moi.length, H_SQ_META.length).setValues(moi.map(sqMetaRow_));
+    sqMetaMoi_();
   });
-  return { ids: ids };
+  var fidMap = {}; rows.forEach(function (o) { fidMap[o.id] = o.anh; });
+  return { ids: ids, fids: fidMap };
 }
 
 /* ---------- đọc ở nền ---------- */
@@ -866,6 +888,7 @@ function sqDocNen_(ids) {
 function sqHdDs_(nv, p) {
   var den = homNay_(), tu = congNgay_(den, -(Math.min(so_(p.soNgay) || 14, 60)));
   var quen = {}; sqQuenRows_().forEach(function (q) { quen[q.id] = q.ten; });
+  var gan = congNgay_(den, -2);
   var ds = sqMetaRows_().filter(function (m) {
     if (m.loai !== LOAI.HD && m.loai !== LOAI.TD) return false;
     return m.ngay >= tu || TT_CHUA_XAC_NHAN.indexOf(m.tt) >= 0;
@@ -873,7 +896,8 @@ function sqHdDs_(nv, p) {
     var t = m.them || {};
     return { id: m.id, loai: m.loai, ngay: m.ngay, nguoi: m.nguoi, moi: m.moi, tong: m.tong || m.cong, tt: m.tt, gio: String(m.taoLuc).slice(11, 16), taoLuc: m.taoLuc,
       thumb: t.thumb || '', soAnh: (m.anh || []).length, soDong: (m.dong || []).length, loi: t.loi || '', kiemBoi: t.kiemBoi || '', guiLuc: t.guiLuc || 0, docLuc: t.docLuc || 0,
-      quen: t.quenId ? (quen[t.quenId] || '') : '', vang: (m.dong || []).filter(function (d) { return d.chacChan === false && !d.sua; }).length, hoi: m.hoi };
+      quen: t.quenId ? (quen[t.quenId] || '') : '', vang: (m.dong || []).filter(function (d) { return d.chacChan === false && !d.sua; }).length, hoi: m.hoi,
+      ct: (TT_CHUA_XAC_NHAN.indexOf(m.tt) >= 0 || m.tt === TT.HOI || m.ngay >= gan) ? { dong: m.dong, tongAnh: m.tongAnh, ghiChu: m.ghiChu, anh: m.anh, aiNgay: m.ai && m.ai.ngay || '', loi: t.loi || '', traLien: !!t.traLien, quenId: t.quenId || '' } : null };
   });
   ds.sort(function (a, b) { return a.ngay < b.ngay ? 1 : a.ngay > b.ngay ? -1 : (a.guiLuc || 0) < (b.guiLuc || 0) ? 1 : (String(a.taoLuc) < String(b.taoLuc) ? 1 : -1); });
   return { ds: ds, tu: tu, den: den, bayGio: Date.now() };
@@ -884,7 +908,7 @@ function sqHdXoa_(nv, id) {
     var m = sqTimMeta_(id);
     if (!m) throw new Error('Không tìm thấy hóa đơn.');
     if (m.tt === TT.OK) throw new Error('Hóa đơn anh Đạt đã duyệt, không xóa được.');
-    layFile_().getSheetByName(SQ_META).deleteRow(m._row);
+    layFile_().getSheetByName(SQ_META).deleteRow(m._row); sqMetaMoi_();
     if (TT_CHUA_XAC_NHAN.indexOf(m.tt) < 0) {
       var ss = layFile_(), shP = ss.getSheetByName('Phieu'), r = timDong_(shP, id);
       if (r > 0) shP.deleteRow(r);
