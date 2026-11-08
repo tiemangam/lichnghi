@@ -22,7 +22,8 @@ var H_SQ_META = ['ID phiếu', 'Loại', 'Ngày', 'Người nhập', 'Mối', '�
 var M = { ID: 0, LOAI: 1, NGAY: 2, NGUOI: 3, MOI: 4, ANH: 5, AI: 6, DONG: 7, TONGANH: 8, CONG: 9, GHICHU: 10, TT: 11, HOI: 12, TRALOI: 13, DUYETLUC: 14, TAOLUC: 15, THEM: 16, TONG: 17 };
 var H_SQ_ALIAS = ['Mối', 'Chữ trên hóa đơn', 'Tên món đúng', 'Người dạy', 'Lúc'];
 var LOAI = { HD: 'Hóa đơn ảnh', TD: 'Hàng tự đặt', BILL: 'Bill không tính tiền', DC: 'Đi chợ' };
-var TT = { CHO: 'Chờ duyệt', OK: 'Đã duyệt', HOI: 'Hỏi lại', TRALOI: 'Đã trả lời', TUCHOI: 'Từ chối' };
+var TT = { CHO: 'Chờ duyệt', OK: 'Đã duyệt', HOI: 'Hỏi lại', TRALOI: 'Đã trả lời', TUCHOI: 'Từ chối', DOC: 'Đang đọc', KIEM: 'Chờ kiểm tra', LOI: 'Lỗi đọc' };
+var TT_CHUA_XAC_NHAN = ['Đang đọc', 'Chờ kiểm tra', 'Lỗi đọc'];
 var NHOM_TU_DAT = 'Hàng tự đặt';
 
 /* ======================= CÀI ĐẶT (chạy 1 lần) ======================= */
@@ -41,6 +42,7 @@ function sqCaiDat() {
   if (nv.getRange(1, 5).getValue() !== 'Chức năng') nv.getRange(1, 1, 1, H_SQ_NV.length).setValues([H_SQ_NV]);
   mk(SQ_META, H_SQ_META);
   mk(SQ_ALIAS, H_SQ_ALIAS);
+  sqHdCaiDat_(mk);
   sqHuyCaiDat_(mk);
   var props = PropertiesService.getScriptProperties();
   if (!props.getProperty('SQ_FOLDER_ID')) {
@@ -85,6 +87,15 @@ var SQ_API = {
   nv_luu_bill: function (p) { var nv = sqNV_(p.pin); return sqLuuBill_(nv, p); },
   nv_tra_loi: function (p) { var nv = sqNV_(p.pin); return sqTraLoi_(nv, p); },
   nv_huy_luu: function (p) { var nv = sqNV_(p.pin); return sqHuyLuu_(nv, p); },
+  nv_gui_hd: function (p) { var nv = sqNV_(p.pin); return sqGuiHD_(nv, p); },
+  nv_doc_nen: function (p) { sqNV_(p.pin); return sqDocNen_(p.ids || []); },
+  nv_doc_lai: function (p) { sqNV_(p.pin); return sqDocLai_(p.id); },
+  nv_hd_ds: function (p) { var nv = sqNV_(p.pin); return sqHdDs_(nv, p); },
+  nv_hd_xem: function (p) { sqNV_(p.pin); var m = sqTimMeta_(sqKiemId_(p.id)); if (!m) throw new Error('Không tìm thấy hóa đơn.'); return { hd: m }; },
+  nv_hd_xoa: function (p) { var nv = sqNV_(p.pin); return sqHdXoa_(nv, p.id); },
+  nv_anh: function (p) { sqNV_(p.pin); sqKiemAnhCuaPhieu_(p.fid); return sqAnh_(p.fid); },
+  nv_quen_luu: function (p) { var nv = sqNV_(p.pin); return sqQuenLuu_(nv, p); },
+  nv_quen_xoa: function (p) { sqNV_(p.pin); return sqQuenXoa_(p.id); },
   nv_phieu: function (p) { var nv = sqNV_(p.pin); var x = sqChiTietPhieu_(p.id); if (x.meta && x.meta.nguoi !== nv.ten) throw new Error('Phiếu này không phải của em.'); return { phieu: x }; },
   /* ---- anh Đạt ---- */
   chu_vao: function (p) { sqChu_(p.pass); return { qlKey: PropertiesService.getScriptProperties().getProperty('QL_KEY') || '' }; },
@@ -185,7 +196,7 @@ function sqDuLieuNV_(nv) {
   var moiSet = {};
   metas.forEach(function (m) { if (m.moi) moiSet[m.moi] = (moiSet[m.moi] || 0) + 1; });
   var tu = congNgay_(homNay_(), -3);
-  var cuaToi = metas.filter(function (m) { return m.nguoi === nv.ten && (m.ngay >= tu || m.tt === TT.HOI); })
+  var cuaToi = metas.filter(function (m) { return m.nguoi === nv.ten && TT_CHUA_XAC_NHAN.indexOf(m.tt) < 0 && (m.ngay >= tu || m.tt === TT.HOI); })
     .map(function (m) { return { id: m.id, loai: m.loai, ngay: m.ngay, moi: m.moi, tong: m.tong || m.cong, tt: m.tt, hoi: m.hoi, traLoi: m.traLoi }; })
     .reverse().slice(0, 30);
   // Hàng tự đặt: nhớ lần giao gần nhất của từng mối (món, số lượng, giá) để lần sau bấm 1 cái là điền lại
@@ -205,6 +216,8 @@ function sqDuLieuNV_(nv) {
     alias: sqAlias_(),
     moi: Object.keys(moiSet).sort(function (a, b) { return moiSet[b] - moiSet[a]; }).slice(0, 20),
     cuaToi: cuaToi,
+    quen: sqQuenDs_(metas),
+    choKiem: metas.filter(function (m) { return m.loai === LOAI.HD && (m.tt === TT.KIEM || m.tt === TT.LOI || m.tt === TT.DOC); }).length,
     diCho: ScriptApp.getService().getUrl()
   };
 }
@@ -338,7 +351,7 @@ function sqMon_(dong) {
 function sqKiemId_(id) { if (!/^[A-Za-z0-9_-]{4,40}$/.test(String(id || ''))) throw new Error('Mã phiếu không hợp lệ.'); return String(id); }
 function sqKiemNgay_(s) { if (!/^\d{4}-\d{2}-\d{2}$/.test(String(s || ''))) throw new Error('Ngày không hợp lệ.'); return String(s); }
 function sqGiuDuyet_(cu, nv) {
-  if (cu && cu.nguoi && cu.nguoi !== nv.ten) throw new Error('Phiếu này không phải của em.');
+  if (cu && cu.nguoi && cu.nguoi !== nv.ten && cu.loai !== LOAI.HD && cu.loai !== LOAI.TD) throw new Error('Phiếu này không phải của em.');
   if (cu && cu.tt === TT.OK) throw new Error('Phiếu đã được anh duyệt, không sửa được nữa.');
   return cu ? (cu.tt === TT.HOI ? TT.TRALOI : cu.tt === TT.TUCHOI ? TT.TRALOI : TT.CHO) : TT.CHO;
 }
@@ -369,13 +382,16 @@ function sqLuuHD_(nv, p) {
     var cong = dong.reduce(function (s, d) { return s + d.tien; }, 0);
     sqApiLuu_({ id: id, ngay: ngay, nhom: 'HĐ ' + moi, nguoiMua: nv.ten, ghiChu: chu_(p.ghiChu, 200),
       mon: dong.map(function (d) { return { ten: d.ten, sl: d.sl, dv: d.dv, gia: d.gia, tien: d.tien }; }) });
+    var anh = (cu && cu.anh && cu.anh.length) ? cu.anh : (p.fids || []).filter(function (x) { return /^[\w-]{10,}$/.test(x); });
+    var them = Object.assign({}, (cu && cu.them) || {}, { suaLuc: bayGio_(), kiemBoi: nv.ten });
     var o = {
-      id: id, loai: LOAI.HD, ngay: ngay, nguoi: nv.ten, moi: moi, anh: (p.fids || []).filter(function (x) { return /^[\w-]{10,}$/.test(x); }),
-      ai: p.ai || (cu && cu.ai) || null, dong: dong, tongAnh: soHoacRong_(p.tongAnh), cong: cong, ghiChu: chu_(p.ghiChu, 200),
-      tt: tt, hoi: cu ? cu.hoi : '', traLoi: cu ? cu.traLoi : '', taoLuc: cu ? cu.taoLuc : bayGio_(), them: { suaLuc: bayGio_() }, tong: cong
+      id: id, loai: LOAI.HD, ngay: ngay, nguoi: cu && cu.nguoi ? cu.nguoi : nv.ten, moi: moi, anh: anh,
+      ai: (cu && cu.ai) || p.ai || null, dong: dong, tongAnh: soHoacRong_(p.tongAnh), cong: cong, ghiChu: chu_(p.ghiChu, 200),
+      tt: tt, hoi: cu ? cu.hoi : '', traLoi: cu ? cu.traLoi : '', taoLuc: cu ? cu.taoLuc : bayGio_(), them: them, tong: cong
     };
     sqGhiMeta_(o);
     sqNhoAlias_(moi, p.nho, nv.ten);
+    sqHocTuSua_(moi, o.ai, dong, nv.ten);
     return { id: id, tong: cong, tt: tt };
   });
 }
@@ -390,12 +406,15 @@ function sqLuuTuDat_(nv, p) {
   return khoa_(function () {
     var cu = sqTimMeta_(id), tt = sqGiuDuyet_(cu, nv);
     var cong = dong.reduce(function (s, d) { return s + d.tien; }, 0);
+    var anh = cu ? cu.anh : [];
+    if (p.anh && p.anh.b64) anh = [sqThuMuc_().createFile(Utilities.newBlob(Utilities.base64Decode(p.anh.b64), p.anh.mime || 'image/jpeg', 'TD-' + id + '.jpg')).getId()];
+    var quenId = sqQuenSauLuu_(nv, p, moi, dong, traLien);
     var ghiChu = [moi, traLien ? 'Trả liền' : 'Ghi nợ mối', chu_(p.ghiChu, 150)].filter(String).join(' · ');
     sqApiLuu_({ id: id, ngay: ngay, nhom: NHOM_TU_DAT, nguoiMua: nv.ten, ghiChu: ghiChu,
       mon: dong.map(function (d) { return { ten: d.ten, sl: d.sl, dv: d.dv, gia: d.gia, tien: d.tien }; }) });
-    sqGhiMeta_({ id: id, loai: LOAI.TD, ngay: ngay, nguoi: nv.ten, moi: moi, dong: dong, cong: cong, ghiChu: chu_(p.ghiChu, 150),
-      tt: tt, hoi: cu ? cu.hoi : '', traLoi: cu ? cu.traLoi : '', taoLuc: cu ? cu.taoLuc : bayGio_(), them: { traLien: traLien, suaLuc: bayGio_() }, tong: cong });
-    return { id: id, tong: cong, tt: tt };
+    sqGhiMeta_({ id: id, loai: LOAI.TD, ngay: ngay, nguoi: cu && cu.nguoi ? cu.nguoi : nv.ten, moi: moi, anh: anh, dong: dong, cong: cong, ghiChu: chu_(p.ghiChu, 150),
+      tt: tt, hoi: cu ? cu.hoi : '', traLoi: cu ? cu.traLoi : '', taoLuc: cu ? cu.taoLuc : bayGio_(), them: { traLien: traLien, suaLuc: bayGio_(), quenId: quenId || (cu && cu.them && cu.them.quenId) || '' }, tong: cong });
+    return { id: id, tong: cong, tt: tt, quenId: quenId };
   });
 }
 
@@ -612,4 +631,334 @@ function sqLichSuMon_(khoa) {
     } else { x.loai = LOAI.DC; x.tt = TT.CHO; x.fids = []; }
   });
   return { khoa: khoa, ds: ds };
+}
+
+/* =====================================================================
+ * HÓA ĐƠN BẢN 2 (09/11/2026)
+ * - Gửi nhiều ảnh 1 lần: mỗi ảnh (hoặc vài ảnh gộp) = 1 hóa đơn, lưu ngay với trạng thái "Đang đọc".
+ * - Đọc ở nền: app gọi nv_doc_nen, Gemini đọc song song (fetchAll) → "Chờ kiểm tra".
+ * - Nhân viên mở "Hóa đơn đã gửi", sửa, bấm Xác nhận đúng (nv_luu_hd) → mới ghi Phieu/ChiTiet (P&L).
+ * - Mỗi chỗ sửa được nhớ theo mối (tab SQ_HocMoi) và đưa vào lời nhắc lần sau.
+ * - Hóa đơn quen (tab SQ_HoaDonQuen): bấm 1 nút là điền sẵn phiếu hàng tự đặt.
+ * ===================================================================== */
+var SQ_HOC = 'SQ_HocMoi', SQ_QUEN = 'SQ_HoaDonQuen';
+var H_SQ_HOC = ['Mối', 'Chữ trên ảnh', 'Tên đúng', 'SL', 'ĐV', 'Đơn giá', 'Thành tiền', 'Ghi chú', 'Người dạy', 'Lúc'];
+var H_SQ_QUEN = ['ID', 'Tên', 'Biểu tượng', 'Mối', 'Món (JSON)', 'Trả liền', 'Người tạo', 'Sửa lúc'];
+// Đáp án anh Đạt xác nhận 09/11 – dùng làm mẫu học ban đầu
+var SQ_HOC_MAU = [
+  ['Mối cá (Zalo)', 'Cá lóc năm ký nhân giá 75.000 bằng 375.000', 'Cá lóc', 5, 'kg', 75000, 375000, ''],
+  ['Mối cá (Zalo)', 'Hông 5x75=375', 'Cá diêu hồng', 5, 'kg', 75000, 375000, '"Hông" / "hồng" của mối cá là CÁ DIÊU HỒNG. "+375=750" là tổng, không phải món'],
+  ['Gas Petrolimex', 'Khí dầu mỏ hóa lỏng bình 12 · 1.084.000 · Bên bán giao 2', 'Gas bình 12kg', 2, 'bình', 542000, 1084000, 'Số ghi tay ở cột "Số lượng nguyên niêm" là TỔNG TIỀN; số bình lấy ở "Số lượng Bên bán giao"'],
+  ['Mối trứng (Zalo)', 'Trứng gà: 5 vĩ* 22 = 330k', 'Trứng gà', 5, 'vỉ', 66000, 330000, '"22" là 2.200đ một quả, 1 vỉ 30 quả'],
+  ['Mối trứng (Zalo)', 'Trứng làm bánh: 20 trứng bỏ riêng* 22 = 44', 'Trứng làm bánh', 20, 'quả', 2200, 44000, ''],
+  ['Mối trứng (Zalo)', 'Trứng cút: 30 trứng = 15k', 'Trứng cút', 30, 'quả', 500, 15000, '']
+];
+function sqTab_(ten, head, napMau) {
+  var ss = layFile_(), sh = ss.getSheetByName(ten);
+  if (sh) return sh;
+  sh = ss.insertSheet(ten);
+  sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold').setBackground('#445803').setFontColor('#F8E8C4');
+  sh.setFrozenRows(1);
+  if (napMau) napMau(sh);
+  return sh;
+}
+function sqHdCaiDat_() { sqTabHoc_(); sqTabQuen_(); }
+function sqTabHoc_() {
+  return sqTab_(SQ_HOC, H_SQ_HOC, function (sh) {
+    var now = bayGio_();
+    sh.getRange(2, 1, SQ_HOC_MAU.length, H_SQ_HOC.length).setValues(SQ_HOC_MAU.map(function (r) { return r.concat(['anh Đạt', now]); }));
+  });
+}
+function sqTabQuen_() { return sqTab_(SQ_QUEN, H_SQ_QUEN); }
+
+/* ---------- bộ nhớ theo mối ---------- */
+function sqHoc_() {
+  var v = sqTabHoc_().getDataRange().getValues().slice(1), gap = {}, out = [];
+  for (var i = v.length - 1; i >= 0; i--) { // dòng mới nhất thắng
+    var r = v[i], chu = String(r[1]).trim(), ten = String(r[2]).trim();
+    if (!chu || !ten) continue;
+    var k = khongDau_(r[0]) + '|' + khongDau_(chu);
+    if (gap[k]) continue; gap[k] = 1;
+    out.push({ moi: String(r[0]).trim(), chu: chu, ten: ten, sl: soHoacRong_(r[3]), dv: String(r[4]), gia: soHoacRong_(r[5]), tien: soHoacRong_(r[6]), ghi: String(r[7]) });
+  }
+  return out; // mới nhất trước
+}
+function sqHocTuSua_(moi, ai, dong, nguoi) {
+  var them = [];
+  (dong || []).forEach(function (d) {
+    if (!d.sua || !d.chu) return;
+    var doi = khongDau_(d.ten) !== khongDau_(d.aiTen) || String(d.sl) !== String(d.aiSl) || String(d.gia) !== String(d.aiGia) || String(d.tien) !== String(d.aiTien);
+    if (!doi) return;
+    them.push([moi || '', d.chu, d.ten, d.sl, d.dv, d.gia, d.tien, '', nguoi, bayGio_()]);
+  });
+  if (!them.length) return 0;
+  var sh = sqTabHoc_();
+  sh.getRange(sh.getLastRow() + 1, 1, them.length, H_SQ_HOC.length).setValues(them);
+  return them.length;
+}
+
+/* ---------- lời nhắc đọc hóa đơn ---------- */
+function sqPromptHD_(ds, alias, hoc, moiBiet) {
+  var nam = homNay_().slice(0, 4);
+  var L = [
+    'Bạn là kế toán của quán ăn Gặm ở Sài Gòn. Hôm nay là ' + homNay_() + '. Ảnh là 1 chứng từ MUA HÀNG của quán. Có thể là: hóa đơn viết tay, hóa đơn hoặc biên bản giao hàng in sẵn có ghi tay, hoặc ảnh chụp TIN NHẮN (Zalo) người bán báo hàng và tiền. Nếu có nhiều ảnh thì đó là các trang của CÙNG 1 chứng từ.',
+    'Việc của bạn: liệt kê TỪNG món hàng quán đã mua, mỗi món 1 dòng: số lượng (sl), đơn vị (dv), đơn giá (gia), thành tiền (tien). Tiền luôn trả theo ĐỒNG.',
+    '',
+    'CÁCH ĐỌC SỐ (rất quan trọng):',
+    '1. Người bán hay viết tắt tiền theo NGHÌN: "75" = 75.000đ, "375" = 375.000đ, "15k" = 15.000đ, "1.2tr" = 1.200.000đ.',
+    '2. "k" hoặc "ký" đứng NGAY SAU SỐ LƯỢNG hàng là KÝ (kg): "chân gà 10k x 95" = 10 kg × 95.000đ. "năm ký" = 5 kg.',
+    '3. Phép tính "a x b = c" hoặc "a * b = c": a = số lượng, b = đơn giá, c = thành tiền. THÀNH TIỀN ghi trên chứng từ là chuẩn. Chọn đơn vị tiền của b sao cho a × b = c. Ví dụ "10 bịch * 35 = 350" là 10 bịch × 35.000đ; "40 cái * 15 = 60" là 40 cái × 1.500đ.',
+    '4. Nếu số lượng ghi theo đơn vị lớn (vỉ, thùng, bao, két) mà đơn giá lại là giá 1 cái lẻ, thì giữ đơn vị lớn, đơn giá = thành tiền ÷ số lượng, và ghi cách hiểu vào lyDo.',
+    '5. Cộng dồn kiểu "...=375+375=750" là TỔNG, không phải món mới. Mỗi phép tính số lượng × giá là 1 món.',
+    '6. Trên biểu mẫu in có cột: số tiền ghi tay (dạng 1.084.000 hoặc có dấu chấm ngăn nghìn) là THÀNH TIỀN dù nằm ở cột nào. Số lượng lấy ở chỗ ghi số bình / số cái / số kg thực giao (vd "Số lượng Bên bán giao: 2" → 2 bình). Tên hàng in sẵn thì đọc cả phần ghi tay bổ sung (vd "bình 12" = bình 12kg).',
+    '7. Kiểm tra hợp lý: quán mua vài kg đến vài chục kg. Nếu ra hàng trăm, hàng nghìn kg thì chắc chắn đã đọc nhầm tiền thành số lượng – đọc lại.',
+    '8. Không có đơn giá thì gia = thành tiền ÷ số lượng. Không có số lượng thì để trống sl, chỉ ghi tien.',
+    '',
+    'GHI KẾT QUẢ:',
+    '- chu = chữ đúng y như trên ảnh cho món đó. ten = tên món chuẩn: nếu khớp món trong DANH MỤC hoặc MẪU ĐÃ HỌC thì ghi đúng tên đó, không thì viết rõ nghĩa.',
+    '- cachTinh = phép tính đã hiểu, viết gọn, vd "5 kg × 75.000 = 375.000".',
+    '- chacChan=false khi chữ/số mờ, khi phải đoán tên món, hoặc khi phải tự suy đơn vị tiền; lyDo ngắn bằng tiếng Việt.',
+    '- anh = số thứ tự ảnh chứa dòng đó (ảnh đầu = 0). vung = [ymin, xmin, ymax, xmax] theo thang 0–1000 bao quanh dòng đó.',
+    '- tongTrenAnh = tổng tiền ghi trên ảnh (đồng), không có thì 0. ngay = ngày trên chứng từ yyyy-mm-dd (chỉ ghi ngày/tháng thì năm là ' + nam + '), không có thì rỗng. moi = tên người bán/cửa hàng/công ty nếu thấy, không thì rỗng.',
+    '- Phí giao, phí ship là 1 dòng. Không bỏ sót, không thêm dòng không có trên ảnh.',
+    '',
+    'DANH MỤC món quán hay mua: ' + ds.slice(0, 400).join('; ')
+  ];
+  if (moiBiet && moiBiet.length) L.push('CÁC MỐI QUEN của quán (nếu chứng từ là của mối nào thì ghi moi đúng tên đó): ' + moiBiet.slice(0, 40).join('; '));
+  if (alias && alias.length) L.push('TÊN GỌI KHÁC đã biết (chữ trên hóa đơn → tên đúng): ' + alias.slice(0, 150).map(function (a) { return a.chu + ' → ' + a.ten; }).join('; '));
+  if (hoc && hoc.length) {
+    L.push('', 'MẪU ĐÃ HỌC (nhân viên đã sửa đúng ở các lần trước – gặp chữ giống vậy thì đọc theo đúng cách này):');
+    hoc.slice(0, 50).forEach(function (h) {
+      L.push('- Mối «' + (h.moi || '?') + '»: trên ảnh ghi «' + h.chu + '» → món «' + h.ten + '»' + (h.sl !== '' ? ', ' + h.sl + ' ' + h.dv : '') +
+        (h.gia !== '' ? ', đơn giá ' + h.gia + 'đ' : '') + (h.tien !== '' ? ', thành tiền ' + h.tien + 'đ' : '') + (h.ghi ? ' (' + h.ghi + ')' : ''));
+    });
+  }
+  return L.join('\n');
+}
+function sqSchemaHD_() {
+  return { type: 'OBJECT', properties: {
+    moi: { type: 'STRING' }, ngay: { type: 'STRING' }, tongTrenAnh: { type: 'NUMBER' },
+    dong: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
+      chu: { type: 'STRING' }, ten: { type: 'STRING' }, sl: { type: 'NUMBER' }, dv: { type: 'STRING' }, gia: { type: 'NUMBER' }, tien: { type: 'NUMBER' },
+      chacChan: { type: 'BOOLEAN' }, lyDo: { type: 'STRING' }, cachTinh: { type: 'STRING' }, anh: { type: 'INTEGER' }, vung: { type: 'ARRAY', items: { type: 'INTEGER' } }
+    }, required: ['chu', 'ten', 'tien', 'chacChan'] } } }, required: ['dong'] };
+}
+function sqMoiBiet_(metas) {
+  var dem = {};
+  (metas || []).forEach(function (m) { if ((m.loai === LOAI.HD || m.loai === LOAI.TD) && m.moi && m.moi !== 'Chưa rõ mối') dem[m.moi] = (dem[m.moi] || 0) + 1; });
+  sqQuenRows_().forEach(function (q) { if (q.moi) dem[q.moi] = (dem[q.moi] || 0) + 1; });
+  return Object.keys(dem).sort(function (a, b) { return dem[b] - dem[a]; });
+}
+// Ghép tên mối AI đọc với mối quen; không thấy tên thì đoán theo mẫu đã học
+function sqGhepMoi_(aiMoi, dong, moiBiet, hoc) {
+  var k = khongDau_(aiMoi);
+  if (k) {
+    for (var i = 0; i < moiBiet.length; i++) {
+      var b = khongDau_(moiBiet[i]);
+      if (b === k || (b.length >= 4 && k.indexOf(b) >= 0) || (k.length >= 4 && b.indexOf(k) >= 0)) return moiBiet[i];
+    }
+    return chu_(aiMoi, 60);
+  }
+  for (var j = 0; j < (dong || []).length; j++) {
+    var c = khongDau_(dong[j].chu);
+    if (!c) continue;
+    for (var h = 0; h < hoc.length; h++) {
+      var hc = khongDau_(hoc[h].chu);
+      if (hoc[h].moi && (hc === c || (hc.length >= 6 && (c.indexOf(hc) >= 0 || hc.indexOf(c) >= 0)))) return hoc[h].moi;
+    }
+  }
+  return '';
+}
+
+/* ---------- gửi nhiều hóa đơn ---------- */
+function sqGuiHD_(nv, p) {
+  var ngay = sqKiemNgay_(p.ngay);
+  var ds = (p.hd || []).slice(0, 12);
+  if (!ds.length) throw new Error('Chưa có ảnh.');
+  var folder = sqThuMuc_(), stamp = Utilities.formatDate(new Date(), TZ, 'yyyyMMdd-HHmmss'), now = bayGio_(), ms = Date.now();
+  var rows = [], ids = [];
+  ds.forEach(function (h, i) {
+    var id = sqKiemId_(h.id);
+    var fids = (h.anh || []).slice(0, 4).map(function (a, j) {
+      return folder.createFile(Utilities.newBlob(Utilities.base64Decode(a.b64), a.mime || 'image/jpeg', 'HD-' + stamp + '-' + (i + 1) + (j ? '-' + (j + 1) : '') + '.jpg')).getId();
+    });
+    if (!fids.length) return;
+    var thumb = /^[A-Za-z0-9+/=]+$/.test(h.thumb || '') && h.thumb.length < 16000 ? h.thumb : '';
+    rows.push({ id: id, loai: LOAI.HD, ngay: ngay, nguoi: nv.ten, moi: '', anh: fids, ai: null, dong: [], tongAnh: '', cong: 0, ghiChu: '',
+      tt: TT.DOC, taoLuc: now, them: { thumb: thumb, guiLuc: ms }, tong: 0 });
+    ids.push(id);
+  });
+  khoa_(function () {
+    var sh = layFile_().getSheetByName(SQ_META);
+    var moi = rows.filter(function (o) { return timDong_(sh, o.id) < 0; });
+    if (moi.length) sh.getRange(sh.getLastRow() + 1, 1, moi.length, H_SQ_META.length).setValues(moi.map(sqMetaRow_));
+  });
+  return { ids: ids };
+}
+
+/* ---------- đọc ở nền ---------- */
+function sqDocLai_(id) {
+  id = sqKiemId_(id);
+  khoa_(function () { var m = sqTimMeta_(id); if (!m) throw new Error('Không tìm thấy hóa đơn.'); if (TT_CHUA_XAC_NHAN.indexOf(m.tt) < 0) throw new Error('Hóa đơn đã xác nhận, không đọc lại được.'); m.tt = TT.DOC; m.them = m.them || {}; m.them.docLuc = 0; delete m.them.loi; sqGhiMeta_(m); });
+  return sqDocNen_([id]);
+}
+function sqDocNen_(ids) {
+  var muon = {}; (ids || []).slice(0, 12).forEach(function (x) { muon[String(x)] = 1; });
+  var now = Date.now(), viec = [];
+  khoa_(function () { // nhận việc: đánh dấu đang đọc để 2 máy không đọc trùng
+    sqMetaRows_().forEach(function (m) {
+      if (!muon[m.id] || (m.tt !== TT.DOC && m.tt !== TT.LOI)) return;
+      var t = (m.them && m.them.docLuc) || 0;
+      if (now - t < 150000) return;
+      m.them = m.them || {}; m.them.docLuc = now; m.tt = TT.DOC;
+      sqGhiMeta_(m); viec.push(m);
+    });
+  });
+  if (!viec.length) return { xong: 0 };
+  var props = PropertiesService.getScriptProperties(), key = props.getProperty('GEMINI_KEY');
+  if (!key) throw new Error('Chưa cài mã Gemini (GEMINI_KEY).');
+  var model = props.getProperty('GEMINI_MODEL') || 'gemini-3.6-flash';
+  var dm = docDanhMuc_(), tenDm = {}, ds = [];
+  dm.forEach(function (d) { var k = khongDau_(d.ten); if (!tenDm[k]) { tenDm[k] = d.ten; ds.push(d.ten); } });
+  var alias = sqAlias_(), hoc = sqHoc_(), moiBiet = sqMoiBiet_(sqMetaRows_());
+  var prompt = sqPromptHD_(ds, alias, hoc, moiBiet), schema = sqSchemaHD_();
+  var partsDs = viec.map(function (m) {
+    var parts = [{ text: prompt }];
+    m.anh.forEach(function (fid) { var b = DriveApp.getFileById(fid).getBlob(); parts.push({ inline_data: { mime_type: b.getContentType() || 'image/jpeg', data: Utilities.base64Encode(b.getBytes()) } }); });
+    return parts;
+  });
+  var reqs = partsDs.map(function (parts) {
+    return { url: 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent', method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      headers: { 'x-goog-api-key': key }, payload: JSON.stringify({ contents: [{ role: 'user', parts: parts }], generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: schema, thinkingConfig: { thinkingLevel: 'low' } } }) };
+  });
+  var res = UrlFetchApp.fetchAll(reqs);
+  var ketQua = viec.map(function (m, i) {
+    try {
+      var body = res[i].getResponseCode() === 200 ? res[i].getContentText() : sqGoiGemini_(key, model, partsDs[i], schema).body; // lỗi/quá tải → thử lại + đổi model
+      var j = JSON.parse(body), txt = j.candidates[0].content.parts.map(function (x) { return x.text || ''; }).join('');
+      var doc = sqJ_(txt, null);
+      if (!doc || !doc.dong) throw new Error('Không đọc được, chụp lại rõ hơn nhé.');
+      var moi = sqGhepMoi_(doc.moi, doc.dong, moiBiet, hoc);
+      var aliasMoi = alias.filter(function (a) { return !a.moi || !moi || khongDau_(a.moi) === khongDau_(moi); });
+      var dong = doc.dong.map(function (d) { var o = sqChuanDong_(d, aliasMoi, tenDm); o.cachTinh = chu_(d.cachTinh, 80); return o; });
+      return { ok: true, moi: moi, ngay: /^\d{4}-\d{2}-\d{2}$/.test(doc.ngay || '') ? doc.ngay : '', tongAnh: so_(doc.tongTrenAnh), dong: dong };
+    } catch (e) { return { ok: false, loi: String(e && e.message || e).slice(0, 200) }; }
+  });
+  khoa_(function () {
+    var theoId = {}; sqMetaRows_().forEach(function (m) { theoId[m.id] = m; });
+    viec.forEach(function (v, i) {
+      var m = theoId[v.id], kq = ketQua[i];
+      if (!m || m.tt !== TT.DOC) return; // đã bị xóa / đã xác nhận trong lúc đọc
+      m.them = m.them || {}; m.them.docLuc = Date.now();
+      if (!kq.ok) { m.tt = TT.LOI; m.them.loi = kq.loi; sqGhiMeta_(m); return; }
+      delete m.them.loi;
+      m.ai = { moi: kq.moi, ngay: kq.ngay, tongAnh: kq.tongAnh, dong: kq.dong, model: model };
+      m.dong = kq.dong; if (!m.moi) m.moi = kq.moi; m.tongAnh = kq.tongAnh || '';
+      m.cong = kq.dong.reduce(function (s, d) { return s + so_(d.tien); }, 0); m.tong = m.cong; m.tt = TT.KIEM;
+      sqGhiMeta_(m);
+    });
+  });
+  return { xong: viec.length, loi: ketQua.filter(function (k) { return !k.ok; }).length };
+}
+
+/* ---------- danh sách, xóa ---------- */
+function sqHdDs_(nv, p) {
+  var den = homNay_(), tu = congNgay_(den, -(Math.min(so_(p.soNgay) || 14, 60)));
+  var quen = {}; sqQuenRows_().forEach(function (q) { quen[q.id] = q.ten; });
+  var ds = sqMetaRows_().filter(function (m) {
+    if (m.loai !== LOAI.HD && m.loai !== LOAI.TD) return false;
+    return m.ngay >= tu || TT_CHUA_XAC_NHAN.indexOf(m.tt) >= 0;
+  }).map(function (m) {
+    var t = m.them || {};
+    return { id: m.id, loai: m.loai, ngay: m.ngay, nguoi: m.nguoi, moi: m.moi, tong: m.tong || m.cong, tt: m.tt, gio: String(m.taoLuc).slice(11, 16), taoLuc: m.taoLuc,
+      thumb: t.thumb || '', soAnh: (m.anh || []).length, soDong: (m.dong || []).length, loi: t.loi || '', kiemBoi: t.kiemBoi || '', guiLuc: t.guiLuc || 0, docLuc: t.docLuc || 0,
+      quen: t.quenId ? (quen[t.quenId] || '') : '', vang: (m.dong || []).filter(function (d) { return d.chacChan === false && !d.sua; }).length, hoi: m.hoi };
+  });
+  ds.sort(function (a, b) { return a.ngay < b.ngay ? 1 : a.ngay > b.ngay ? -1 : (a.guiLuc || 0) < (b.guiLuc || 0) ? 1 : (String(a.taoLuc) < String(b.taoLuc) ? 1 : -1); });
+  return { ds: ds, tu: tu, den: den, bayGio: Date.now() };
+}
+function sqHdXoa_(nv, id) {
+  id = sqKiemId_(id);
+  return khoa_(function () {
+    var m = sqTimMeta_(id);
+    if (!m) throw new Error('Không tìm thấy hóa đơn.');
+    if (m.tt === TT.OK) throw new Error('Hóa đơn anh Đạt đã duyệt, không xóa được.');
+    layFile_().getSheetByName(SQ_META).deleteRow(m._row);
+    if (TT_CHUA_XAC_NHAN.indexOf(m.tt) < 0) {
+      var ss = layFile_(), shP = ss.getSheetByName('Phieu'), r = timDong_(shP, id);
+      if (r > 0) shP.deleteRow(r);
+      xoaChiTiet_(ss, id);
+      PropertiesService.getScriptProperties().setProperty('SQ_TONGHOP_CU', '1');
+    }
+    return { id: id };
+  });
+}
+function sqKiemAnhCuaPhieu_(fid) {
+  fid = String(fid || '');
+  var co = sqMetaRows_().some(function (m) { return (m.anh || []).indexOf(fid) >= 0; });
+  if (!co) throw new Error('Ảnh không thuộc hóa đơn nào.');
+}
+
+/* ---------- hóa đơn quen ---------- */
+function sqQuenRows_() {
+  return sqTabQuen_().getDataRange().getValues().slice(1).filter(function (r) { return String(r[0]) && String(r[1]); }).map(function (r, i) {
+    return { id: String(r[0]), ten: String(r[1]), icon: String(r[2]) || '📦', moi: String(r[3]), mon: sqJ_(r[4], []), traLien: String(r[5]) === 'x', nguoi: String(r[6]), suaLuc: String(r[7]), _row: i + 2 };
+  });
+}
+function sqQuenDs_(metas) {
+  var lan = {}, homNay = homNay_(), hn = [];
+  (metas || []).forEach(function (m) {
+    if (m.loai !== LOAI.TD) return;
+    var q = m.them && m.them.quenId;
+    if (q && (!lan[q] || m.ngay > lan[q])) lan[q] = m.ngay;
+    if (m.ngay === homNay) hn.push({ id: m.id, moi: m.moi, nguoi: m.nguoi, tong: m.tong || m.cong, gio: String(m.taoLuc).slice(11, 16), quenId: q || '',
+      mon: (m.dong || []).map(function (d) { return d.ten + ' ' + (d.sl === '' ? '' : d.sl) + ' ' + (d.dv || ''); }).join(', ') });
+  });
+  return { ds: sqQuenRows_().map(function (q) { delete q._row; q.lanCuoi = lan[q.id] || ''; return q; }), homNay: hn.reverse() };
+}
+function sqIcon_(s) {
+  var k = ' ' + khongDau_(s).replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ') + ' ';
+  var bang = [['sua chua', '🥛'], ['sua', '🥛'], ['trung', '🥚'], ['muoi', '🧂'], ['cha', '🥟'], ['nem', '🥟'], ['gas', '🔥'], ['binh', '🔥'], ['da', '🧊'], ['bia', '🍺'], ['nuoc', '💧'],
+    ['rau', '🥬'], ['ca', '🐟'], ['tom', '🦐'], ['muc', '🦑'], ['ga', '🐔'], ['vit', '🦆'], ['thit', '🥩'], ['heo', '🥩'], ['bo', '🥩'], ['banh', '🥖'], ['bun', '🍜'], ['dau', '🫗'], ['duong', '🍬'], ['hop', '📦']];
+  for (var i = 0; i < bang.length; i++) if (k.indexOf(' ' + bang[i][0] + ' ') >= 0) return bang[i][1];
+  return '📦';
+}
+function sqMonQuen_(mon) {
+  return sqMon_(mon).map(function (d) { return { ten: d.ten, sl: d.sl, dv: d.dv, gia: d.gia }; });
+}
+function sqQuenLuu_(nv, p) {
+  var ten = chu_(p.ten, 40), mon = sqMonQuen_(p.mon);
+  if (!ten) throw new Error('Chưa đặt tên hóa đơn quen.');
+  if (!mon.length) throw new Error('Hóa đơn quen chưa có món nào.');
+  return khoa_(function () {
+    var sh = sqTabQuen_(), ds = sqQuenRows_(), id = String(p.id || ''), cu = id ? ds.filter(function (q) { return q.id === id; })[0] : null;
+    if (!cu) { var trung = ds.filter(function (q) { return khongDau_(q.ten) === khongDau_(ten); })[0]; if (trung) cu = trung; }
+    var r = [cu ? cu.id : 'Q' + Date.now().toString(36).toUpperCase(), ten, chu_(p.icon, 4) || (cu && cu.icon) || sqIcon_(ten + ' ' + mon[0].ten), chu_(p.moi, 60),
+      JSON.stringify(mon), p.traLien ? 'x' : '', nv.ten, bayGio_()];
+    if (cu) sh.getRange(cu._row, 1, 1, H_SQ_QUEN.length).setValues([r]); else sh.appendRow(r);
+    return { quen: { id: r[0], ten: r[1], icon: r[2], moi: r[3], mon: mon, traLien: !!p.traLien } };
+  });
+}
+function sqQuenXoa_(id) {
+  return khoa_(function () {
+    var q = sqQuenRows_().filter(function (x) { return x.id === String(id || ''); })[0];
+    if (!q) throw new Error('Không tìm thấy hóa đơn quen.');
+    sqTabQuen_().deleteRow(q._row);
+    return { id: q.id };
+  });
+}
+// Sau khi lưu phiếu hàng tự đặt: cập nhật hóa đơn quen đang dùng, hoặc tạo mới nếu nhân viên tick "Lưu làm hóa đơn quen"
+function sqQuenSauLuu_(nv, p, moi, dong, traLien) {
+  try {
+    if (p.quenId && p.capNhatQuen) {
+      var q = sqQuenRows_().filter(function (x) { return x.id === String(p.quenId); })[0];
+      if (q) { sqTabQuen_().getRange(q._row, 4, 1, 5).setValues([[moi, JSON.stringify(sqMonQuen_(dong)), traLien ? 'x' : '', nv.ten, bayGio_()]]); return q.id; }
+    }
+    if (p.taoQuen && p.taoQuen.ten) {
+      var sh = sqTabQuen_(), ten = chu_(p.taoQuen.ten, 40), id = 'Q' + Date.now().toString(36).toUpperCase();
+      sh.appendRow([id, ten, sqIcon_(ten + ' ' + (dong[0] && dong[0].ten)), moi, JSON.stringify(sqMonQuen_(dong)), traLien ? 'x' : '', nv.ten, bayGio_()]);
+      return id;
+    }
+  } catch (e) { }
+  return p.quenId ? String(p.quenId) : '';
 }
