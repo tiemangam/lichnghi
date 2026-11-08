@@ -368,6 +368,7 @@ function api(name, body){
   body = body || {}; body.api = name; if (S.pin && !body.pin) body.pin = S.pin;
   return fetch(EXEC, { method:'POST', body: JSON.stringify(body) }).then(function(r){ return r.json(); }).then(function(j){ if (!j.ok) throw new Error(j.error||'Lỗi'); return j; });
 }
+var lsJ = { get: function(k){ try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch(e){ return null; } }, set: function(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} } };
 var S = { pin: ls.get('gam_sq_pin'), ten: ls.get('gam_sq_ten'), vai: ls.get('gam_sq_vai'), cn: (ls.get('gam_sq_cn')||'').split(',').filter(String), D: null };
 
 /* ---------- điều hướng ---------- */
@@ -429,10 +430,12 @@ function vaoHome(){
   $('tiles').innerHTML = ds.map(function(k2, i){ var t = TILES[k2];
     return '<button class="tile'+(i===0?' main':'')+'" data-t="'+k2+'"><span class="ic">'+t.ic+'</span><b>'+t.ten+'</b><small>'+t.mo+'</small><span class="dot hide" id="dot-'+k2+'"></span></button>'; }).join('');
   [].forEach.call($('tiles').querySelectorAll('.tile'), function(b){ b.onclick = function(){ moTile(b.getAttribute('data-t')); }; });
+  if (!S.D) { var c = lsJ.get('gam_sq_D'); if (c && c.ten === S.ten) S.D = c; } // hiện ngay dữ liệu đã lưu trên máy
+  if (S.D) { veMine(); veMoi(); veDot(); }
   taiDuLieu();
 }
 function taiDuLieu(){
-  return api('nv_dulieu').then(function(j){ S.D = j; var cn = (j.chucNang||[]).join(','); if (cn && cn !== (S.cn||[]).join(',')) { S.cn = j.chucNang; ls.set('gam_sq_cn', cn); if (S.view==='home') { vaoHome(); return j; } } veMine(); veMoi(); veDot(); return j; }).catch(function(e){
+  return api('nv_dulieu').then(function(j){ S.D = j; lsJ.set('gam_sq_D', j); var cn = (j.chucNang||[]).join(','); if (cn && cn !== (S.cn||[]).join(',')) { S.cn = j.chucNang; ls.set('gam_sq_cn', cn); if (S.view==='home') { vaoHome(); return j; } } veMine(); veMoi(); veDot(); return j; }).catch(function(e){
     if (/PIN/.test(e.message)) { ['gam_sq_pin','gam_sq_ten','gam_sq_vai','gam_sq_cn'].forEach(ls.del); S.pin=''; show('pin'); return; }
     $('mine').innerHTML = '<p class="sub">Chưa tải được: '+esc(e.message)+'</p>';
   });
@@ -610,6 +613,7 @@ function guiLo(lo){
   lo.tt = 'Đang gửi'; lo.loi = ''; if (S.view==='ds') veDS();
   api('nv_gui_hd', { ngay: lo.ngay, hd: lo.hd }).then(function(j){
     CHO_GUI.splice(CHO_GUI.indexOf(lo), 1);
+    lo.hd.forEach(function(h){ ((j.fids||{})[h.id]||[]).forEach(function(fid, i){ if (h.anh[i]) ganAnh(fid, 'data:'+(h.anh[i].mime||'image/jpeg')+';base64,'+h.anh[i].b64, true); }); });
     docNen(j.ids);
     toast('Đã gửi ' + j.ids.length + ' hóa đơn ✓ App đang đọc', 3500);
     if (S.view==='ds') taiDS();
@@ -627,12 +631,12 @@ function docNen(ids){ // gọi đọc ở nền, không chờ
 /* ---------- HÓA ĐƠN ĐÃ GỬI ---------- */
 var DS = { loc: 'can', ds: [], hen: null };
 var CAN_KIEM = ['Đang đọc', 'Chờ kiểm tra', 'Lỗi đọc', 'Hỏi lại'];
-function moDS(thay){ if (thay) { show('ds', false); history.replaceState({ v:'ds' }, '', '#ds'); } else show('ds'); veDS(); taiDS(); }
+function moDS(thay){ if (!DS.ds.length) { var c = lsJ.get('gam_sq_ds'); if (c && c.ten === S.ten) DS.ds = c.ds; } if (thay) { show('ds', false); history.replaceState({ v:'ds' }, '', '#ds'); } else show('ds'); veDS(); taiDS(); }
 [].forEach.call($('dsLoc').querySelectorAll('button'), function(b){ b.onclick = function(){ DS.loc = b.getAttribute('data-v'); [].forEach.call($('dsLoc').querySelectorAll('button'), function(x){ x.classList.toggle('on', x===b); }); veDS(); }; });
 function taiDS(){
   clearTimeout(DS.hen);
   return api('nv_hd_ds', {}).then(function(j){
-    DS.ds = j.ds; veDS();
+    DS.ds = j.ds; veDS(); lsJ.set('gam_sq_ds', { ten: S.ten, ds: j.ds }); taiTruocAnh();
     var dangDoc = j.ds.filter(function(x){ return x.tt==='Đang đọc'; });
     var ket = dangDoc.filter(function(x){ return j.bayGio - (x.docLuc || x.guiLuc || 0) > (x.docLuc ? 150000 : 15000); }).map(function(x){ return x.id; });
     if (ket.length) docNen(ket);
@@ -680,26 +684,55 @@ function ganChoGui(){
   [].forEach.call($('dsList').querySelectorAll('.hdc[data-lo]'), function(b){ b.onclick = function(){ var lo = CHO_GUI[+b.getAttribute('data-lo')]; if (lo && lo.tt==='Gửi lỗi') guiLo(lo); }; });
 }
 /* ---------- XEM / SỬA / XÁC NHẬN 1 HÓA ĐƠN ---------- */
-var ANH = {}; // fid → {url,w,h}
+var ANH = {}, ANH_CHO = {}; // fid → {url,w,h}
+function khoAnh(){ try { return window.caches ? caches.open('gam-sq-anh') : Promise.reject(); } catch(e){ return Promise.reject(); } }
+function ganAnh(fid, url, luu){
+  return new Promise(function(ok){ var im = new Image();
+    im.onload = function(){ ANH[fid] = { url:url, w:im.naturalWidth, h:im.naturalHeight }; ok(ANH[fid]); }; im.onerror = function(){ ok(null); }; im.src = url; })
+    .then(function(a){ if (a && luu) khoAnh().then(function(c){ c.put('/anh/'+fid, new Response(url)); }).catch(function(){}); return a; });
+}
 function taiAnh(fid){
   if (ANH[fid]) return Promise.resolve(ANH[fid]);
-  return api('nv_anh', { fid: fid }).then(function(j){
-    return new Promise(function(ok){ var url = 'data:'+(j.mime||'image/jpeg')+';base64,'+j.b64, im = new Image();
-      im.onload = function(){ ANH[fid] = { url:url, w:im.naturalWidth, h:im.naturalHeight }; ok(ANH[fid]); }; im.onerror = function(){ ok(null); }; im.src = url; });
-  });
+  if (ANH_CHO[fid]) return ANH_CHO[fid];
+  return ANH_CHO[fid] = khoAnh().then(function(c){ return c.match('/anh/'+fid); }).then(function(r){ return r ? r.text() : null; }).catch(function(){ return null; })
+    .then(function(url){
+      if (url) return ganAnh(fid, url, false);
+      return api('nv_anh', { fid: fid }).then(function(j){ return ganAnh(fid, 'data:'+(j.mime||'image/jpeg')+';base64,'+j.b64, true); });
+    }).then(function(a){ delete ANH_CHO[fid]; return a; }, function(e){ delete ANH_CHO[fid]; throw e; });
+}
+function taiTruocAnh(){ // tải sẵn ảnh của các hóa đơn cần kiểm tra, mỗi lần 2 ảnh
+  var hang = []; DS.ds.forEach(function(x){ if (x.ct && CAN_KIEM.indexOf(x.tt)>=0) (x.ct.anh||[]).forEach(function(f){ if (!ANH[f] && hang.indexOf(f)<0) hang.push(f); }); });
+  var chay = function(){ var f = hang.shift(); if (!f) return; taiAnh(f).catch(function(){}).then(chay); };
+  chay(); chay();
 }
 var LUU_LOI = {};
+function hdTu(m){ // dựng HD từ dữ liệu phiếu
+  var chua = ['Đang đọc','Chờ kiểm tra','Lỗi đọc'].indexOf(m.tt)>=0;
+  return { id: m.id, tt: m.tt, ngay: m.ngay, moi: m.moi, nguoi: m.nguoi, fids: m.anh||[], ai: m.ai || (m.aiNgay ? { ngay: m.aiNgay } : null), tongAnh: m.tongAnh,
+    them: m.them || { loi: m.loi || '' }, nho: [], anh: [], ghiChu: m.ghiChu || '', daSua: false,
+    dong: (m.dong||[]).map(function(d){ return chua ? Object.assign({}, d, { sua:false, aiTen:d.ten, aiSl:d.sl, aiGia:d.gia, aiTien:d.tien }) : Object.assign({ chacChan:true }, d); }) };
+}
+function moHDTu(m){
+  clearTimeout(HD && HD.hen);
+  HD = hdTu(m);
+  if (LUU_LOI[m.id]) { var b = LUU_LOI[m.id]; HD.dong = b.dong; HD.moi = b.moi; HD.ngay = b.ngay; HD.ghiChu = b.ghiChu || ''; HD.daSua = true; }
+  $('hdGhiChu').value = HD.ghiChu;
+  HD.fids.forEach(function(fid, i){ if (ANH[fid]) HD.anh[i] = ANH[fid]; });
+  veHD2(); if (S.view!=='hd2') show('hd2');
+  var id = m.id;
+  HD.fids.forEach(function(fid, i){ if (!HD.anh[i]) taiAnh(fid).then(function(a){ if (a && HD && HD.id===id) { HD.anh[i] = a; veStrip(); } }).catch(function(){}); });
+  if (m.tt==='Đang đọc') { docNen([id]); HD.hen = setTimeout(function(){ if (S.view==='hd2' && HD && HD.id===id && HD.tt==='Đang đọc') moXemHD(id, true); }, 5000); }
+}
 function moXemHD(id, lamMoi){
-  var done = lamMoi ? function(){} : busy('Đang mở hóa đơn…');
+  var x = DS.ds.filter(function(z){ return z.id===id; })[0];
+  var coSan = !lamMoi && x && x.ct;
+  if (coSan) moHDTu(Object.assign({}, x, x.ct, { them: { loi: x.ct.loi } })); // hiện ngay, không chờ
+  var done = (lamMoi || coSan) ? function(){} : busy('Đang mở hóa đơn…');
   api('nv_hd_xem', { id: id }).then(function(j){
-    done(); var m = j.hd, chua = ['Đang đọc','Chờ kiểm tra','Lỗi đọc'].indexOf(m.tt)>=0;
-    HD = { id: m.id, tt: m.tt, ngay: m.ngay, moi: m.moi, nguoi: m.nguoi, fids: m.anh||[], ai: m.ai, tongAnh: m.tongAnh, them: m.them||{}, nho: [], anh: [],
-      dong: (m.dong||[]).map(function(d){ return chua ? Object.assign({}, d, { sua:false, aiTen:d.ten, aiSl:d.sl, aiGia:d.gia, aiTien:d.tien }) : Object.assign({ chacChan:true }, d); }) };
-    if (LUU_LOI[id]) { var b = LUU_LOI[id]; HD.dong = b.dong; HD.moi = b.moi; HD.ngay = b.ngay; $('hdGhiChu').value = b.ghiChu||''; } else $('hdGhiChu').value = m.ghiChu || '';
-    veHD2(); if (S.view!=='hd2') show('hd2');
-    HD.fids.forEach(function(fid, i){ taiAnh(fid).then(function(a){ if (a && HD && HD.id===id) { HD.anh[i] = a; veStrip(); } }); });
-    if (m.tt==='Đang đọc') { docNen([id]); clearTimeout(HD.hen); HD.hen = setTimeout(function(){ if (S.view==='hd2' && HD && HD.id===id && HD.tt==='Đang đọc') moXemHD(id, true); }, 5000); }
-  }).catch(function(e){ done(); toast(e.message, 6000); });
+    done();
+    if (coSan || lamMoi) { if (!HD || HD.id!==id || HD.daSua || S.view!=='hd2') return; } // em đang sửa thì không ghi đè
+    moHDTu(j.hd);
+  }).catch(function(e){ done(); if (!coSan) toast(e.message, 6000); });
 }
 function veStrip(){
   $('hdStrip').innerHTML = HD.fids.map(function(f,i){ var a = HD.anh[i]; return a ? '<img src="'+a.url+'" data-i="'+i+'">' : '<div class="thumb" style="width:90px;height:120px;display:grid;place-items:center"><span class="spin2"></span></div>'; }).join('');
@@ -742,9 +775,9 @@ function veHD2(){
   $('hdQuen').classList.toggle('hide', !HD.dong.length);
   $('hdHinh').classList.toggle('hide', chua);
 }
-$('hdMoi').oninput = function(){ HD.moi = this.value.trim(); };
-$('hdNgay2').onchange = function(){ HD.ngay = this.value || HD.ngay; };
-$('hdAdd').onclick = function(){ HD.dong.push({ chu:'', ten:'', sl:'', dv:'kg', gia:'', tien:0, chacChan:true, sua:true, moiThem:true }); suaDong(HD.dong.length-1); };
+$('hdMoi').oninput = function(){ HD.moi = this.value.trim(); HD.daSua = true; };
+$('hdNgay2').onchange = function(){ HD.ngay = this.value || HD.ngay; HD.daSua = true; };
+$('hdAdd').onclick = function(){ HD.daSua = true; HD.dong.push({ chu:'', ten:'', sl:'', dv:'kg', gia:'', tien:0, chacChan:true, sua:true, moiThem:true }); suaDong(HD.dong.length-1); };
 
 function goiY(q){
   var dm = (S.D && S.D.danhMuc) || [], k0 = kd(q);
@@ -813,7 +846,7 @@ function suaDong(i){
   q('#sGia').oninput = function(){ che = 'gia'; tinh(); };
   q('#sTien').oninput = function(){ che = 'tien'; tinh(); };
   veSug(); veNho(); tinh();
-  q('#sXoa').onclick = function(){ HD.dong.splice(i,1); dim.remove(); veHD2(); };
+  q('#sXoa').onclick = function(){ HD.dong.splice(i,1); HD.daSua = true; dim.remove(); veHD2(); };
   q('#sOk').onclick = function(){
     var t = q('#sTen').value.trim(); if (!t) { q('#sTen').focus(); return; }
     var nd = Object.assign({}, HD.dong[i], { ten:t, sl:soLuong(q('#sSl').value), dv:q('#sDv').value.trim(), gia:nghin(q('#sGia').value), tien:nghin(q('#sTien').value)||0 });
@@ -824,7 +857,7 @@ function suaDong(i){
     if (!q('#sNhoW').classList.contains('hide') && q('#sNho').checked) {
       HD.nho = HD.nho.filter(function(a){ return kd(a.chu)!==kd(d.chu); }); HD.nho.push({ chu:d.chu, ten:t });
     }
-    dim.remove(); veHD2();
+    HD.daSua = true; dim.remove(); veHD2();
   };
 }
 $('hdLuu').onclick = function(){
