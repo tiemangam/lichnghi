@@ -1,5 +1,5 @@
 // Gặm Quản lý nghỉ – service worker: giữ khung app + hiện thông báo; dữ liệu lấy trực tiếp từ Google
-var V = 'gam-quanly-v5';
+var V = 'gam-quanly-v6';
 var SHELL = ['./', './index.html', './manifest.webmanifest', '../icon-ql-192.png', '../logo.png'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(V).then(function (c) { return c.addAll(SHELL); })); self.skipWaiting(); });
 self.addEventListener('activate', function (e) {
@@ -9,8 +9,10 @@ self.addEventListener('activate', function (e) {
 self.addEventListener('fetch', function (e) {
   var u = new URL(e.request.url);
   if (e.request.method !== 'GET' || u.origin !== location.origin) return;
-  e.respondWith(fetch(e.request).then(function (r) {
-    var copy = r.clone(); caches.open(V).then(function (c) { c.put(e.request, copy); }); return r;
+  // luôn hỏi lại GitHub (bỏ qua bộ nhớ đệm 10 phút của trình duyệt) để sửa app là máy nhân viên thấy ngay; mất mạng thì dùng bản đã lưu
+  e.respondWith(fetch(e.request.url, { cache: 'no-cache', credentials: 'same-origin', redirect: e.request.mode === 'navigate' ? 'manual' : 'follow' }).then(function (r) {
+    if (r.ok) { var copy = r.clone(); caches.open(V).then(function (c) { c.put(e.request, copy); }); }
+    return r;
   }).catch(function () { return caches.match(e.request, { ignoreSearch: true }); }));
 });
 self.addEventListener('notificationclick', function (e) {
