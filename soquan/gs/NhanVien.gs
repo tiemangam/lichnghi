@@ -3,14 +3,16 @@
  * Mỗi nhân viên: tên, mã PIN 4 số (không trùng), vai trò, các chức năng được dùng trong Sổ Quán, nghỉ làm.
  * Mật khẩu của anh Đạt: tạo lần đầu bằng mã quản lý (QL_KEY), sau đó đổi trong app.
  */
-var SQ_CHUC_NANG = { hd: 'Chụp hóa đơn', dicho: 'Đi chợ', td: 'Hàng tự đặt', bill: 'Bill không tính tiền', huy: 'Hủy hàng' };
+var SQ_CHUC_NANG = { hd: 'Chụp hóa đơn', dicho: 'Đi chợ', td: 'Hóa đơn quen', tn: 'Thu ngân cuối ca', huy: 'Hủy hàng' };
 var SQ_VAI_MAC_DINH = {
-  'ke toan': ['hd', 'dicho', 'td', 'bill', 'huy'], 'di cho': ['dicho', 'hd', 'td', 'huy'], 'thu ngan': ['bill', 'hd', 'td', 'huy'],
-  'quan ly': ['hd', 'dicho', 'td', 'bill', 'huy'], 'bep': ['huy', 'hd', 'td', 'dicho'], 'phuc vu': ['bill', 'huy']
+  'ke toan': ['hd', 'dicho', 'td', 'huy'], 'di cho': ['dicho', 'hd', 'td', 'huy'], 'thu ngan': ['tn', 'hd', 'td', 'huy'],
+  'quan ly': ['tn', 'hd', 'dicho', 'td', 'huy'], 'bep': ['huy', 'hd', 'td', 'dicho'], 'phuc vu': ['huy']
 };
 function sqTachCN_(s, vai) {
   var ds = String(s || '').split(',').map(function (x) { return x.trim(); }).filter(function (x) { return SQ_CHUC_NANG[x]; });
-  return ds.length ? ds : (SQ_VAI_MAC_DINH[khongDau_(vai)] || ['hd', 'dicho', 'td', 'bill', 'huy']);
+  ds = ds.length ? ds : (SQ_VAI_MAC_DINH[khongDau_(vai)] || ['hd', 'dicho', 'td', 'huy']).slice();
+  if (khongDau_(vai) === 'thu ngan' && ds.indexOf('tn') < 0) ds.unshift('tn'); // thu ngân luôn có ô Thu ngân cuối ca
+  return ds;
 }
 function sqTaoPass_(p) {
   var props = PropertiesService.getScriptProperties();
