@@ -116,7 +116,9 @@ var SQ_API = {
   chu_huy: function (p) { sqChu_(p.pass); return sqHuyBaoCao_(p); },
   chu_huy_gia: function (p) { sqChu_(p.pass); return sqHuyDatGia_(p); },
   chu_tn: function (p) { sqChu_(p.pass); return sqTnChu_(p); },
-  chu_tn_xuly: function (p) { sqChu_(p.pass); return sqTnXuLy_(p); }
+  chu_tn_xuly: function (p) { sqChu_(p.pass); return sqTnXuLy_(p); },
+  chu_tong: function (p) { sqChu_(p.pass); return sqTongQuan_(p); },
+  chu_sapo_luu: function (p) { sqChu_(p.pass); return sqSapoLuu_(p); }
 };
 
 /* ======================= ĐĂNG NHẬP ======================= */
