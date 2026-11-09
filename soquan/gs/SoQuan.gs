@@ -120,6 +120,10 @@ var SQ_API = {
   chu_tn: function (p) { sqChu_(p.pass); return sqTnChu_(p); },
   chu_tn_xuly: function (p) { sqChu_(p.pass); return sqTnXuLy_(p); },
   chu_tong: function (p) { sqChu_(p.pass); return sqTongQuan_(p); },
+  chu_cp: function (p) { sqChu_(p.pass); return sqCpNgay_(p); },
+  chu_cp_moi: function (p) { sqChu_(p.pass); return sqCpMoi_(p); },
+  chu_cp_sua: function (p) { sqChu_(p.pass); return sqCpSua_(p); },
+  chu_cp_quay: function (p) { sqChu_(p.pass); return sqCpQuay_(p); },
   chu_sapo_luu: function (p) { sqChu_(p.pass); return sqSapoLuu_(p, 'anh Đạt'); }
 };
 
@@ -619,7 +623,7 @@ function sqTinhGia_(dongs) {
       for (var j = i - 1; j >= 0; j--) if (ds[j].ngay < cur.ngay) { prev = ds[j]; break; }
       if (!prev) continue;
       var pct = (cur.gia - prev.gia) / prev.gia;
-      var g = { khoa: khoa, ten: cur.ten, nhomHang: sqNhomHang_(cur.ten), dv: cur.dv, id: cur.id, ngay: cur.ngay, nhom: cur.nhom, sl: cur.sl, gia: cur.gia, tien: cur.tien,
+      var g = { khoa: khoa, ten: cur.ten, nhomHang: sqNhomHang_(cur.ten), dv: cur.dv, id: cur.id, stt: cur.stt, ngay: cur.ngay, nhom: cur.nhom, sl: cur.sl, gia: cur.gia, tien: cur.tien,
         truoc: { id: prev.id, ngay: prev.ngay, gia: prev.gia, sl: prev.sl, tien: prev.tien, nhom: prev.nhom }, chenh: cur.gia - prev.gia, pct: pct, traThem: Math.round((cur.gia - prev.gia) * cur.sl) };
       if (Math.abs(pct) >= 0.005) bienDong.push(g);
       (theoPhieu[cur.id] = theoPhieu[cur.id] || []).push(g);

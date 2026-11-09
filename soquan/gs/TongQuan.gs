@@ -56,8 +56,8 @@ function sqTongQuan_(p) {
     .sort(function (a, b) { return a.ngay < b.ngay ? 1 : -1; })
     .forEach(function (x) { viec.push({ muc: 'r', loai: 'Tiền mặt', tab: 'tm', ngay: x.ngay, text: sqDM_(x.ngay) + ' · Ca ' + x.ca + ': két lệch ' + (x.lech < 0 ? '−' : '+') + sqTien_(Math.abs(x.lech)) + ' (' + x.nguoi + ')' }); });
   try {
-    sqGiaThayDoi_({ den: hn, tu: congNgay_(hn, -6) }).ds.filter(function (g) { return g.pct >= 0.05; }).slice(0, 4).forEach(function (g) {
-      viec.push({ muc: g.pct >= 0.15 ? 'r' : 'y', loai: 'Giá nhập tăng', tab: 'gia', text: g.ten + ': ' + sqTien_(g.gia) + '/' + (g.dv || 'đv') + ' – tăng ' + Math.round(g.pct * 100) + '% so với lần mua ' + sqDM_(g.truoc.ngay) });
+    sqGiaThayDoi_({ den: hn, tu: congNgay_(hn, -2) }).ds.filter(function (g) { return g.pct >= 0.1; }).slice(0, 4).forEach(function (g) {
+      viec.push({ muc: 'r', loai: 'Giá nhập tăng', tab: 'cp', ngay: g.ngay, text: g.ten + ': ' + sqTien_(g.gia) + '/' + (g.dv || 'đv') + ' – tăng ' + Math.round(g.pct * 100) + '% so với lần mua ' + sqDM_(g.truoc.ngay) });
     });
   } catch (e) { }
   // đối chiếu: sổ thu ngân (DTTM) với dòng "Tiền mặt" của Sapo (thu tại quầy)
@@ -71,9 +71,8 @@ function sqTongQuan_(p) {
   });
   var homQua = congNgay_(hn, -1);
   if (!(ngay[homQua] && ngay[homQua].kenh)) viec.push({ muc: 'i', loai: 'Số Sapo', tab: 'tong', ngay: homQua, text: 'Chưa tải số Sapo ngày ' + sqDM_(homQua) + ' (phương thức thanh toán + mặt hàng)' });
-  if (choDuyet) viec.push({ muc: 'y', loai: 'Duyệt phiếu', tab: 'duyet', text: choDuyet + ' phiếu đang chờ anh duyệt' });
-  if (hoiLai) viec.push({ muc: 'i', loai: 'Duyệt phiếu', tab: 'duyet', text: hoiLai + ' phiếu anh hỏi lại, nhân viên chưa trả lời' });
-  if (choKiem) viec.push({ muc: 'y', loai: 'Hóa đơn', tab: 'duyet', text: choKiem + ' hóa đơn ảnh nhân viên chưa kiểm tra / xác nhận' });
+  if (hoiLai) viec.push({ muc: 'i', loai: 'Hóa đơn', tab: 'cp', text: hoiLai + ' hóa đơn anh hỏi lại, nhân viên chưa trả lời' });
+  if (choKiem) viec.push({ muc: 'y', loai: 'Hóa đơn', tab: 'cp', text: choKiem + ' hóa đơn ảnh nhân viên chưa kiểm tra / xác nhận' });
   var chuaGia = 0; try { chuaGia = sqGiaHuy_().filter(function (x) { return x.gia === ''; }).length; } catch (e) { }
   if (chuaGia) viec.push({ muc: 'i', loai: 'Hủy hàng', tab: 'huy', text: chuaGia + ' món hủy chưa có giá – anh đặt giá để tính tiền hủy' });
 
