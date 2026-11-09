@@ -206,6 +206,10 @@ td.r{color:var(--do);font-weight:700} td.y{color:#8a5d10;font-weight:700}
 .chart2 svg{width:100%;height:auto;display:block}.chart2 text{font-family:var(--B);font-size:10px;fill:#6E604A}
 .lg2{display:flex;gap:14px;font-size:12px;color:var(--muc2);margin-top:4px}.lg2 span{display:inline-flex;align-items:center;gap:5px}.lg2 i{width:10px;height:10px;border-radius:3px;display:inline-block}
 .sapo{display:flex;gap:14px;align-items:center;border:1.5px dashed var(--vang);background:var(--vangn);border-radius:16px;padding:12px 14px;color:#6b4a0c;font-size:13px}
+/* mở bên trong app Gặm Quản lý: bỏ dòng logo cho rộng chỗ */
+html.nhung header{padding-top:4px}
+html.nhung header .in{display:none}
+html.nhung .tabs{margin-top:0}
 </style>
 </head>
 <body>
@@ -294,6 +298,8 @@ if (qExec) ls.set('gam_sq_exec', decodeURIComponent(qExec));
 var EXEC = ls.get('gam_sq_exec') || EXEC_GOC;
 var PASS = ls.get('gam_chu_pass');
 var MOBILE = function(){ return window.innerWidth < 1000; };
+var NHUNG = window.parent !== window; if (NHUNG) document.documentElement.classList.add('nhung');
+setInterval(function(){ if (!NHUNG) return; var n = function(id){ var e = $(id); return e && !e.classList.contains('hide') ? (+e.textContent || 0) : 0; }; try { parent.postMessage('gam-dh-n:' + (n('nTong') + n('nDuyet')), '*'); } catch(e){} }, 4000);
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function tien(n){ n = Math.round(Number(n)||0); return (n<0?'−':'') + Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.') + 'đ'; }

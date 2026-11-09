@@ -184,7 +184,7 @@ textarea.vin{min-height:64px;resize:vertical}
     <button data-v="bep">Bếp<span class="n" id="nBep"></span></button>
     <button data-v="vc">Voucher</button>
     <button data-v="ls">Lịch sử</button>
-    <button data-v="dh" id="btnDH" class="hide">Điều hành</button>
+    <button data-v="dh" id="btnDH" class="hide">Điều hành<span class="n" id="nDH"></span></button>
   </div>
   <div id="views">
     <div class="view" id="v-moi"><div class="scroll"><div class="wrap">
@@ -285,6 +285,7 @@ textarea.vin{min-height:64px;resize:vertical}
   var ls = { get:function(k){ try{return localStorage.getItem(k)||''}catch(e){return ''} }, set:function(k,v){ try{localStorage.setItem(k,v)}catch(e){} } };
   /* Sổ Quán (app đi chợ + hóa đơn): mật khẩu anh Đạt mở thêm phần Điều hành */
   var SQ_EXEC = ls.get('gam_sq_exec') || 'https://script.google.com/macros/s/AKfycbyuPUKFDtEW-Trp-Ycwkv4lC7eoYnUEA_WL0p0veag0qSTb5xisMXHqURxYKUC36CZs/exec';
+  window.addEventListener('message', function(e){ var m = /^gam-dh-n:(\d+)$/.exec(String(e.data||'')); if (m) $('nDH').textContent = +m[1] ? m[1] : ''; });
   function mkDH(){ var box = $('v-dh'); if (box.firstChild) return; var f = document.createElement('iframe'); f.src = 'dieuhanh.html'; f.title = 'Điều hành'; box.appendChild(f); }
   var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
@@ -567,6 +568,7 @@ textarea.vin{min-height:64px;resize:vertical}
     $('login').classList.remove('on');
     var chu = !!ls.get('gam_chu_pass');
     $('btnDH').classList.toggle('hide', !chu); $('bar').classList.toggle('chu', chu);
+    if (chu) setTimeout(mkDH, 2500); // tải sẵn Điều hành để có số việc cần xử lý trên nút
     if (!KEY) { show('dh'); return; }
     var v = ls.get('gam_ql_view'); show(v==='pv'||v==='bep'||v==='ls'||v==='vc'||(v==='dh'&&chu) ? v : 'moi');
     poll(); preload(); setInterval(function(){ if (!document.hidden) poll(); }, 30000);
