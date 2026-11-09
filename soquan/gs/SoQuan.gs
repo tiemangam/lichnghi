@@ -99,6 +99,8 @@ var SQ_API = {
   nv_tn_ngay: function (p) { var nv = sqNV_(p.pin); return sqTnNgay_(nv, p); },
   nv_tn_luu: function (p) { var nv = sqNV_(p.pin); return sqTnLuu_(nv, p); },
   nv_tn_thang: function (p) { var nv = sqNV_(p.pin); return sqTnThang_(nv, p); },
+  nv_sapo_ds: function (p) { var nv = sqNV_(p.pin); return sqSapoNV_(nv); },
+  nv_sapo_luu: function (p) { var nv = sqNV_(p.pin); sqSapoQuyen_(nv); var r = sqSapoLuu_(p, nv.ten); r.ds = sqSapoNV_(nv).ds; return r; },
   nv_phieu: function (p) { var nv = sqNV_(p.pin); var x = sqChiTietPhieu_(p.id); if (x.meta && x.meta.nguoi !== nv.ten) throw new Error('Phiếu này không phải của em.'); return { phieu: x }; },
   /* ---- anh Đạt ---- */
   chu_vao: function (p) { sqChu_(p.pass); return { qlKey: PropertiesService.getScriptProperties().getProperty('QL_KEY') || '' }; },
@@ -118,7 +120,7 @@ var SQ_API = {
   chu_tn: function (p) { sqChu_(p.pass); return sqTnChu_(p); },
   chu_tn_xuly: function (p) { sqChu_(p.pass); return sqTnXuLy_(p); },
   chu_tong: function (p) { sqChu_(p.pass); return sqTongQuan_(p); },
-  chu_sapo_luu: function (p) { sqChu_(p.pass); return sqSapoLuu_(p); }
+  chu_sapo_luu: function (p) { sqChu_(p.pass); return sqSapoLuu_(p, 'anh Đạt'); }
 };
 
 /* ======================= ĐĂNG NHẬP ======================= */

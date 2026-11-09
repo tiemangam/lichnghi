@@ -91,11 +91,11 @@ function sqSapoRows_() {
     .filter(function (x) { return x.d && /^\d{4}-\d{2}-\d{2}$/.test(x.ngay); });
 }
 // p.ds = [{ngay, loai:'tt'|'mon', d:{...}}]
-function sqSapoLuu_(p) {
+function sqSapoLuu_(p, nguoi) {
   var ds = (Array.isArray(p.ds) ? p.ds : []).slice(0, 62);
   if (!ds.length) throw new Error('Chưa có số liệu.');
   return khoa_(function () {
-    var sh = sqTabSapo_(), rows = sqSapoRows_(), idx = {}, luc = bayGio_(), n = 0;
+    var sh = sqTabSapo_(), rows = sqSapoRows_(), idx = {}, luc = bayGio_() + (nguoi ? ' · ' + nguoi : ''), n = 0;
     rows.forEach(function (x) { idx[x.ngay + '|' + x.loai] = x.row; });
     ds.forEach(function (x) {
       var ngay = sqKiemNgay_(x.ngay), loai = x.loai === 'mon' ? 'mon' : 'tt';
@@ -109,4 +109,14 @@ function sqSapoLuu_(p) {
     });
     return { luu: n };
   });
+}
+
+// Nhân viên (Sơn / thu ngân) gửi file Sapo từ app Nhà Gặm – chỉ thấy ngày nào đã gửi, không thấy số tiền
+function sqSapoQuyen_(nv) { if ((nv.chucNang || []).indexOf('sapo') < 0) throw new Error('Em chưa được mở chức năng Gửi số Sapo. Nhờ anh Đạt bật trong Điều hành → Nhân viên.'); }
+function sqSapoNV_(nv) {
+  sqSapoQuyen_(nv);
+  var hn = homNay_(), tu = congNgay_(hn, -9), m = {};
+  sqSapoRows_().forEach(function (x) { if (x.ngay >= tu) { var o = m[x.ngay] || (m[x.ngay] = { ngay: x.ngay }); o[x.loai] = x.luc; } });
+  var ds = []; for (var i = 0; i <= 8; i++) { var d = congNgay_(hn, -i); ds.push(m[d] || { ngay: d }); }
+  return { homNay: hn, ds: ds };
 }
