@@ -44,7 +44,8 @@ function sqTongQuan_(p) {
     if (x.ngay < tu || x.ngay > den) return;
     var o = N(x.ngay);
     if (x.loai === 'tt') { o.dt = x.d.tong; o.don = x.d.don; o.kenh = x.d.kenh; o.sapoLuc = x.luc; }
-    else if (x.ngay.slice(0, 7) === thang) o.mon = x.d.mon;
+    else if (x.loai === 'tq') o.tq = x.d;
+    else if (x.loai === 'mon' && x.ngay.slice(0, 7) === thang) o.mon = x.d.mon;
   });
   // việc cần xử lý
   var metas = sqMetaRows_(), viec = [];
@@ -69,8 +70,13 @@ function sqTongQuan_(p) {
     o.lechSapo = c;
     if (Math.abs(c) > TN_LECH_DO) viec.push({ muc: 'y', loai: 'Đối chiếu Sapo', tab: 'tong', ngay: d, text: sqDM_(d) + ': sổ thu ngân ' + sqTien_(o.dttm) + ' – Sapo tiền mặt ' + sqTien_(tm.tien) + ' (lệch ' + (c < 0 ? '−' : '+') + sqTien_(Math.abs(c)) + ')' });
   });
-  var homQua = congNgay_(hn, -1);
-  if (!(ngay[homQua] && ngay[homQua].kenh)) viec.push({ muc: 'i', loai: 'Số Sapo', tab: 'tong', ngay: homQua, text: 'Chưa tải số Sapo ngày ' + sqDM_(homQua) + ' (phương thức thanh toán + mặt hàng)' });
+  // số Sapo: 4 file mỗi tối (thanh toán, mặt hàng, tồn kho, doanh thu tổng quan)
+  var co = sqSapoCo_(congNgay_(hn, -1)), thieu = function (d) { var x = co[d] || {}; return SAPO_FILE.filter(function (f) { return !x[f[0]]; }).map(function (f) { return f[1]; }); };
+  var gio = +Utilities.formatDate(new Date(), TZ, 'H');
+  var tHn = thieu(hn), tHq = thieu(congNgay_(hn, -1));
+  if (gio >= 23 && tHn.length) viec.push({ muc: 'r', loai: 'Số Sapo', tab: 'tong', ngay: hn, text: 'Đã quá 23h, chưa có ' + (tHn.length === 4 ? 'số Sapo' : tHn.join(', ')) + ' ngày ' + sqDM_(hn) + ' – nhắc Sơn gửi' });
+  if (tHq.length) viec.push({ muc: tHq.length === 4 ? 'y' : 'i', loai: 'Số Sapo', tab: 'tong', ngay: congNgay_(hn, -1), text: 'Ngày ' + sqDM_(congNgay_(hn, -1)) + ' còn thiếu: ' + tHq.join(', ') });
+  try { sqKhoViec_().forEach(function (v) { viec.push(v); }); } catch (e) { }
   if (hoiLai) viec.push({ muc: 'i', loai: 'Hóa đơn', tab: 'cp', text: hoiLai + ' hóa đơn anh hỏi lại, nhân viên chưa trả lời' });
   if (choKiem) viec.push({ muc: 'y', loai: 'Hóa đơn', tab: 'cp', text: choKiem + ' hóa đơn ảnh nhân viên chưa kiểm tra / xác nhận' });
   var chuaGia = 0; try { chuaGia = sqGiaHuy_().filter(function (x) { return x.gia === ''; }).length; } catch (e) { }
@@ -79,6 +85,14 @@ function sqTongQuan_(p) {
   return { thang: thang, truoc: truoc, homNay: hn, ngay: ngay, viec: viec, lechDo: TN_LECH_DO, sapo: null };
 }
 
+var SAPO_FILE = [['tt', 'Thanh toán'], ['mon', 'Mặt hàng'], ['kho', 'Tồn kho'], ['tq', 'Doanh thu tổng quan']];
+// ngày nào đã có file nào (từ ngày tu): { 'yyyy-mm-dd': { tt: 'lúc · ai', mon:…, kho:…, tq:… } }
+function sqSapoCo_(tu) {
+  var m = {};
+  sqSapoRows_().forEach(function (x) { if (x.ngay >= tu) (m[x.ngay] = m[x.ngay] || {})[x.loai] = x.luc; });
+  try { sqKhoMeta_().forEach(function (x) { if (x.loai === 'kho' && x.ngay >= tu) (m[x.ngay] = m[x.ngay] || {}).kho = x.luc; }); } catch (e) { }
+  return m;
+}
 /* ---------- SỐ SAPO (anh tải file Excel xuất từ Sapo trong Điều hành, trình duyệt đọc file rồi gửi số lên) ---------- */
 var DH_SAPO = 'DH_Sapo';
 var H_DH_SAPO = ['Ngày', 'Loại', 'Số liệu (JSON)', 'Tải lúc'];
@@ -89,16 +103,22 @@ function sqSapoRows_() {
   return sh.getRange(2, 1, n - 1, 4).getValues().map(function (r, i) { return { row: i + 2, ngay: chuanNgay_(r[0]), loai: String(r[1]), d: sqJ_(r[2], null), luc: String(r[3] || '') }; })
     .filter(function (x) { return x.d && /^\d{4}-\d{2}-\d{2}$/.test(x.ngay); });
 }
-// p.ds = [{ngay, loai:'tt'|'mon', d:{...}}]
+// p.ds = [{ngay, loai:'tt'|'mon'|'tq'|'kho'|'khoky', d:{...}}]
 function sqSapoLuu_(p, nguoi) {
-  var ds = (Array.isArray(p.ds) ? p.ds : []).slice(0, 62);
+  var ds = (Array.isArray(p.ds) ? p.ds : []).slice(0, 70);
   if (!ds.length) throw new Error('Chưa có số liệu.');
   return khoa_(function () {
     var sh = sqTabSapo_(), rows = sqSapoRows_(), idx = {}, luc = bayGio_() + (nguoi ? ' · ' + nguoi : ''), n = 0;
     rows.forEach(function (x) { idx[x.ngay + '|' + x.loai] = x.row; });
-    ds.forEach(function (x) {
-      var ngay = sqKiemNgay_(x.ngay), loai = x.loai === 'mon' ? 'mon' : 'tt';
-      var d = loai === 'tt'
+    var kho = ds.filter(function (x) { return x.loai === 'kho' || x.loai === 'khoky'; });
+    n += sqKhoLuu_(kho, luc);
+    ds.filter(function (x) { return kho.indexOf(x) < 0; }).forEach(function (x) {
+      var ngay = sqKiemNgay_(x.ngay), loai = x.loai === 'mon' ? 'mon' : x.loai === 'tq' ? 'tq' : 'tt', q = x.d || {};
+      var d = loai === 'tq'
+        ? { tienHang: Math.round(so_(q.tienHang)), giam: Math.round(so_(q.giam)), thue: Math.round(so_(q.thue)), phiDV: Math.round(so_(q.phiDV)), phiGiao: Math.round(so_(q.phiGiao)),
+            phiDoiTac: Math.round(so_(q.phiDoiTac)), thueSan: Math.round(so_(q.thueSan)), tip: Math.round(so_(q.tip)), dtThuc: Math.round(so_(q.dtThuc)),
+            don: Math.round(so_(q.don)), huy: Math.round(so_(q.huy)), tienHuy: Math.round(so_(q.tienHuy)), sl: so_(q.sl) }
+        : loai === 'tt'
         ? { tong: Math.round(so_(x.d && x.d.tong)), don: Math.round(so_(x.d && x.d.don)), kenh: (x.d && x.d.kenh || []).slice(0, 20).map(function (k) { return { ten: chu_(k.ten, 40), don: Math.round(so_(k.don)), huy: Math.round(so_(k.huy)), tien: Math.round(so_(k.tien)) }; }) }
         : { tong: Math.round(so_(x.d && x.d.tong)), giam: Math.round(so_(x.d && x.d.giam)), mon: (x.d && x.d.mon || []).slice(0, 300).map(function (m) { return { dm: chu_(m.dm, 30), ten: chu_(m.ten, 60), sl: so_(m.sl), tien: Math.round(so_(m.tien)) }; }) };
       var row = idx[ngay + '|' + loai];
@@ -114,8 +134,7 @@ function sqSapoLuu_(p, nguoi) {
 function sqSapoQuyen_(nv) { if ((nv.chucNang || []).indexOf('sapo') < 0) throw new Error('Em chưa được mở chức năng Gửi số Sapo. Nhờ anh Đạt bật trong Điều hành → Nhân viên.'); }
 function sqSapoNV_(nv) {
   sqSapoQuyen_(nv);
-  var hn = homNay_(), tu = congNgay_(hn, -9), m = {};
-  sqSapoRows_().forEach(function (x) { if (x.ngay >= tu) { var o = m[x.ngay] || (m[x.ngay] = { ngay: x.ngay }); o[x.loai] = x.luc; } });
-  var ds = []; for (var i = 0; i <= 8; i++) { var d = congNgay_(hn, -i); ds.push(m[d] || { ngay: d }); }
+  var hn = homNay_(), tu = congNgay_(hn, -9), m = sqSapoCo_(tu);
+  var ds = []; for (var i = 0; i <= 8; i++) { var d = congNgay_(hn, -i), x = m[d] || {}; ds.push({ ngay: d, tt: x.tt || '', mon: x.mon || '', kho: x.kho || '', tq: x.tq || '' }); }
   return { homNay: hn, ds: ds };
 }
