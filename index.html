@@ -42,6 +42,9 @@ body.app #app{display:flex}
 #bar button{flex:1;min-width:0;height:42px;padding:0 4px;border:1.5px solid rgba(248,232,196,.55);border-radius:999px;background:transparent;color:var(--kem);font:700 13.5px/1 var(--H);text-transform:uppercase;letter-spacing:.01em;cursor:pointer;white-space:nowrap}
 #bar button.on{background:var(--kem);color:var(--xanh);border-color:var(--kem)}
 #frames{flex:1;position:relative;min-height:0}
+/* Sổ Quán đang mở màn toàn trang (đi chợ): ẩn thanh trên cho rộng chỗ thao tác */
+body.full #bar{display:none}
+body.full #app{padding-top:env(safe-area-inset-top);background:var(--xanh)}
 #frames iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:var(--nen)}
 #frames iframe.on{display:block}
 .loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:var(--kem);background:var(--xanh);font:500 14px var(--B);z-index:2}
@@ -321,11 +324,14 @@ body.app #cai{display:none}
     var cur = '';
     /* app bên Google báo 'đã vẽ xong' thì mới bỏ màn chờ (tránh màn trắng) */
     window.addEventListener('message', function(e){
+      var f2 = /^gam-full:([01])$/.exec(String(e.data||''));
+      if (f2) { document.body.classList.toggle('full', f2[1] === '1' && cur === 'sq'); return; }
       var m = /^gam-ready:(pv|bep|sq)$/.exec(String(e.data||''));
       if (m && frames[m[1]] && frames[m[1]].load.parentNode) frames[m[1]].load.remove();
     });
     var tabs = function(bp){
       cur = bp;
+      document.body.classList.remove('full');
       $('pick').classList.remove('on');
       [].forEach.call(document.querySelectorAll('#bar button'), function(b){ b.classList.toggle('on', b.getAttribute('data-bp') === bp); });
       $('qt').classList.toggle('on', bp === 'qt');
