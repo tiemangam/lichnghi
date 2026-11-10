@@ -111,31 +111,41 @@ function sqKhoTinh_(p) {
   p = p || {};
   var meta = sqKhoMeta_(), ngays = meta.filter(function (x) { return x.loai === 'kho'; }).map(function (x) { return x.ngay; }).sort();
   var kys = meta.filter(function (x) { return x.loai === 'khoky'; }).map(function (x) { return { tu: x.ngay, den: x.den, n: x.n, row: x.row }; });
+  // chưa có file 1 ngày nào mới hơn file nhiều ngày → lấy tồn cuối kỳ của file nhiều ngày mới nhất làm số tồn
+  var kyMoi = kys.slice().sort(function (a, b) { return a.den < b.den ? 1 : a.den > b.den ? -1 : b.n - a.n; })[0], gia = null;
+  if (kyMoi && (!ngays.length || kyMoi.den > ngays[ngays.length - 1])) {
+    gia = { loai: 'gia', ngay: kyMoi.den, row: kyMoi.row, tu: kyMoi.tu, luc: (meta.filter(function (x) { return x.row === kyMoi.row; })[0] || {}).luc || '' };
+    ngays.push(kyMoi.den);
+  }
   if (!ngays.length) return { trong: true, ngays: [], ky: kys.map(function (k) { return { tu: k.tu, den: k.den, n: k.n }; }), loaiTen: KHO_LOAI };
   var ngay = /^\d{4}-\d{2}-\d{2}$/.test(String(p.ngay || '')) ? String(p.ngay) : ngays[ngays.length - 1];
   var truoc = ngays.filter(function (d) { return d <= ngay; });
   ngay = truoc.length ? truoc[truoc.length - 1] : ngays[0];
   var days = sqKhoNgayDs_(ngay, KHO_SO_NGAY);
   var can = meta.filter(function (x) { return x.loai === 'kho' && x.ngay >= days[0] && x.ngay <= ngay; });
+  if (gia && gia.ngay >= days[0] && gia.ngay <= ngay) can.push(gia);
   // các file nhiều ngày trong 75 ngày, không chồng nhau (ưu tiên file mới)
   kys = kys.filter(function (k) { return k.den >= congNgay_(ngay, -75) && k.tu <= ngay; }).sort(function (a, b) { return a.tu < b.tu ? 1 : -1; });
   var dung = [], moc = '9999-12-31';
   kys.forEach(function (k) { if (k.den < moc) { dung.push(k); moc = k.tu; } });
   var data = sqKhoDoc_(can.concat(dung));
-  var snap = {}, lucNgay = '';
-  can.forEach(function (x) { var m = {}; (data[x.row] || []).forEach(function (a) { m[sqKhoK_(a[0])] = a; }); snap[x.ngay] = m; if (x.ngay === ngay) lucNgay = x.luc; });
+  var snap = {}, snapGia = {}, lucNgay = '', curGia = null;
+  can.forEach(function (x) {
+    var rows = data[x.row] || [];
+    if (x.loai === 'gia') { rows = rows.map(function (a) { return [a[0], a[1], a[7], 0, 0, 0, a[6], a[7]]; }); snapGia[x.ngay] = true; if (x.ngay === ngay) curGia = rows; }
+    var m = {}; rows.forEach(function (a) { m[sqKhoK_(a[0])] = a; }); snap[x.ngay] = m; if (x.ngay === ngay) lucNgay = x.luc; });
   var kyTong = {}, kyN = 0, kyTu = '', kyDen = '';
   dung.forEach(function (k) {
     kyN += k.n; if (!kyTu || k.tu < kyTu) kyTu = k.tu; if (!kyDen || k.den > kyDen) kyDen = k.den;
     (data[k.row] || []).forEach(function (a) { var key = sqKhoK_(a[0]), o = kyTong[key] || (kyTong[key] = { dung: 0, ban: 0 }); o.dung += -(a[3] + a[5]); o.ban += -a[3]; });
   });
-  var cd = sqKhoCD_(), cur = data[can.filter(function (x) { return x.ngay === ngay; })[0].row] || [];
+  var cd = sqKhoCD_(), cur = curGia || data[can.filter(function (x) { return x.ngay === ngay; })[0].row] || [];
   var cuaSo = days.slice(-KHO_CUA_SO), nen = days.slice(0, KHO_SO_NGAY - KHO_CUA_SO);
   var r1 = function (v) { return Math.round(v * 100) / 100; };
 
   var items = cur.map(function (a) {
     var key = sqKhoK_(a[0]), s = cd[key] || {};
-    var d14 = days.map(function (d) { var x = snap[d] && snap[d][key]; return x ? r1(-(x[3] + x[5])) : null; });
+    var d14 = days.map(function (d) { var x = !snapGia[d] && snap[d] && snap[d][key]; return x ? r1(-(x[3] + x[5])) : null; });
     var coBan = (kyTong[key] && kyTong[key].ban > 0) || days.some(function (d) { var x = snap[d] && snap[d][key]; return x && x[3] < 0; });
     var loaiDoan = sqKhoLoaiDoan_(a[0], coBan), loai = s.loai || loaiDoan;
     // tốc độ dùng tự tính
@@ -188,7 +198,7 @@ function sqKhoTinh_(p) {
     });
   } catch (e) { }
 
-  return { ngay: ngay, ngays: ngays.slice(-60), luc: lucNgay, homNay: homNay_(), days: days, items: items, doiChieu: { them: them, huy: huy },
+  return { tuKy: curGia ? { tu: gia.tu, den: gia.ngay } : null, ngay: ngay, ngays: ngays.slice(-60), luc: lucNgay, homNay: homNay_(), days: days, items: items, doiChieu: { them: them, huy: huy },
     ky: kyN ? { tu: kyTu, den: kyDen, n: kyN } : null, loaiTen: KHO_LOAI, cuaSo: KHO_CUA_SO };
 }
 
