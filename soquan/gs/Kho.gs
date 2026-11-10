@@ -146,6 +146,7 @@ function sqKhoTinh_(p) {
   var items = cur.map(function (a) {
     var key = sqKhoK_(a[0]), s = cd[key] || {};
     var d14 = days.map(function (d) { var x = !snapGia[d] && snap[d] && snap[d][key]; return x ? r1(-(x[3] + x[5])) : null; });
+    var n14 = days.map(function (d) { var x = !snapGia[d] && snap[d] && snap[d][key]; return x ? [x[2], x[4], r1(-(x[3] + x[5])), x[7]] : null; });
     var coBan = (kyTong[key] && kyTong[key].ban > 0) || days.some(function (d) { var x = snap[d] && snap[d][key]; return x && x[3] < 0; });
     var loaiDoan = sqKhoLoaiDoan_(a[0], coBan), loai = s.loai || loaiDoan;
     // tốc độ dùng tự tính
@@ -165,7 +166,7 @@ function sqKhoTinh_(p) {
     var min = s.min !== '' && s.min !== undefined ? s.min : a[6], cuoi = a[7];
     return { t: a[0], dv: a[1], dau: a[2], ban: a[3], them: a[4], giam: a[5], minSapo: a[6], min: min, minAnh: s.min !== '' && s.min !== undefined, cuoi: cuoi,
       tt: cuoi <= 0 ? 'het' : cuoi <= min ? 'sap' : '', loai: loai, loaiDoan: loaiDoan, dm: dm, rate: rate == null ? null : Math.round(rate * 1000) / 1000, rateTu: rateTu == null ? null : Math.round(rateTu * 1000) / 1000, nguon: nguon,
-      d14: d14, soNgay3: w.length, dung3: dung3, exp3: exp3, tile: tile, muc: muc, duNgay: rate > 0 ? Math.round(cuoi / rate * 10) / 10 : null, dat: !!(s.dat && s.dat >= ngay) };
+      d14: d14, n14: n14, soNgay3: w.length, dung3: dung3, exp3: exp3, tile: tile, muc: muc, duNgay: rate > 0 ? Math.round(cuoi / rate * 10) / 10 : null, dat: !!(s.dat && s.dat >= ngay) };
   });
 
   // đối chiếu "Thêm" ↔ hóa đơn mua (ngày trước + ngày đó)
