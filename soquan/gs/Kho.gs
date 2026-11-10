@@ -214,8 +214,110 @@ function sqKhoViec_() {
   j.items.filter(function (x) { return x.muc === 'r'; }).sort(function (a, b) { return b.tile - a.tile; }).slice(0, 4).forEach(function (x) {
     out.push({ muc: 'r', loai: 'Kho – dùng nhiều', tab: 'kho', ngay: j.ngay, text: x.t + ': dùng ' + String(x.dung3).replace('.', ',') + ' ' + String(x.dv).toLowerCase() + ' trong ' + x.soNgay3 + ' ngày – gấp ' + String(Math.round(x.tile * 10) / 10).replace('.', ',') + ' lần định mức' });
   });
+  try {
+    var t = sqKhoTuan_({});
+    t.items.filter(function (x) { return x.muc === 'r'; }).slice(0, 4).forEach(function (x) {
+      var T = t.tuanInfo[t.tuanInfo.length - 1];
+      out.push({ muc: 'r', loai: 'Kho – tuần ' + sqDM_(T.tu) + '–' + sqDM_(T.den), tab: 'kho', ngay: T.den, text: x.t + ': dùng ' + String(x.dung).replace('.', ',') + ' ' + String(x.dv).toLowerCase() + ' – gấp ' + String(Math.round(x.tile * 10) / 10).replace('.', ',') + ' lần so với ' + (x.dau && x.ppcBase ? 'số món chiên bán' : 'doanh thu') + ' (4 tuần trước)' });
+    });
+  } catch (e) { }
   var vang = j.items.filter(function (x) { return x.muc === 'y'; }).length;
   if (het.length || sap.length || vang) out.push({ muc: het.length ? 'y' : 'i', loai: 'Kho', tab: 'kho', ngay: j.ngay,
     text: sqDM_(j.ngay) + ': ' + [het.length ? het.length + ' món đã hết' : '', sap.length ? sap.length + ' món sắp hết' : '', vang ? vang + ' món dùng nhiều hơn thường lệ' : ''].filter(String).join(' · ') });
   return out;
+}
+
+/* ---------- THEO TUẦN (Thứ 2 → Chủ nhật): lượng dùng so với doanh thu, dầu ăn so với món chiên ---------- */
+var KHO_CHIEN_MAC_DINH = ['sun ga', 'chan ga chien', 'trung muc chien', 'cha cuon ca trich', 'ga dot', 'com chien', 'lau vit nau chao', 'goi chay', 'ca loc'];
+var KHO_DAU = ['dau an'];
+function sqThu2_(d) { var p = d.split('-'), w = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay(); return congNgay_(d, -((w + 6) % 7)); }
+function sqKhoChien_() { var v = PropertiesService.getScriptProperties().getProperty('KHO_MON_CHIEN'); var ds = v ? sqJ_(v, null) : null; return Array.isArray(ds) && ds.length ? ds : KHO_CHIEN_MAC_DINH; }
+function sqKhoChienLuu_(p) {
+  var ds = (Array.isArray(p.ds) ? p.ds : []).map(function (x) { return khongDau_(chu_(x, 80)); }).filter(String).slice(0, 80);
+  PropertiesService.getScriptProperties().setProperty('KHO_MON_CHIEN', JSON.stringify(ds));
+  return { ok: true, ds: ds };
+}
+function sqKhoLaChien_(ten, ds) { var k = khongDau_(ten); return ds.some(function (p) { return k === p || k.indexOf(p) >= 0; }); }
+
+function sqKhoTuan_(p) {
+  p = p || {};
+  var hn = homNay_(), tuNay = sqThu2_(hn);
+  var tuan = /^\d{4}-\d{2}-\d{2}$/.test(String(p.tuan || '')) ? sqThu2_(String(p.tuan)) : '';
+  if (!tuan) { // mặc định: tuần mới nhất có số kho
+    var moi = ''; sqKhoMeta_().forEach(function (x) { var d = x.loai === 'kho' ? x.ngay : (sqThu2_(x.ngay) === x.ngay && x.den === congNgay_(x.ngay, 6) ? x.den : ''); if (d && d > moi) moi = d; });
+    tuan = moi ? sqThu2_(moi > hn ? hn : moi) : tuNay;
+  }
+  var SO = 12, mons = []; for (var i = SO - 1; i >= 0; i--) mons.push(congNgay_(tuan, -7 * i));
+  var start = mons[0], end = congNgay_(tuan, 6);
+  // kho: đọc 1 lần
+  var sh = sqTabKho_(), n = sh.getLastRow(), daily = {}, weekly = {}, ten = {};
+  if (n >= 2) {
+    var a = sh.getRange(2, 1, n - 1, 5).getValues();
+    a.forEach(function (r) {
+      var ngay = chuanNgay_(r[0]), loai = String(r[1]), den = chuanNgay_(r[2]);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay)) return;
+      var hop = loai === 'kho' ? (ngay >= start && ngay <= end) : (loai === 'khoky' && ngay >= start && ngay <= tuan && sqThu2_(ngay) === ngay && den === congNgay_(ngay, 6));
+      if (!hop) return;
+      var m = {}; sqKhoMon_(sqJ_(String(r[4] || ''), [])).forEach(function (x) { var k = sqKhoK_(x[0]); m[k] = x; ten[k] = x; });
+      if (loai === 'kho') daily[ngay] = m; else weekly[ngay] = m;
+    });
+  }
+  // doanh thu + món bán
+  var dt = {}, don = {}, monNgay = {}, monTuan = {}, tenMon = {};
+  sqSapoRows_().forEach(function (x) {
+    if (x.loai === 'tt' && x.ngay >= start && x.ngay <= end) { dt[x.ngay] = x.d.tong; don[x.ngay] = x.d.don; }
+    else if (x.loai === 'tq' && x.ngay >= start && x.ngay <= end) { if (dt[x.ngay] == null) dt[x.ngay] = x.d.dtThuc; if (don[x.ngay] == null) don[x.ngay] = x.d.don; }
+    else if (x.loai === 'mon' && x.ngay >= start && x.ngay <= end) monNgay[x.ngay] = x.d.mon || [];
+    else if (x.loai === 'monky' && x.ngay >= start && x.ngay <= tuan && sqThu2_(x.ngay) === x.ngay && x.d.den === congNgay_(x.ngay, 6)) monTuan[x.ngay] = x.d;
+  });
+  var chienDs = sqKhoChien_();
+  var tuanInfo = mons.map(function (m) {
+    var days = [0, 1, 2, 3, 4, 5, 6].map(function (k) { return congNgay_(m, k); });
+    var dKho = days.filter(function (d) { return daily[d]; }), dDt = days.filter(function (d) { return dt[d] != null; }), dMon = days.filter(function (d) { return monNgay[d]; });
+    var mt = monTuan[m];
+    var doanhThu = dDt.length ? dDt.reduce(function (s, d) { return s + dt[d]; }, 0) : null, soDon = dDt.length ? dDt.reduce(function (s, d) { return s + (don[d] || 0); }, 0) : null;
+    if (mt && dDt.length < 7) { doanhThu = mt.tong; soDon = null; }
+    var chien = {}, coMon = false;
+    var cong = function (ds) { (ds || []).forEach(function (x) { if (sqKhoLaChien_(x.ten, chienDs)) { chien[x.ten] = (chien[x.ten] || 0) + so_(x.sl); } tenMon[x.ten] = 1; }); };
+    if (mt && dMon.length < 7) { cong(mt.mon); coMon = true; } else if (dMon.length) { dMon.forEach(function (d) { cong(monNgay[d]); }); coMon = true; }
+    var tongChien = 0; for (var c in chien) tongChien += chien[c];
+    return { tu: m, den: days[6], days: days, kho: weekly[m] ? 'tuan' : dKho.length ? dKho.length : 0, khoNgay: dKho.length, dt: doanhThu, ngayDt: mt && dDt.length < 7 ? 7 : dDt.length, don: soDon,
+      chien: coMon ? tongChien : null, chienDs: chien, ngayMon: mt && dMon.length < 7 ? 7 : dMon.length };
+  });
+  var cd = sqKhoCD_(), r2 = function (v) { return Math.round(v * 100) / 100; };
+  var dungTuan = function (k, wi) { var T = tuanInfo[wi], m = weekly[T.tu]; if (m) { var x = m[k]; return x ? r2(-(x[3] + x[5])) : 0; }
+    if (!T.khoNgay) return null; var s = 0; T.days.forEach(function (d) { var x = daily[d] && daily[d][k]; if (x) s += -(x[3] + x[5]); }); return r2(s); };
+  var cur = SO - 1, items = [];
+  Object.keys(ten).forEach(function (k) {
+    var a0 = ten[k], s = cd[k] || {}, coBan = false;
+    var w = tuanInfo.map(function (T, wi) { return dungTuan(k, wi); });
+    Object.keys(weekly).concat(Object.keys(daily)).forEach(function (d) { var x = (weekly[d] || daily[d])[k]; if (x && x[3] < 0) coBan = true; });
+    var loai = s.loai || sqKhoLoaiDoan_(a0[0], coBan);
+    if (loai === 'ban') return;
+    if (!w.some(function (v) { return v > 0; })) return;
+    var per = tuanInfo.map(function (T, wi) { return w[wi] != null && T.dt > 0 ? w[wi] / (T.dt / 1e7) : null; });
+    var truoc = per.slice(cur - 4, cur).filter(function (v) { return v != null; });
+    var base = truoc.length ? truoc.reduce(function (x, y) { return x + y; }, 0) / truoc.length : null;
+    var wPrev = w.slice(cur - 4, cur).filter(function (v) { return v != null; }), avgW = wPrev.length ? wPrev.reduce(function (x, y) { return x + y; }, 0) / wPrev.length : null;
+    var dung = w[cur], T = tuanInfo[cur], tile = null, exp = null;
+    if (dung != null && base > 0 && per[cur] != null) { tile = per[cur] / base; exp = base * T.dt / 1e7; }
+    else if (dung != null && avgW > 0) { tile = dung / avgW; exp = avgW; }
+    var dau = KHO_DAU.indexOf(k) >= 0, ppc = null, ppcBase = null;
+    if (dau) {
+      var pc = tuanInfo.map(function (T2, wi) { return T2.chien > 0 && w[wi] > 0 ? T2.chien / w[wi] : null; });
+      ppc = pc[cur]; var pb = pc.slice(cur - 4, cur).filter(function (v) { return v != null; }); ppcBase = pb.length ? pb.reduce(function (x, y) { return x + y; }, 0) / pb.length : null;
+      if (ppc != null && ppcBase) { tile = ppcBase / ppc; exp = T.chien / ppcBase; }
+    }
+    var muc = '';
+    // món dùng ít (< 1 đơn vị/tuần trung bình) thì không báo – số nhỏ lệch là chuyện thường
+    if (tile != null && dung != null && avgW >= 1 && dung - exp >= 1) muc = tile >= 2 ? 'r' : tile >= 1.3 ? 'y' : '';
+    var d7 = T.days.map(function (d) { var x = daily[d] && daily[d][k]; return x ? r2(-(x[3] + x[5])) : null; });
+    items.push({ k: k, t: a0[0], dv: a0[1], loai: loai, nhom: loai === 'kho' || loai === 'bb' ? 'xuat' : 'chinh', w: w, per: per.map(function (v) { return v == null ? null : Math.round(v * 1000) / 1000; }),
+      dung: dung, truoc: w[cur - 1], per10: per[cur] == null ? null : Math.round(per[cur] * 1000) / 1000, base10: base == null ? null : Math.round(base * 1000) / 1000, avgW: avgW == null ? null : r2(avgW),
+      tile: tile == null ? null : r2(tile), exp: exp == null ? null : r2(exp), muc: muc, d7: d7, dau: dau, ppc: ppc == null ? null : Math.round(ppc), ppcBase: ppcBase == null ? null : Math.round(ppcBase) });
+  });
+  var thuTu = { kho: 0, bb: 1, tuoi: 2, tp: 3 };
+  items.sort(function (a, b) { return (a.nhom === b.nhom ? 0 : a.nhom === 'xuat' ? -1 : 1) || ((b.muc === 'r') - (a.muc === 'r')) || ((b.muc === 'y') - (a.muc === 'y')) || (thuTu[a.loai] - thuTu[b.loai]) || a.t.localeCompare(b.t); });
+  var monList = Object.keys(tenMon).sort();
+  return { tuan: tuan, tuNay: tuNay, homNay: hn, tuanInfo: tuanInfo, items: items, chienDs: chienDs, monList: monList };
 }

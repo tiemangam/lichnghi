@@ -113,7 +113,7 @@ function sqSapoLuu_(p, nguoi) {
     var kho = ds.filter(function (x) { return x.loai === 'kho' || x.loai === 'khoky'; });
     n += sqKhoLuu_(kho, luc);
     ds.filter(function (x) { return kho.indexOf(x) < 0; }).forEach(function (x) {
-      var ngay = sqKiemNgay_(x.ngay), loai = x.loai === 'mon' ? 'mon' : x.loai === 'tq' ? 'tq' : 'tt', q = x.d || {};
+      var ngay = sqKiemNgay_(x.ngay), loai = x.loai === 'mon' || x.loai === 'monky' || x.loai === 'tq' ? x.loai : 'tt', q = x.d || {};
       var d = loai === 'tq'
         ? { tienHang: Math.round(so_(q.tienHang)), giam: Math.round(so_(q.giam)), thue: Math.round(so_(q.thue)), phiDV: Math.round(so_(q.phiDV)), phiGiao: Math.round(so_(q.phiGiao)),
             phiDoiTac: Math.round(so_(q.phiDoiTac)), thueSan: Math.round(so_(q.thueSan)), tip: Math.round(so_(q.tip)), dtThuc: Math.round(so_(q.dtThuc)),
@@ -121,6 +121,7 @@ function sqSapoLuu_(p, nguoi) {
         : loai === 'tt'
         ? { tong: Math.round(so_(x.d && x.d.tong)), don: Math.round(so_(x.d && x.d.don)), kenh: (x.d && x.d.kenh || []).slice(0, 20).map(function (k) { return { ten: chu_(k.ten, 40), don: Math.round(so_(k.don)), huy: Math.round(so_(k.huy)), tien: Math.round(so_(k.tien)) }; }) }
         : { tong: Math.round(so_(x.d && x.d.tong)), giam: Math.round(so_(x.d && x.d.giam)), mon: (x.d && x.d.mon || []).slice(0, 300).map(function (m) { return { dm: chu_(m.dm, 30), ten: chu_(m.ten, 60), sl: so_(m.sl), tien: Math.round(so_(m.tien)) }; }) };
+      if (loai === 'monky') d.den = /^\d{4}-\d{2}-\d{2}$/.test(String(q.den || '')) ? String(q.den) : ngay;
       var row = idx[ngay + '|' + loai];
       if (!row) { row = sh.getLastRow() + 1; idx[ngay + '|' + loai] = row; }
       sh.getRange(row, 1, 1, 4).setValues([[ngay, loai, JSON.stringify(d), luc]]);
