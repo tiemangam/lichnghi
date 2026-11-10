@@ -1266,7 +1266,7 @@ function veKH(){
   var it = j.items, i0 = j.ngays.indexOf(j.ngay);
   $('khTit').textContent = THU[dow(j.ngay)] + ', ' + dm(j.ngay);
   $('khTruoc').disabled = i0 <= 0; $('khSau').disabled = i0 >= j.ngays.length-1;
-  $('khBao').innerHTML = j.ngay < cong(j.homNay, -1) ? '<div class="cb i" style="margin-bottom:10px">Đang xem số kho ngày '+dmy(j.ngay)+(i0===j.ngays.length-1?' – ngày gần nhất có file tồn kho':'')+'.</div>' : '';
+  $('khBao').innerHTML = j.tuKy ? '<div class="cb i" style="margin-bottom:10px;line-height:1.55">Số tồn đang lấy từ <b>tồn cuối kỳ</b> của file kho nhiều ngày '+dm(j.tuKy.tu)+'–'+dm(j.tuKy.den)+'. Phần <b>nhập – xuất từng ngày</b> và <b>cảnh báo dùng đột biến</b> sẽ có khi Sơn (hoặc anh) gửi file <b>Báo cáo kho hàng 1 ngày</b> mỗi tối.</div>' : j.ngay < cong(j.homNay, -1) ? '<div class="cb i" style="margin-bottom:10px">Đang xem số kho ngày '+dmy(j.ngay)+(i0===j.ngays.length-1?' – ngày gần nhất có file tồn kho':'')+'.</div>' : '';
   var het = it.filter(function(x){ return x.tt==='het'; }), sap = it.filter(function(x){ return x.tt==='sap'; }), nhap = it.filter(function(x){ return x.them>0; }), bt = it.filter(function(x){ return x.muc; });
   $('khKpi').innerHTML = [[het.length?'r':'g','Đã hết',het.length+' món'],['','Sắp hết',sap.length+' món'],['g','Nhập thêm',nhap.length+' món'],[bt.some(function(x){ return x.muc==='r'; })?'r':'','Dùng bất thường',bt.length+' món']]
     .map(function(k){ return '<div class="kpi '+k[0]+'"><small>'+k[1]+'</small><b>'+k[2]+'</b></div>'; }).join('');
