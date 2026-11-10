@@ -7,14 +7,18 @@
 var DH_KHO = 'DH_Kho';
 var H_DH_KHO = ['Ngày', 'Loại', 'Dữ liệu tới ngày', 'Số ngày', 'Số liệu (JSON)', 'Tải lúc'];
 var SQ_KHO_CD = 'SQ_KhoCaiDat';
-var H_SQ_KHO_CD = ['Món', 'Loại', 'Mức tối thiểu', 'Định mức SL', 'Trong (ngày) từ', 'đến', 'Đã đặt ngày', 'Sửa lúc'];
+var H_SQ_KHO_CD = ['Món', 'Loại', 'Mức tối thiểu', 'Định mức SL', 'Trong (ngày) từ', 'đến', 'Đã đặt ngày', 'Sửa lúc', 'Nhóm'];
 var KHO_LOAI = { tuoi: 'Đồ tươi', kho: 'Gia vị – xuất dùng', bb: 'Bao bì – vật dụng', ban: 'Bán sẵn', tp: 'Thành phẩm bếp' };
 var KHO_THEO_DOI = ['tuoi', 'kho', 'bb'];   // loại được theo dõi tốc độ dùng
 var KHO_CUA_SO = 3;                          // xét 3 ngày gần nhất
 var KHO_SO_NGAY = 14;
 
 function sqTabKho_() { return sqTab_(DH_KHO, H_DH_KHO, function (sh) { sh.getRange('A:D').setNumberFormat('@'); sh.getRange('F:F').setNumberFormat('@'); }); }
-function sqTabKhoCD_() { return sqTab_(SQ_KHO_CD, H_SQ_KHO_CD, function (sh) { sh.getRange('A:B').setNumberFormat('@'); sh.getRange('G:H').setNumberFormat('@'); }); }
+function sqTabKhoCD_() {
+  var sh = sqTab_(SQ_KHO_CD, H_SQ_KHO_CD, function (sh) { sh.getRange('A:B').setNumberFormat('@'); sh.getRange('G:I').setNumberFormat('@'); });
+  if (!sh.getRange(1, 9).getValue()) sh.getRange(1, 9).setValue('Nhóm').setFontWeight('bold').setBackground('#445803').setFontColor('#F8E8C4');
+  return sh;
+}
 
 // [tên, đv, đầu, bán, thêm, giảm, tối thiểu Sapo, cuối]
 function sqKhoMon_(ds) {
@@ -61,7 +65,7 @@ function sqKhoCD_() {
   sh.getRange(2, 1, n - 1, H_SQ_KHO_CD.length).getValues().forEach(function (r, i) {
     var t = String(r[0] || ''); if (!t) return;
     var sr = function (v) { return v === '' || v === null ? '' : so_(v); };
-    m[sqKhoK_(t)] = { row: i + 2, ten: t, loai: KHO_LOAI[String(r[1])] ? String(r[1]) : '', min: sr(r[2]), sl: sr(r[3]), n1: sr(r[4]), n2: sr(r[5]), dat: chuanNgay_(r[6]) || '' };
+    m[sqKhoK_(t)] = { row: i + 2, ten: t, loai: KHO_LOAI[String(r[1])] ? String(r[1]) : '', min: sr(r[2]), sl: sr(r[3]), n1: sr(r[4]), n2: sr(r[5]), dat: chuanNgay_(r[6]) || '', nhom: String(r[8] || '') };
   });
   return m;
 }
@@ -70,17 +74,18 @@ function sqKhoCDLuu_(p) {
   var so0 = function (v, am) { if (v === '' || v === null || v === undefined) return ''; var x = Number(v); if (!isFinite(x) || x < 0 || (!am && x === 0)) return ''; return Math.round(x * 1000) / 1000; };
   return khoa_(function () {
     var sh = sqTabKhoCD_(), cd = sqKhoCD_(), x = cd[sqKhoK_(ten)];
-    var o = x || { ten: ten, loai: '', min: '', sl: '', n1: '', n2: '', dat: '' };
+    var o = x || { ten: ten, loai: '', min: '', sl: '', n1: '', n2: '', dat: '', nhom: '' };
     if ('loai' in p) o.loai = KHO_LOAI[String(p.loai)] ? String(p.loai) : '';
     if ('min' in p) o.min = so0(p.min, true);
     if ('sl' in p) o.sl = so0(p.sl);
     if ('n1' in p) o.n1 = so0(p.n1);
     if ('n2' in p) o.n2 = so0(p.n2);
+    if ('nhom' in p) o.nhom = /^[a-z0-9_]{1,20}$/.test(String(p.nhom || '')) ? String(p.nhom) : '';
     if ('dat' in p) o.dat = /^\d{4}-\d{2}-\d{2}$/.test(String(p.dat || '')) ? String(p.dat) : '';
     if (o.sl === '' || o.n1 === '') { o.sl = ''; o.n1 = ''; o.n2 = ''; }
     if (o.n2 !== '' && o.n2 < o.n1) { var t = o.n1; o.n1 = o.n2; o.n2 = t; }
     var row = x ? x.row : sh.getLastRow() + 1;
-    sh.getRange(row, 1, 1, H_SQ_KHO_CD.length).setValues([[ten, o.loai, o.min, o.sl, o.n1, o.n2, o.dat, bayGio_()]]);
+    sh.getRange(row, 1, 1, H_SQ_KHO_CD.length).setValues([[ten, o.loai, o.min, o.sl, o.n1, o.n2, o.dat, bayGio_(), o.nhom || '']]);
     return { ok: true };
   });
 }
@@ -96,6 +101,48 @@ function sqKhoLoaiDoan_(t, coBan) {
   if (coBan) return 'tp';
   return 'kho';
 }
+/* ---------- NHÓM HIỂN THỊ (thứ tự từ trên xuống; anh sắp xếp / đổi tên / chuyển món bằng nút ✎ Sắp xếp nhóm) ---------- */
+// kw: khớp đầu tên (theo cả chữ); '=x' = đúng nguyên tên
+var KHO_NHOM_MD = [
+  { id: 'thit', ten: 'Thịt heo – bò', mo: true, kw: ['thit', 'bo goi', 'bo met', 'bo nhung', 'bo vien', 'bo tai', 'bo bit tet'] },
+  { id: 'ga', ten: 'Gà – vịt', mo: true, kw: ['ga nguyen con', 'ga dot', 'ga lau', 'ga', 'dui ga', 'dui vit', 'vit', 'cari ga'] },
+  { id: 'chan', ten: 'Chân gà – sụn', mo: true, kw: ['chan sa', 'chan thai', 'chan ga', 'rut sa', 'rut thai', 'sun'] },
+  { id: 'hs', ten: 'Cá – mực – hến', mo: true, kw: ['ca', 'rang muc', 'trung muc', 'muc', 'hen', 'tom'] },
+  { id: 'cha', ten: 'Chả – nem', mo: true, kw: ['cha', 'nem', 'moc'] },
+  { id: 'trung', ten: 'Trứng', mo: true, kw: ['trung'] },
+  { id: 'lau', ten: 'Nước lẩu', mo: true, kw: ['nuoc lau'] },
+  { id: 'hanh', ten: 'Hành phi – đậu phộng', mo: true, kw: ['hanh phi', 'dau phong'] },
+  { id: 'chinh', ten: 'Món chính khác', mo: true, kw: ['xoi chien'] },
+  { id: 'trang', ten: 'Tráng miệng', mo: false, kw: ['kem chuoi', 'kem', 'banh flan', 'sua chua'] },
+  { id: 'nuoc', ten: 'Nước uống', mo: false, kw: ['pepsi', '7 up', '7up', 'mirinda', 'sting', 'nuoc suoi', 'tiger', 'strongbow', 'coca', 'sprite', 'bia', 'heineken', 'saigon', '333', 'tra', 'nuoc ngot', 'redbull', 'red bull'] },
+  { id: 'kho', ten: 'Bánh – bột – đồ khô', mo: false, kw: ['banh trang', 'banh da', 'banh', 'mi ki', 'mi', 'bun', 'bot mi', 'bot nang', 'bot nep', 'bot chien', 'sua dac', 'sua hop', 'sua', '=bo', 'keo'] },
+  { id: 'gv', ten: 'Gia vị', mo: false, kw: ['giam', 'hat nem', 'nuoc mam', 'mam', 'bot ngot', 'duong', 'muoi', 'dau an', 'dau hao', 'nuoc tuong', 'tuong ot', 'tuong', 'sate', 'chao', 'cot chanh', 'bot ot', 'bot cari', 'bot', 'ot mam gung', 'ot', 'tieu', 'toi', 'hanh', 'sa'] },
+  { id: 'bb', ten: 'Bao bì – vật dụng', mo: false, kw: ['boc', 'hop', 'ly', 'nap', 'ong hut', 'muong', 'dua', 'giay', 'tem', 'ghim', 'khan', 'tam', 'bao tay', 'gas', 'nhang', 'nuoc rua', 'hu sot', 'vim', 'tui', 'chen', 'dia', 'to'] },
+  { id: 'khac', ten: 'Khác', mo: false, kw: [] }
+];
+function sqKhoKw_(k, w) { if (w.charAt(0) === '=') return k === w.slice(1); return k === w || k.indexOf(w + ' ') === 0; }
+function sqKhoNhomDoan_(ten) {
+  var k = sqKhoK_(ten).replace(/\(gia thuong\)/g, '').replace(/\s+/g, ' ').trim();
+  for (var i = 0; i < KHO_NHOM_MD.length; i++) if (KHO_NHOM_MD[i].kw.some(function (w) { return sqKhoKw_(k, w); })) return KHO_NHOM_MD[i].id;
+  return 'khac';
+}
+function sqKhoNhom_() {
+  var v = PropertiesService.getScriptProperties().getProperty('KHO_NHOM'), luu = v ? sqJ_(v, null) : null, out = [], co = {};
+  (Array.isArray(luu) ? luu : []).forEach(function (g) { if (g && g.id && !co[g.id]) { co[g.id] = 1; out.push({ id: String(g.id), ten: String(g.ten || g.id), mo: !!g.mo }); } });
+  KHO_NHOM_MD.forEach(function (g) { if (!co[g.id]) { co[g.id] = 1; out.push({ id: g.id, ten: g.ten, mo: g.mo }); } });
+  return out;
+}
+function sqKhoNhomLuu_(p) {
+  var ds = (Array.isArray(p.ds) ? p.ds : []).slice(0, 40).map(function (g) {
+    return { id: /^[a-z0-9_]{1,20}$/.test(String(g && g.id || '')) ? String(g.id) : '', ten: chu_(g && g.ten, 40), mo: !!(g && g.mo) };
+  }).filter(function (g) { return g.id && g.ten; });
+  if (!ds.length) PropertiesService.getScriptProperties().deleteProperty('KHO_NHOM');
+  else PropertiesService.getScriptProperties().setProperty('KHO_NHOM', JSON.stringify(ds));
+  return { ok: true, nhomDs: sqKhoNhom_() };
+}
+// nhóm của 1 món: anh đã chuyển (cột Nhóm) → theo đó, không thì app đoán theo tên
+function sqKhoNhomCua_(ten, s, ids) { return s && s.nhom && ids[s.nhom] ? s.nhom : sqKhoNhomDoan_(ten); }
+function sqKhoIds_(ds) { var m = {}; ds.forEach(function (g) { m[g.id] = 1; }); return m; }
 function sqKhoTok_(s) { return khongDau_(String(s || '').replace(/\(.*?\)/g, ' ')).replace(/[^a-z0-9 ]/g, ' ').split(' ').filter(function (w) { return w.length >= 2; }); }
 // điểm khớp tên: 2 = tên kho nằm trọn trong tên dòng, 1 = tên dòng nằm trọn trong tên kho (dòng có ≥2 chữ hoặc kho 1 chữ)
 function sqKhoDiem_(a, b) {
@@ -117,7 +164,7 @@ function sqKhoTinh_(p) {
     gia = { loai: 'gia', ngay: kyMoi.den, row: kyMoi.row, tu: kyMoi.tu, luc: (meta.filter(function (x) { return x.row === kyMoi.row; })[0] || {}).luc || '' };
     ngays.push(kyMoi.den);
   }
-  if (!ngays.length) return { trong: true, ngays: [], ky: kys.map(function (k) { return { tu: k.tu, den: k.den, n: k.n }; }), loaiTen: KHO_LOAI };
+  if (!ngays.length) return { trong: true, ngays: [], ky: kys.map(function (k) { return { tu: k.tu, den: k.den, n: k.n }; }), loaiTen: KHO_LOAI, nhomDs: sqKhoNhom_() };
   var ngay = /^\d{4}-\d{2}-\d{2}$/.test(String(p.ngay || '')) ? String(p.ngay) : ngays[ngays.length - 1];
   var truoc = ngays.filter(function (d) { return d <= ngay; });
   ngay = truoc.length ? truoc[truoc.length - 1] : ngays[0];
@@ -139,6 +186,7 @@ function sqKhoTinh_(p) {
     kyN += k.n; if (!kyTu || k.tu < kyTu) kyTu = k.tu; if (!kyDen || k.den > kyDen) kyDen = k.den;
     (data[k.row] || []).forEach(function (a) { var key = sqKhoK_(a[0]), o = kyTong[key] || (kyTong[key] = { dung: 0, ban: 0 }); o.dung += -(a[3] + a[5]); o.ban += -a[3]; });
   });
+  var nhomDs = sqKhoNhom_(), nhomIds = sqKhoIds_(nhomDs);
   var cd = sqKhoCD_(), cur = curGia || data[can.filter(function (x) { return x.ngay === ngay; })[0].row] || [];
   var cuaSo = days.slice(-KHO_CUA_SO), nen = days.slice(0, KHO_SO_NGAY - KHO_CUA_SO);
   var r1 = function (v) { return Math.round(v * 100) / 100; };
@@ -166,7 +214,7 @@ function sqKhoTinh_(p) {
     var min = s.min !== '' && s.min !== undefined ? s.min : a[6], cuoi = a[7];
     return { t: a[0], dv: a[1], dau: a[2], ban: a[3], them: a[4], giam: a[5], minSapo: a[6], min: min, minAnh: s.min !== '' && s.min !== undefined, cuoi: cuoi,
       tt: cuoi <= 0 ? 'het' : cuoi <= min ? 'sap' : '', loai: loai, loaiDoan: loaiDoan, dm: dm, rate: rate == null ? null : Math.round(rate * 1000) / 1000, rateTu: rateTu == null ? null : Math.round(rateTu * 1000) / 1000, nguon: nguon,
-      d14: d14, n14: n14, soNgay3: w.length, dung3: dung3, exp3: exp3, tile: tile, muc: muc, duNgay: rate > 0 ? Math.round(cuoi / rate * 10) / 10 : null, dat: !!(s.dat && s.dat >= ngay) };
+      nhom: sqKhoNhomCua_(a[0], s, nhomIds), nhomDoan: sqKhoNhomDoan_(a[0]), d14: d14, n14: n14, soNgay3: w.length, dung3: dung3, exp3: exp3, tile: tile, muc: muc, duNgay: rate > 0 ? Math.round(cuoi / rate * 10) / 10 : null, dat: !!(s.dat && s.dat >= ngay) };
   });
 
   // đối chiếu "Thêm" ↔ hóa đơn mua (ngày trước + ngày đó)
@@ -200,7 +248,7 @@ function sqKhoTinh_(p) {
   } catch (e) { }
 
   return { tuKy: curGia ? { tu: gia.tu, den: gia.ngay } : null, ngay: ngay, ngays: ngays.slice(-60), luc: lucNgay, homNay: homNay_(), days: days, items: items, doiChieu: { them: them, huy: huy },
-    ky: kyN ? { tu: kyTu, den: kyDen, n: kyN } : null, loaiTen: KHO_LOAI, cuaSo: KHO_CUA_SO };
+    ky: kyN ? { tu: kyTu, den: kyDen, n: kyN } : null, loaiTen: KHO_LOAI, cuaSo: KHO_CUA_SO, nhomDs: nhomDs };
 }
 
 // Điều hành
@@ -263,11 +311,12 @@ function sqKhoTuan_(p) {
     });
   }
   // doanh thu + món bán
-  var dt = {}, don = {}, monNgay = {}, monTuan = {}, tenMon = {};
+  var dt = {}, don = {}, monNgay = {}, monTuan = {}, tenMon = {}, monGop = [];
   sqSapoRows_().forEach(function (x) {
     if (x.loai === 'tt' && x.ngay >= start && x.ngay <= end) { dt[x.ngay] = x.d.tong; don[x.ngay] = x.d.don; }
     else if (x.loai === 'tq' && x.ngay >= start && x.ngay <= end) { if (dt[x.ngay] == null) dt[x.ngay] = x.d.dtThuc; if (don[x.ngay] == null) don[x.ngay] = x.d.don; }
     else if (x.loai === 'mon' && x.ngay >= start && x.ngay <= end) monNgay[x.ngay] = x.d.mon || [];
+    else if (x.loai === 'monkg' && x.d.den && sqThu2_(x.ngay) === x.ngay && sqThu2_(x.d.den) === congNgay_(x.d.den, -6) && x.ngay >= start && x.d.den < tuan) monGop.push({ tu: x.ngay, den: x.d.den, mon: x.d.mon || [] });
     else if (x.loai === 'monky' && x.ngay >= start && x.ngay <= tuan && sqThu2_(x.ngay) === x.ngay && x.d.den === congNgay_(x.ngay, 6)) monTuan[x.ngay] = x.d;
   });
   var chienDs = sqKhoChien_();
@@ -284,7 +333,7 @@ function sqKhoTuan_(p) {
     return { tu: m, den: days[6], days: days, kho: weekly[m] ? 'tuan' : dKho.length ? dKho.length : 0, khoNgay: dKho.length, dt: doanhThu, ngayDt: mt && dDt.length < 7 ? 7 : dDt.length, don: soDon,
       chien: coMon ? tongChien : null, chienDs: chien, ngayMon: mt && dMon.length < 7 ? 7 : dMon.length };
   });
-  var cd = sqKhoCD_(), r2 = function (v) { return Math.round(v * 100) / 100; };
+  var cd = sqKhoCD_(), r2 = function (v) { return Math.round(v * 100) / 100; }, nhomDs = sqKhoNhom_(), nhomIds = sqKhoIds_(nhomDs);
   var dungTuan = function (k, wi) { var T = tuanInfo[wi], m = weekly[T.tu]; if (m) { var x = m[k]; return x ? r2(-(x[3] + x[5])) : 0; }
     if (!T.khoNgay) return null; var s = 0; T.days.forEach(function (d) { var x = daily[d] && daily[d][k]; if (x) s += -(x[3] + x[5]); }); return r2(s); };
   var cur = SO - 1, items = [];
@@ -302,22 +351,31 @@ function sqKhoTuan_(p) {
     var dung = w[cur], T = tuanInfo[cur], tile = null, exp = null;
     if (dung != null && base > 0 && per[cur] != null) { tile = per[cur] / base; exp = base * T.dt / 1e7; }
     else if (dung != null && avgW > 0) { tile = dung / avgW; exp = avgW; }
-    var dau = KHO_DAU.indexOf(k) >= 0, ppc = null, ppcBase = null;
+    var dau = KHO_DAU.indexOf(k) >= 0, ppc = null, ppcBase = null, ppcKy = null;
     if (dau) {
       var pc = tuanInfo.map(function (T2, wi) { return T2.chien > 0 && w[wi] > 0 ? T2.chien / w[wi] : null; });
       ppc = pc[cur]; var pb = pc.slice(cur - 4, cur).filter(function (v) { return v != null; }); ppcBase = pb.length ? pb.reduce(function (x, y) { return x + y; }, 0) / pb.length : null;
+      // chưa có món chiên theo tuần → lấy mốc từ file Mặt hàng gộp nhiều tuần (cả kỳ) + dầu dùng cùng kỳ
+      if (ppcBase == null) monGop.sort(function (a, b) { return a.den < b.den ? 1 : -1; }).some(function (g) {
+        var ws = []; tuanInfo.forEach(function (T2, wi) { if (T2.tu >= g.tu && T2.den <= g.den) ws.push(wi); });
+        if (ws.length * 7 !== sqKhoSoNgay_(g.tu, g.den) + 1 || ws.some(function (wi) { return w[wi] == null; })) return false;
+        var dauKy = ws.reduce(function (s2, wi) { return s2 + w[wi]; }, 0), chienKy = 0;
+        g.mon.forEach(function (m) { if (sqKhoLaChien_(m.ten, chienDs)) chienKy += so_(m.sl); });
+        if (!(dauKy > 0) || !(chienKy > 0)) return false;
+        ppcBase = chienKy / dauKy; ppcKy = { tu: g.tu, den: g.den, chien: chienKy, dau: r2(dauKy) }; return true;
+      });
       if (ppc != null && ppcBase) { tile = ppcBase / ppc; exp = T.chien / ppcBase; }
     }
     var muc = '';
     // món dùng ít (< 1 đơn vị/tuần trung bình) thì không báo – số nhỏ lệch là chuyện thường
     if (tile != null && dung != null && avgW >= 1 && dung - exp >= 1) muc = tile >= 2 ? 'r' : tile >= 1.3 ? 'y' : '';
     var d7 = T.days.map(function (d) { var x = daily[d] && daily[d][k]; return x ? r2(-(x[3] + x[5])) : null; });
-    items.push({ k: k, t: a0[0], dv: a0[1], loai: loai, nhom: loai === 'kho' || loai === 'bb' ? 'xuat' : 'chinh', w: w, per: per.map(function (v) { return v == null ? null : Math.round(v * 1000) / 1000; }),
+    items.push({ k: k, t: a0[0], dv: a0[1], loai: loai, nhom: sqKhoNhomCua_(a0[0], s, nhomIds), w: w, per: per.map(function (v) { return v == null ? null : Math.round(v * 1000) / 1000; }),
       dung: dung, truoc: w[cur - 1], per10: per[cur] == null ? null : Math.round(per[cur] * 1000) / 1000, base10: base == null ? null : Math.round(base * 1000) / 1000, avgW: avgW == null ? null : r2(avgW),
-      tile: tile == null ? null : r2(tile), exp: exp == null ? null : r2(exp), muc: muc, d7: d7, dau: dau, ppc: ppc == null ? null : Math.round(ppc), ppcBase: ppcBase == null ? null : Math.round(ppcBase) });
+      tile: tile == null ? null : r2(tile), exp: exp == null ? null : r2(exp), muc: muc, d7: d7, dau: dau, ppc: ppc == null ? null : Math.round(ppc), ppcBase: ppcBase == null ? null : Math.round(ppcBase), ppcKy: ppcKy });
   });
-  var thuTu = { kho: 0, bb: 1, tuoi: 2, tp: 3 };
-  items.sort(function (a, b) { return (a.nhom === b.nhom ? 0 : a.nhom === 'xuat' ? -1 : 1) || ((b.muc === 'r') - (a.muc === 'r')) || ((b.muc === 'y') - (a.muc === 'y')) || (thuTu[a.loai] - thuTu[b.loai]) || a.t.localeCompare(b.t); });
+  var thu = {}; nhomDs.forEach(function (g, i) { thu[g.id] = i; });
+  items.sort(function (a, b) { return (thu[a.nhom] - thu[b.nhom]) || ((b.muc === 'r') - (a.muc === 'r')) || ((b.muc === 'y') - (a.muc === 'y')) || a.t.localeCompare(b.t); });
   var monList = Object.keys(tenMon).sort();
-  return { tuan: tuan, tuNay: tuNay, homNay: hn, tuanInfo: tuanInfo, items: items, chienDs: chienDs, monList: monList };
+  return { tuan: tuan, tuNay: tuNay, homNay: hn, tuanInfo: tuanInfo, items: items, chienDs: chienDs, monList: monList, nhomDs: nhomDs };
 }

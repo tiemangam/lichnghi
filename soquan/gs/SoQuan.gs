@@ -129,7 +129,8 @@ var SQ_API = {
   chu_sapo_ds: function (p) { sqChu_(p.pass); return sqSapoDs_(14); },
   chu_kho_cd: function (p) { sqChu_(p.pass); return sqKhoCDLuu_(p); },
   chu_kho_tuan: function (p) { sqChu_(p.pass); return sqKhoTuan_(p); },
-  chu_kho_chien: function (p) { sqChu_(p.pass); return sqKhoChienLuu_(p); }
+  chu_kho_chien: function (p) { sqChu_(p.pass); return sqKhoChienLuu_(p); },
+  chu_kho_nhom: function (p) { sqChu_(p.pass); return sqKhoNhomLuu_(p); }
 };
 
 /* ======================= ĐĂNG NHẬP ======================= */
