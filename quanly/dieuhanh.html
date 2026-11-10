@@ -260,6 +260,8 @@ table.ln input.t{text-align:left}
 .tl{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:4px 8px;align-items:center;padding:7px 4px;border-bottom:1px dashed var(--vien);font-size:13px;width:100%;border-left:0;border-right:0;border-top:0;background:none;text-align:left;cursor:pointer}
 .tl.on{background:var(--vangn);border-radius:8px}
 .tl small{grid-column:2/4;color:var(--muc2);font-size:11.5px}
+.tabs .spmo{margin-left:auto;opacity:1;background:rgba(248,232,196,.16);border-radius:12px;margin-bottom:6px;padding:8px 14px}
+@media (max-width:640px){.tabs .spmo{order:-1;margin-left:0;padding:7px 10px}.tabs .spmo .t{display:none}}
 /* kho */
 .khg{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
 @media (min-width:1100px){.khg{grid-template-columns:330px minmax(0,1fr) 320px}}
@@ -319,7 +321,7 @@ td.kb{color:#7a6a4c}td.kth{color:#2E6B12;font-weight:700}td.kgi{color:#C0392B;fo
 </div>
 <div id="app" class="hide">
   <header><div class="in"><div class="lg"></div><h1>Điều hành</h1><div class="sp"></div><a href="https://claude.ai/artifact/4mpUW2fwMArV54EnZFhQsn" target="_blank" rel="noopener">Gặm Điều Hành (bản cũ) ↗</a></div>
-    <div class="tabs"><button data-tab="tong">Tổng quan<span class="n hide" id="nTong"></span></button><button data-tab="tm">Tiền mặt<span class="n hide" id="nTm"></span></button><button data-tab="cp">Chi phí &amp; Hóa đơn<span class="n hide" id="nCp"></span></button><span class="hide"><span id="nDuyet"></span><span id="nGia"></span></span><button data-tab="kho">Kho<span class="n hide" id="nKho"></span></button><button data-tab="huy">Hủy hàng<span class="n hide" id="nHuy"></span></button><button data-tab="nv">Nhân viên</button></div>
+    <div class="tabs"><button data-tab="tong">Tổng quan<span class="n hide" id="nTong"></span></button><button data-tab="tm">Tiền mặt<span class="n hide" id="nTm"></span></button><button data-tab="cp">Chi phí &amp; Hóa đơn<span class="n hide" id="nCp"></span></button><span class="hide"><span id="nDuyet"></span><span id="nGia"></span></span><button data-tab="kho">Kho<span class="n hide" id="nKho"></span></button><button data-tab="huy">Hủy hàng<span class="n hide" id="nHuy"></span></button><button data-tab="nv">Nhân viên</button><button id="spMo" class="spmo">📥<span class="t"> Gửi số</span> Sapo<span class="n hide" id="nSp"></span></button></div>
   </header>
   <main>
     <section id="t-tong" class="hide">
@@ -469,7 +471,7 @@ function moTab(t){
   if (t==='huy') { if (!H.data) taiHuy(); else veHuy(); }
   if (t==='gia') { if (!G.data) taiGia(); else veGia(); }
 }
-[].forEach.call(document.querySelectorAll('.tabs button'), function(b){ b.onclick = function(){ moTab(b.getAttribute('data-tab')); }; });
+[].forEach.call(document.querySelectorAll('.tabs button[data-tab]'), function(b){ b.onclick = function(){ moTab(b.getAttribute('data-tab')); }; });
 
 /* ================= DUYỆT PHIẾU ================= */
 var D = { ds: [], tt: 'cho', loai: '' };
@@ -838,7 +840,7 @@ function veTQ(){
   // việc cần xử lý
   $('tqViecSub').textContent = j.viec.length ? j.viec.length + ' mục' : '';
   $('tqViec').innerHTML = j.viec.length ? j.viec.map(function(v, i){ return '<div class="al"><i class="'+v.muc+'"></i><div><span class="a">'+esc(v.loai)+'</span><p>'+esc(v.text)+'</p></div><button data-vi="'+i+'">Mở ›</button></div>'; }).join('') : '<p class="sub" style="padding:8px 0">Không có việc gì cần xử lý. 👍</p>';
-  [].forEach.call($('tqViec').querySelectorAll('[data-vi]'), function(b){ b.onclick = function(){ var v = j.viec[+b.getAttribute('data-vi')]; if (v.tab==='tm' && v.ngay) TM.ngay = v.ngay; if (v.tab==='tong') { if (v.ngay) TQ.ngay = v.ngay; veTQ(); if (v.loai==='Số Sapo') $('spFile').click(); return; } if (v.tab==='cp') { CP.den = v.ngay || homNay(); CP.tu = CP.den; CP.chon = null; CP.data = null; } if (v.tab==='kho') { KH.ngay = v.ngay || ''; KH.data = null; } moTab(v.tab); window.scrollTo(0,0); }; });
+  [].forEach.call($('tqViec').querySelectorAll('[data-vi]'), function(b){ b.onclick = function(){ var v = j.viec[+b.getAttribute('data-vi')]; if (v.tab==='tm' && v.ngay) TM.ngay = v.ngay; if (v.tab==='tong') { if (v.ngay) TQ.ngay = v.ngay; veTQ(); if (v.loai==='Số Sapo') moGuiSapo(); return; } if (v.tab==='cp') { CP.den = v.ngay || homNay(); CP.tu = CP.den; CP.chon = null; CP.data = null; } if (v.tab==='kho') { KH.ngay = v.ngay || ''; KH.data = null; } moTab(v.tab); window.scrollTo(0,0); }; });
   // chi theo nhóm (tháng tới ngày chọn)
   var nhom = {}; days.forEach(function(d){ if (d > ng) return; var x = D(d); for (var k in x.nhom) nhom[k] = (nhom[k]||0) + x.nhom[k]; });
   var ds = Object.keys(nhom).map(function(k){ return [k, nhom[k]]; }).sort(function(a,b){ return b[1]-a[1]; }), mN = ds.length ? ds[0][1] : 1;
@@ -948,25 +950,60 @@ function spDoc(ten, rows){
   }
   return { ten: ten, loi: 'Chưa nhận ra loại báo cáo này. Hiện dùng: Phương thức thanh toán, Danh mục mặt hàng, Báo cáo kho hàng, Doanh thu tổng quan.' };
 }
-function veSP(){
-  var ok = SP.ds.filter(function(x){ return !x.loi; });
-  $('spDs').innerHTML = SP.ds.length ? SP.ds.map(function(x){ return '<div class="cb '+(x.loi?(x.loai==='cc'?'i':'r'):'')+'" style="margin-top:6px;'+(x.loi?'':'background:var(--xanhn);color:var(--xanh)')+'">'+(x.loi ? '⚠ '+esc(x.ten)+': '+esc(x.loi) : '✓ '+esc(x.mo))+'</div>'; }).join('') +
-    (ok.length ? '<button class="btn" id="spLuu" style="margin-top:8px;width:100%">Lưu số Sapo ('+ok.length+' file)</button>' : '') : '';
-  var b = $('spLuu'); if (b) b.onclick = function(){ b.disabled = true; b.textContent = 'Đang lưu…';
-    api('chu_sapo_luu', { ds: ok.map(function(x){ return { ngay: x.ngay, loai: x.loai, d: x.d }; }) }).then(function(){
-      toast('Đã lưu số Sapo ✓'); if (ok.some(function(x){ return x.loai==='kho' || x.loai==='khoky'; })) { KH.data = null; taiKH(); } var ng1 = ok.filter(function(x){ return x.loai !== 'khoky'; }).map(function(x){ return x.ngay; }).sort(), d0 = ng1[ng1.length-1]; SP.ds = []; veSP(); if (d0) { TQ.ngay = d0; if (d0.slice(0,7) !== TQ.thang) { TQ.thang = d0.slice(0,7); TQ.data = null; } } taiTQ();
-    }).catch(function(e){ b.disabled = false; b.textContent = 'Lưu lại'; toast('Chưa lưu được: ' + e.message); }); };
-}
-$('spFile').onchange = function(){
-  var fs = [].slice.call(this.files || []); this.value = '';
-  if (!fs.length) return;
-  if (!window.XLSX) { toast('Chưa tải được công cụ đọc Excel, kiểm tra mạng rồi thử lại'); return; }
-  Promise.all(fs.map(function(f){ return f.arrayBuffer().then(function(buf){
+var SPO = { ov: null, ds: null };
+function docSapo(fs){
+  if (!window.XLSX) return Promise.reject(new Error('Chưa tải được công cụ đọc Excel, kiểm tra mạng rồi thử lại'));
+  return Promise.all(fs.map(function(f){ return f.arrayBuffer().then(function(buf){
     try { var wb = XLSX.read(buf, { type: 'array' }), ws = wb.Sheets[wb.SheetNames[0]]; return spDoc(f.name, XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' })); }
     catch(e){ return { ten: f.name, loi: 'Không mở được file: ' + e.message }; } }); })).then(function(ds){
     ds = [].concat.apply([], ds);
-    var seen = {}; SP.ds = ds.filter(function(x){ var k = x.loi ? x.ten : x.ngay + x.loai; if (seen[k]) return false; seen[k] = 1; return true; }); veSP(); });
-};
+    var seen = {}; return ds.filter(function(x){ var k = x.loi ? x.ten : x.ngay + x.loai; if (seen[k]) return false; seen[k] = 1; return true; }); });
+}
+function veSP(){
+  ['spDs','spoDs'].forEach(function(id){ if (id !== SP.el && $(id)) $(id).innerHTML = ''; });
+  var el = $(SP.el || 'spDs'); if (!el) return;
+  var ok = SP.ds.filter(function(x){ return !x.loi; });
+  el.innerHTML = SP.ds.length ? SP.ds.map(function(x){ return '<div class="cb '+(x.loi?(x.loai==='cc'?'i':'r'):'')+'" style="margin-top:6px;'+(x.loi?'':'background:var(--xanhn);color:var(--xanh)')+'">'+(x.loi ? '⚠ '+esc(x.ten)+': '+esc(x.loi) : '✓ '+esc(x.mo))+'</div>'; }).join('') +
+    (ok.length ? '<button class="btn" id="spLuu" style="margin-top:8px;width:100%;padding:11px">Lưu số Sapo ('+ok.length+' file)</button>' : '') : '';
+  var b = $('spLuu'); if (b) b.onclick = function(){ b.disabled = true; b.textContent = 'Đang lưu…';
+    api('chu_sapo_luu', { ds: ok.map(function(x){ return { ngay: x.ngay, loai: x.loai, d: x.d }; }) }).then(function(){
+      toast('Đã lưu số Sapo ✓'); if (ok.some(function(x){ return x.loai==='kho' || x.loai==='khoky'; })) { KH.data = null; KH.ngay = ''; taiKH(); }
+      var ng1 = ok.filter(function(x){ return x.loai !== 'khoky'; }).map(function(x){ return x.ngay; }).sort(), d0 = ng1[ng1.length-1]; SP.ds = []; veSP();
+      if (d0) { TQ.ngay = d0; if (d0.slice(0,7) !== TQ.thang) { TQ.thang = d0.slice(0,7); TQ.data = null; } } taiTQ(); taiSPO();
+    }).catch(function(e){ b.disabled = false; b.textContent = 'Lưu lại'; toast('Chưa lưu được: ' + e.message); }); };
+}
+function chonSapo(inp, el){
+  inp.onchange = function(){ var fs = [].slice.call(this.files || []); this.value = ''; if (!fs.length) return;
+    SP.el = el; $(el).innerHTML = '<div class="cb i" style="margin-top:6px">Đang đọc file…</div>';
+    docSapo(fs).then(function(ds){ SP.ds = ds; veSP(); }).catch(function(e){ $(el).innerHTML = '<div class="cb r" style="margin-top:6px">⚠ '+esc(e.message)+'</div>'; }); };
+}
+chonSapo($('spFile'), 'spDs');
+var SP_F = [['tt','Thanh toán'],['mon','Mặt hàng'],['kho','Tồn kho'],['tq','Tổng quan']];
+function taiSPO(){
+  return api('chu_sapo_ds').then(function(j){ SPO.ds = j.ds;
+    var gio = +new Date(Date.now()+7*3600e3).toISOString().slice(11,13), thieu = function(x){ return SP_F.filter(function(f){ return !x[f[0]]; }).length; };
+    var n = j.ds.filter(function(x, i){ return (i === 1 || (i === 0 && gio >= 23)) && thieu(x); }).length;
+    $('nSp').textContent = n ? '!' : ''; $('nSp').classList.toggle('hide', !n); veSPO(); }).catch(function(){});
+}
+function veSPO(){
+  var el = $('spoNgay'); if (!el) return;
+  if (!SPO.ds) { el.innerHTML = '<div class="loading">Đang tải…</div>'; return; }
+  el.innerHTML = SPO.ds.map(function(x, i){ var co = SP_F.filter(function(f){ return x[f[0]]; }), ai = String(x.tt || x.mon || x.kho || x.tq || '').split(' · ')[1] || '';
+    var pill = co.length === 4 ? '<span class="pl g">Đủ</span>' : co.length ? '<span class="pl y">Thiếu '+(4-co.length)+'</span>' : '<span class="pl '+(i===0?'m':'r')+'">'+(i===0?'Chưa gửi':'Chưa có')+'</span>';
+    return '<div class="rk" style="align-items:center"><span><b>'+THU2[dow(x.ngay)]+' '+dm(x.ngay)+'</b>'+(i===0?' · hôm nay':'')+'<small style="display:block;color:var(--muc2)">'+SP_F.map(function(f){ return (x[f[0]] ? '✓ ' : '✗ ') + f[1]; }).join(' · ')+(ai ? ' · '+esc(ai)+' gửi' : '')+'</small></span>'+pill+'</div>'; }).join('');
+}
+function moGuiSapo(){
+  var ov = moOv(false), p = ov.querySelector('.pane'); SPO.ov = ov;
+  p.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="font-size:20px;color:var(--xanh)">📥 Gửi số Sapo</h3><button class="btn ph" id="spoX">Đóng</button></div>' +
+    '<p class="sub" style="margin-top:4px">Sơn gửi mỗi tối trong Sổ Quán (Nhà Gặm → Sổ Quán → 📥 Gửi số Sapo). Ngày nào Sơn quên, anh vào Sapo → Báo cáo, chọn <b>đúng ngày đó</b>, xuất file Excel rồi chọn ở đây. App tự đọc ngày trong file, gửi nhiều ngày một lần cũng được.</p>' +
+    '<div class="cb i" style="margin-top:8px;line-height:1.6">Mỗi ngày 4 file: <b>Phương thức thanh toán</b> · <b>Danh mục mặt hàng</b> · <b>Báo cáo kho hàng</b> · <b>Doanh thu tổng quan</b>.<br>File kho nhiều ngày (cả tháng) cũng nhận – dùng để tính trung bình định mức.</div>' +
+    '<label class="btn" style="display:block;text-align:center;padding:13px;margin-top:10px;cursor:pointer;font-size:15px">Chọn file Excel<input type="file" id="spoFile" accept=".xls,.xlsx" multiple class="hide"></label><div id="spoDs"></div>' +
+    '<div class="sec" style="margin-top:16px"><span>14 ngày gần nhất</span><span>bấm Chọn file để gửi bù</span></div><div id="spoNgay"></div>';
+  $('spoX').onclick = function(){ ov.remove(); };
+  chonSapo($('spoFile'), 'spoDs'); veSPO(); taiSPO();
+  if (!window.XLSX) { var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; document.head.appendChild(sc); }
+}
+$('spMo').onclick = moGuiSapo;
 $('tqThTruoc').onclick = function(){ TQ.thang = thangKe(TQ.thang, -1); TQ.ngay = ''; TQ.data = null; $('tqKpi').innerHTML = '<div class="loading">Đang tải…</div>'; taiTQ(); };
 $('tqThSau').onclick = function(){ if (TQ.thang >= homNay().slice(0,7)) return; TQ.thang = thangKe(TQ.thang, 1); TQ.ngay = ''; TQ.data = null; $('tqKpi').innerHTML = '<div class="loading">Đang tải…</div>'; taiTQ(); };
 $('tqHom').onclick = function(){ var th = homNay().slice(0,7); TQ.ngay = homNay(); if (th !== TQ.thang) { TQ.thang = th; TQ.data = null; taiTQ(); } else veTQ(); };
@@ -1225,7 +1262,7 @@ function taiKH(){
 function veKH(){
   var j = KH.data; if (!j) return;
   if (j.trong) { $('khTit').textContent = 'Kho'; $('khKpi').innerHTML = ''; $('khBao').innerHTML = ''; $('khXd').innerHTML = ''; $('khNx').innerHTML = ''; $('khDc').innerHTML = '';
-    $('khCan').innerHTML = '<div class="empty">Chưa có số tồn kho từng ngày.<br>Sơn gửi file <b>Báo cáo kho hàng</b> mỗi tối (Sổ Quán → 📥 Gửi số Sapo), hoặc anh chọn file ở Tổng quan → 📥.'+(j.ky && j.ky.length ? '<br>Đã có '+j.ky.length+' file nhiều ngày để tính trung bình.' : '')+'</div>'; return; }
+    $('khCan').innerHTML = '<div class="empty">Chưa có số tồn kho từng ngày.<br>Sơn gửi file <b>Báo cáo kho hàng</b> mỗi tối (Sổ Quán → 📥 Gửi số Sapo), hoặc anh bấm <b>📥 Gửi số Sapo</b> trên thanh tab để tự gửi.'+(j.ky && j.ky.length ? '<br>Đã có '+j.ky.length+' file nhiều ngày để tính trung bình.' : '')+'</div>'; return; }
   var it = j.items, i0 = j.ngays.indexOf(j.ngay);
   $('khTit').textContent = THU[dow(j.ngay)] + ', ' + dm(j.ngay);
   $('khTruoc').disabled = i0 <= 0; $('khSau').disabled = i0 >= j.ngays.length-1;
@@ -1343,7 +1380,7 @@ setInterval(function(){ if (TAB==='kho' && !document.hidden && KH.data && !docum
 
 function batDau(){
   $('login').classList.add('hide'); $('app').classList.remove('hide');
-  moTab(TAB); if (TAB!=='tm') taiTM(); if (TAB!=='cp') taiCP(); if (TAB!=='tong') taiTQ(); if (TAB!=='kho') setTimeout(function(){ if (!KH.data) taiKH(); }, 1500); if (TAB!=='huy') setTimeout(function(){ if (!H.data) api('chu_huy', hRange()).then(function(j){ H.data = j; $('nHuy').textContent = j.bangGia.filter(function(x){ return x.gia===''; }).length; $('nHuy').classList.toggle('hide', !+$('nHuy').textContent); }).catch(function(){}); }, 900);
+  moTab(TAB); if (TAB!=='tm') taiTM(); if (TAB!=='cp') taiCP(); if (TAB!=='tong') taiTQ(); if (TAB!=='kho') setTimeout(function(){ if (!KH.data) taiKH(); }, 1500); setTimeout(taiSPO, 2200); if (TAB!=='huy') setTimeout(function(){ if (!H.data) api('chu_huy', hRange()).then(function(j){ H.data = j; $('nHuy').textContent = j.bangGia.filter(function(x){ return x.gia===''; }).length; $('nHuy').classList.toggle('hide', !+$('nHuy').textContent); }).catch(function(){}); }, 900);
 }
 if (PASS) batDau(); else dangNhap();
 })();
