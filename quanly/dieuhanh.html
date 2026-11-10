@@ -1289,15 +1289,19 @@ function veKH(){
   var cs = j.days.length - j.cuaSo;
   var td = it.filter(function(x){ return ['tuoi','kho','bb'].indexOf(x.loai) >= 0 && (x.rate != null || x.dung3); });
   var lech = td.filter(function(x){ return x.muc; }).sort(function(a, b){ return (a.muc===b.muc ? 0 : a.muc==='r' ? -1 : 1) || b.tile - a.tile; });
-  var bth = td.filter(function(x){ return !x.muc && x.dung3; }).sort(function(a, b){ return (b.tile||0) - (a.tile||0); });
+  var thuTu = { kho: 0, tuoi: 1, bb: 2 };
+  var bth = td.filter(function(x){ return !x.muc && (x.rate > 0 || x.dung3 > 0); }).sort(function(a, b){ return ((b.dung3 > 0) - (a.dung3 > 0)) || (thuTu[a.loai] - thuTu[b.loai]) || a.t.localeCompare(b.t, 'vi'); });
+  var nHien = KH.moXd ? bth.length : Math.min(bth.length, lech.length ? 0 : 8), coNgay = it.some(function(x){ return x.dung3 != null; });
   var xr = function(x){ var i = it.indexOf(x), co = x.d14.filter(function(v){ return v != null; }), mx = Math.max.apply(null, co.concat([x.rate||0, 0.0001]));
     var bars = x.d14.map(function(v, k){ return v == null ? '<i class="na" title="'+dm(j.days[k])+': chưa có số"></i>' : '<i class="'+(k>=cs?'hi':'')+'" style="height:'+Math.max(4, Math.round(Math.max(v,0)/mx*100))+'%" title="'+dm(j.days[k])+': '+soK(v)+' '+dvt(x)+'"></i>'; }).join('');
-    var pl = x.muc==='r' ? '<span class="pl r">gấp '+soK(Math.round(x.tile*10)/10)+' lần</span>' : x.muc==='y' ? '<span class="pl y">+'+Math.round((x.tile-1)*100)+'%</span>' : x.tile != null ? '<span class="pl g">bình thường</span>' : '<span class="pl m">'+(x.soNgay3 < 2 ? 'mới có '+x.soNgay3+' ngày' : 'chưa đủ số')+'</span>';
-    return '<button class="xr '+(x.muc||'')+'" data-sua="'+i+'"><span class="nm"><b>'+esc(x.t)+'</b><small>Dùng: <b>'+(x.dung3==null ? '–' : soK(x.dung3)+' '+dvt(x)+' trong '+x.soNgay3+' ngày')+'</b></small><small>Định mức: <span class="mu">'+esc(dmTxt(x))+' ✎</span> · '+(x.dm ? 'anh đặt' : esc(x.nguon || 'chưa có'))+'</small></span><span class="spk">'+bars+'</span>'+pl+'</button>'; };
+    var pl = x.muc==='r' ? '<span class="pl r">gấp '+soK(Math.round(x.tile*10)/10)+' lần</span>' : x.muc==='y' ? '<span class="pl y">+'+Math.round((x.tile-1)*100)+'%</span>' : x.tile != null ? '<span class="pl g">bình thường</span>' : '<span class="pl m">'+(x.dung3 == null ? 'chỉ có TB' : x.soNgay3 < 2 ? 'mới có '+x.soNgay3+' ngày' : 'chưa đủ số')+'</span>';
+    return '<button class="xr '+(x.muc||'')+'" data-sua="'+i+'"><span class="nm"><b>'+esc(x.t)+'</b><small>Dùng: <b>'+(x.dung3==null ? 'chưa có số từng ngày' : soK(x.dung3)+' '+dvt(x)+' trong '+x.soNgay3+' ngày')+'</b></small><small>Định mức: <span class="mu">'+esc(dmTxt(x))+' ✎</span> · '+(x.dm ? 'anh đặt' : esc(x.nguon || 'chưa có'))+'</small></span><span class="spk">'+bars+'</span>'+pl+'</button>'; };
   $('khXd').innerHTML = '<h3 style="font-size:17px;color:var(--xanh)">Xuất dùng so với định mức <span class="sub">· '+j.cuaSo+' ngày gần nhất ('+dm(j.days[cs])+'–'+dm(j.ngay)+')</span></h3>' +
     '<p class="sub" style="margin:2px 0 10px">Cột: mỗi ngày dùng bao nhiêu (bán + giảm, '+j.days.length+' ngày) · cột đậm = '+j.cuaSo+' ngày đang xét · cột gạch = chưa có số ngày đó</p>' +
-    (lech.map(xr).join('') || '<p class="sub" style="padding:6px 0">Không món nào dùng nhiều bất thường. 👍</p>') +
-    (bth.length ? (KH.moXd ? bth.map(xr).join('') + '<button class="btn ph" id="khXdTat" style="width:100%;margin-top:4px">Thu gọn</button>' : '<button class="btn ph" id="khXdMo" style="width:100%;margin-top:4px">+ '+bth.length+' món dùng bình thường ›</button>') : '') +
+    (!coNgay ? '<div class="cb i" style="margin-bottom:8px">Chưa có số từng ngày – đang hiện <b>định mức trung bình</b> để anh tham khảo. Mỗi tối có file kho 1 ngày, mỗi món thêm 1 cột; bấm vào món để xem bảng từng ngày.</div>' : '') +
+    (lech.map(xr).join('') || (coNgay ? '<p class="sub" style="padding:6px 0">Không món nào dùng nhiều bất thường. 👍</p>' : '')) +
+    bth.slice(0, nHien).map(xr).join('') +
+    (bth.length > nHien ? '<button class="btn ph" id="khXdMo" style="width:100%;margin-top:4px">+ Xem thêm '+(bth.length - nHien)+' món ›</button>' : KH.moXd && bth.length > 8 ? '<button class="btn ph" id="khXdTat" style="width:100%;margin-top:4px">Thu gọn</button>' : '') +
     '<p class="sub" style="margin-top:8px">🟡 dùng nhiều hơn định mức từ 50% · 🔴 gấp đôi trở lên (chỉ báo khi dư từ 1 đơn vị). Định mức: anh tự đặt bằng nút ✎, để trống thì app lấy trung bình.</p>';
   // nhập – xuất
   $('khNx').innerHTML = '<h3 style="font-size:17px;color:var(--xanh)">Nhập – xuất trong ngày <span class="sub">· '+dmy(j.ngay)+(j.luc ? ' · gửi '+esc(j.luc) : '')+'</span></h3>' +
@@ -1338,6 +1342,24 @@ function chepKho(){
   var cu = function(){ var t = document.createElement('textarea'); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); ok(); } catch(e){ toast('Không chép được'); } t.remove(); };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, cu); else cu();
 }
+function bangNgay(x, j){
+  var r = x.rate, dv = dvt(x), rows = [];
+  (x.n14 || []).forEach(function(v, k){ if (v) rows.push([j.days[k], v]); });
+  var h = '<div class="khf"><label>Từng ngày (file kho 1 ngày)</label>';
+  if (!rows.length) return h + '<p class="sub">Chưa có số ngày nào. Mỗi tối Sơn gửi file <b>Báo cáo kho hàng</b> 1 ngày thì thêm 1 dòng ở đây.</p></div>';
+  return h + '<div style="overflow-x:auto"><table class="kt"><tr><th>Ngày</th><th>Đầu</th><th>Thêm</th><th>Dùng</th><th>Cuối</th><th>So định mức</th></tr>' +
+    rows.map(function(a, k){ var v = a[1], dung = v[2], ss = '', tag = function(c, t){ return '<span class="pl '+c+'" style="padding:2px 6px">'+t+'</span>'; };
+      if (!(r > 0)) ss = '';
+      else if (dung <= 0) ss = '<span class="sub">không dùng</span>';
+      else if (r >= 1) { var tl = dung / r; ss = (dung - r >= 1 && tl >= 2) ? tag('r', 'gấp '+soK(Math.round(tl*10)/10)) : (dung - r >= 1 && tl >= 1.5) ? tag('y', '+'+Math.round((tl-1)*100)+'%') : tag('g', 'bình thường'); }
+      else { // món dùng ít (vd 1 can / 4 ngày): xem cách lần dùng trước bao nhiêu ngày
+        var tr = null; for (var q = k-1; q >= 0; q--) if (rows[q][1][2] > 0) { tr = rows[q][0]; break; }
+        var tb = 1 / r, cach = tr ? Math.round((Date.parse(a[0]) - Date.parse(tr)) / 864e5) : null, can = cach != null ? cach / dung : null;
+        ss = can == null ? '<span class="sub">lần đầu có số</span>' : can < tb * 0.5 ? tag('r', 'cách '+cach+' ngày') : can < tb * 0.75 ? tag('y', 'cách '+cach+' ngày') : tag('g', 'cách '+cach+' ngày'); }
+      return [a, v, dung, ss]; }).reverse().map(function(z){ var a = z[0], v = z[1], dung = z[2], ss = z[3];
+      return '<tr><td><b>'+THU2[dow(a[0])]+' '+dm(a[0])+'</b></td><td>'+soK(v[0])+'</td>'+(v[1] ? '<td class="kth">+'+soK(v[1])+'</td>' : '<td class="kz">·</td>')+'<td'+(dung>0?' class="kgi"':'')+'>'+(dung ? soK(dung) : '·')+'</td><td><b>'+soK(v[3])+'</b></td><td>'+ss+'</td></tr>'; }).join('') +
+    '</table></div><p class="sub" style="margin-top:4px">Dùng = bán + giảm trong ngày ('+dv+'), so với định mức '+esc(dmTxt(x))+'.'+(r > 0 && r < 1 ? ' Món dùng ít: so số ngày từ lần dùng trước (bình thường ~'+soK(Math.round(10/r)/10)+' ngày/1 '+dv+').' : '')+'</p></div>';
+}
 function moSuaKho(x){
   var j = KH.data, ov = moOv(false), p = ov.querySelector('.pane');
   var f = { loai: x.loai, min: x.minAnh ? x.min : '', sl: x.dm ? x.dm.sl : '', n1: x.dm ? x.dm.n1 : '', n2: x.dm ? x.dm.n2 : '' };
@@ -1347,6 +1369,7 @@ function moSuaKho(x){
     var dv = dvt(x), minHien = f.min === '' ? x.minSapo : f.min;
     p.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="font-size:20px;color:var(--xanh)">✎ '+esc(x.t)+' <span class="sub">· '+dv+'</span></h3><button class="btn ph" id="kdX">Đóng</button></div>' +
       '<p class="sub" style="margin-top:4px">Tồn cuối '+dm(j.ngay)+': <b>'+soK(x.cuoi)+' '+dv+'</b> · '+(x.rateTu != null ? 'app tính <b>'+esc(rateTxt(x.rateTu, x.dv))+'</b> ('+esc(x.nguon)+')' : 'chưa đủ số để tính trung bình')+'</p>' +
+      bangNgay(x, j) +
       '<div class="khf"><label>Loại</label><div class="chips">'+Object.keys(j.loaiTen).map(function(k){ return '<button class="chip'+(f.loai===k?' on':'')+'" data-l="'+k+'">'+esc(j.loaiTen[k])+'</button>'; }).join('')+'</div>' +
         '<p class="sub" style="margin-top:4px">Đồ tươi, Gia vị, Bao bì: app theo dõi tốc độ dùng và báo khi dùng nhiều đột biến.'+(f.loai!==x.loaiDoan ? ' App đoán: '+esc(j.loaiTen[x.loaiDoan])+'.' : '')+'</p></div>' +
       '<div class="khf"><label>Mức tối thiểu (báo sắp hết)</label><div class="row"><button class="kpm" id="kdTru">−</button><input id="kdMin" inputmode="decimal" value="'+soK(minHien)+'"><button class="kpm" id="kdCong">+</button> '+dv+' <span class="sub">· Sapo đang để '+soK(x.minSapo)+(f.min !== '' && f.min !== x.minSapo ? ' · <button class="lnk" id="kdSapo">dùng số Sapo</button>' : '')+'</span></div></div>' +
