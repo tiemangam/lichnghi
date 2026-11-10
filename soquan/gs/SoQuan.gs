@@ -126,6 +126,7 @@ var SQ_API = {
   chu_cp_quay: function (p) { sqChu_(p.pass); return sqCpQuay_(p); },
   chu_sapo_luu: function (p) { sqChu_(p.pass); return sqSapoLuu_(p, 'anh Đạt'); },
   chu_kho: function (p) { sqChu_(p.pass); return sqKhoChu_(p); },
+  chu_sapo_ds: function (p) { sqChu_(p.pass); return sqSapoDs_(14); },
   chu_kho_cd: function (p) { sqChu_(p.pass); return sqKhoCDLuu_(p); }
 };
 

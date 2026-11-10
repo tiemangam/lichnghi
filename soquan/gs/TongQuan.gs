@@ -134,7 +134,12 @@ function sqSapoLuu_(p, nguoi) {
 function sqSapoQuyen_(nv) { if ((nv.chucNang || []).indexOf('sapo') < 0) throw new Error('Em chưa được mở chức năng Gửi số Sapo. Nhờ anh Đạt bật trong Điều hành → Nhân viên.'); }
 function sqSapoNV_(nv) {
   sqSapoQuyen_(nv);
-  var hn = homNay_(), tu = congNgay_(hn, -9), m = sqSapoCo_(tu);
-  var ds = []; for (var i = 0; i <= 8; i++) { var d = congNgay_(hn, -i), x = m[d] || {}; ds.push({ ngay: d, tt: x.tt || '', mon: x.mon || '', kho: x.kho || '', tq: x.tq || '' }); }
+  return sqSapoDs_(9);
+}
+
+// danh sách n ngày gần nhất đã có file nào (anh Đạt + nhân viên)
+function sqSapoDs_(n) {
+  var hn = homNay_(), m = sqSapoCo_(congNgay_(hn, -n)), ds = [];
+  for (var i = 0; i < n; i++) { var d = congNgay_(hn, -i), x = m[d] || {}; ds.push({ ngay: d, tt: x.tt || '', mon: x.mon || '', kho: x.kho || '', tq: x.tq || '' }); }
   return { homNay: hn, ds: ds };
 }
