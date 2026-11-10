@@ -1458,6 +1458,7 @@ function spCong(s, n){ var p = s.split('-'), d = new Date(Date.UTC(+p[0], +p[1]-
 function spDiff(a, b){ var p = a.split('-'), q = b.split('-'); return Math.round((Date.UTC(+q[0],+q[1]-1,+q[2]) - Date.UTC(+p[0],+p[1]-1,+p[2])) / 864e5); }
 function spSerial(v){ if (typeof v === 'number' && v > 20000) return new Date(Date.UTC(1899,11,30) + Math.round(v)*864e5).toISOString().slice(0,10); var m = String(v).match(/(\d\d)\/(\d\d)\/(\d{4})/); return m ? m[3]+'-'+m[2]+'-'+m[1] : ''; }
 function spXuat(rows){ for (var i=0;i<Math.min(rows.length,12);i++) if (String(rows[i][0]).trim()==='Thời gian xuất') { var m = String(rows[i][1]).match(/(\d\d):(\d\d) (\d\d)\/(\d\d)\/(\d{4})/); if (m) return { ngay: m[5]+'-'+m[4]+'-'+m[3], gio: +m[1] + (+m[2])/60 }; } return null; }
+function dow2(s){ var p=s.split('-'); return new Date(Date.UTC(+p[0],+p[1]-1,+p[2])).getUTCDay(); }
 function spK(n){ n = Math.round(Number(n)||0); return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
 // tồn kho + doanh thu tổng quan + khuyến mại (trả null nếu không phải 3 loại này)
 function spDoc2(ten, rows, kh, cot0, so){
@@ -1479,7 +1480,7 @@ function spDoc2(ten, rows, kh, cot0, so){
     if (x && x.ngay < kh.den) { n = spDiff(kh.tu, x.ngay) + x.gio/24; den = x.gio >= 12 ? x.ngay : spCong(x.ngay, -1); }
     n = Math.round(n*100)/100;
     if (n < 2) return { ten: ten, loi: 'File kho nhiều ngày nhưng dữ liệu chưa tới 2 ngày.' };
-    return { ten: ten, loai: 'khoky', ngay: kh.tu, d: { den: den, n: n, mon: mon }, mo: 'Tồn kho nhiều ngày · ' + dmy(kh.tu).slice(0,5) + '–' + dmy(den).slice(0,5) + ' (' + String(Math.round(n*10)/10).replace('.',',') + ' ngày) · dùng để tính trung bình' };
+    return { ten: ten, loai: 'khoky', ngay: kh.tu, d: { den: den, n: n, mon: mon }, mo: (n === 7 && dow2(kh.tu) === 1 ? 'Tồn kho cả tuần T2–CN · ' : 'Tồn kho nhiều ngày · ') + dmy(kh.tu).slice(0,5) + '–' + dmy(den).slice(0,5) + ' (' + String(Math.round(n*10)/10).replace('.',',') + ' ngày) · dùng để tính trung bình' + (n === 7 && dow2(kh.tu) === 1 ? ' + xem theo tuần' : '') };
   }
   if (co('Doanh thu tổng quan')) {
     var ht = -1; for (var j=0;j<rows.length;j++) if (String(rows[j][0]).trim()==='STT' && rows[j].indexOf('Tiền hàng') >= 0) { ht = j; break; }
@@ -1504,7 +1505,7 @@ function spDoc(ten, rows){
   if (co('Bảng chấm công nhân viên')) return { ten: ten, loai: 'cc', loi: 'Đây là file chấm công, chưa cần gửi ở đây.' };
   var x2 = spDoc2(ten, rows, kh, cot0, so); if (x2) return x2;
   if (!kh) return { ten: ten, loi: 'Không phải file xuất từ Sapo (không thấy dòng "Từ ngày … đến ngày …").' };
-  if (!kh.motNgay) return { ten: ten, loi: 'File gồm nhiều ngày ('+dmy(kh.tu).slice(0,5)+' – '+dmy(kh.den).slice(0,5)+'). Em xuất lại chỉ 1 ngày nhé.' };
+  if (!kh.motNgay && !co('BÁO CÁO MẶT HÀNG')) return { ten: ten, loi: 'File gồm nhiều ngày ('+dmy(kh.tu).slice(0,5)+' – '+dmy(kh.den).slice(0,5)+'). Em xuất lại chỉ 1 ngày nhé.' };
   if (co('Phương thức thanh toán')) {
     var h = hi('Tên'); if (h < 0) return { ten: ten, loi: 'Không đọc được bảng phương thức thanh toán.' };
     var kenh = [], tong = 0, don = 0;
@@ -1525,6 +1526,8 @@ function spDoc(ten, rows){
       g.sl += so(q[cSl]); g.tien += so(q[cTien]); }
     var mon = Object.keys(gom).map(function(x){ return gom[x]; }).sort(function(a,b){ return b.tien - a.tien; });
     if (!tong2) tong2 = mon.reduce(function(s2,m){ return s2 + m.tien; }, 0);
+    if (!kh.motNgay) { var denM = spCong(kh.den, -1); if (spDiff(kh.tu, kh.den) !== 7 || dow2(kh.tu) !== 1) return { ten: ten, loi: 'File Mặt hàng nhiều ngày chỉ nhận đúng 1 tuần Thứ 2 → Chủ nhật (vd 00:00 06/10 đến 00:00 13/10).' };
+      return { ten: ten, loai: 'monky', ngay: kh.tu, d: { den: denM, tong: tong2, giam: giam, mon: mon }, mo: 'Mặt hàng cả tuần · ' + dmy(kh.tu).slice(0,5) + '–' + dmy(denM).slice(0,5) + ' · ' + mon.length + ' món · ' + spK(tong2) + 'đ' }; }
     return { ten: ten, loai: 'mon', ngay: kh.tu, d: { tong: tong2, giam: giam, mon: mon }, mo: 'Danh mục mặt hàng · ngày ' + dmy(kh.tu) + ' · ' + mon.length + ' món' };
   }
   return { ten: ten, loi: 'Không phải báo cáo cần gửi. Cần 4 file: Phương thức thanh toán, Danh mục mặt hàng, Báo cáo kho hàng, Doanh thu tổng quan.' };
@@ -1539,7 +1542,7 @@ function veSPNgay(ds){
 function veSP(){
   var ok = SP.ds.filter(function(x){ return !x.loi; });
   $('spDs').innerHTML = SP.ds.map(function(x){ return '<div class="spf '+(x.loi?(x.loai==='cc'?'i':'r'):'')+'">'+(x.loi ? '⚠ '+esc(x.loi) : '✓ '+esc(x.mo))+'</div>'; }).join('') +
-    (function(){ if (!ok.length || ok.every(function(x){ return x.loai==='khoky'; })) return ''; var th = [['tt','Phương thức thanh toán'],['mon','Danh mục mặt hàng'],['kho','Báo cáo kho hàng'],['tq','Doanh thu tổng quan']].filter(function(f){ return !ok.some(function(x){ return x.loai===f[0]; }); }).map(function(f){ return f[1]; });
+    (function(){ if (!ok.length || ok.every(function(x){ return x.loai==='khoky' || x.loai==='monky'; })) return ''; var th = [['tt','Phương thức thanh toán'],['mon','Danh mục mặt hàng'],['kho','Báo cáo kho hàng'],['tq','Doanh thu tổng quan']].filter(function(f){ return !ok.some(function(x){ return x.loai===f[0]; }); }).map(function(f){ return f[1]; });
       return th.length ? '<div class="spf i">Còn thiếu: '+th.join(', ')+' (gửi trước phần đã có cũng được).</div>' : ''; })() +
     (ok.length ? '<button class="btn" id="spGui" style="margin-top:10px">📤 Gửi cho anh Đạt ('+ok.length+' file)</button>' : '');
   var b = $('spGui'); if (b) b.onclick = function(){ b.disabled = true; b.textContent = 'Đang gửi…';
@@ -1556,7 +1559,7 @@ $('spFile').onchange = function(){
     catch(e){ return { ten: f.name, loi: 'Không mở được file ' + f.name }; } }); })); }).then(function(ds){
     ds = [].concat.apply([], ds);
     var seen = {}; ds = ds.filter(function(x){ var k = x.loi ? x.ten : x.ngay + x.loai; if (seen[k]) return false; seen[k] = 1; return true; });
-    var ngs = {}; ds.forEach(function(x){ if (x.ngay && x.loai !== 'khoky') ngs[x.ngay] = 1; });
+    var ngs = {}; ds.forEach(function(x){ if (x.ngay && x.loai !== 'khoky' && x.loai !== 'monky') ngs[x.ngay] = 1; });
     if (Object.keys(ngs).length > 1) ds.push({ ten: '', loi: 'Các file không cùng 1 ngày – em kiểm tra lại ngày khi xuất nhé (vẫn gửi được).', loai: 'cc' });
     SP.ds = ds; veSP();
   }).catch(function(e){ $('spDs').innerHTML = '<div class="spf r">⚠ '+esc(e.message)+'</div>'; });
