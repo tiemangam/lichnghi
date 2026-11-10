@@ -1526,7 +1526,9 @@ function spDoc(ten, rows){
       g.sl += so(q[cSl]); g.tien += so(q[cTien]); }
     var mon = Object.keys(gom).map(function(x){ return gom[x]; }).sort(function(a,b){ return b.tien - a.tien; });
     if (!tong2) tong2 = mon.reduce(function(s2,m){ return s2 + m.tien; }, 0);
-    if (!kh.motNgay) { var denM = spCong(kh.den, -1); if (spDiff(kh.tu, kh.den) !== 7 || dow2(kh.tu) !== 1) return { ten: ten, loi: 'File Mặt hàng nhiều ngày chỉ nhận đúng 1 tuần Thứ 2 → Chủ nhật (vd 00:00 06/10 đến 00:00 13/10).' };
+    if (!kh.motNgay) { var denM = spCong(kh.den, -1), nN = spDiff(kh.tu, kh.den);
+      if (nN !== 7 || dow2(kh.tu) !== 1) { var tron = dow2(kh.tu) === 1 && nN % 7 === 0;
+        return { ten: ten, loai: 'monkg', ngay: kh.tu, d: { den: denM, n: nN, tong: tong2, giam: giam, mon: mon }, mo: 'Mặt hàng gộp ' + dmy(kh.tu).slice(0,5) + '–' + dmy(denM).slice(0,5) + ' (' + nN + ' ngày) · ' + mon.length + ' món · ' + spK(tong2) + 'đ · ' + (tron ? 'làm mốc so sánh dầu ăn – món chiên cả kỳ' : 'lưu tham khảo (muốn làm mốc so dầu ăn: chọn từ Thứ 2 đến hết Chủ nhật)') }; }
       return { ten: ten, loai: 'monky', ngay: kh.tu, d: { den: denM, tong: tong2, giam: giam, mon: mon }, mo: 'Mặt hàng cả tuần · ' + dmy(kh.tu).slice(0,5) + '–' + dmy(denM).slice(0,5) + ' · ' + mon.length + ' món · ' + spK(tong2) + 'đ' }; }
     return { ten: ten, loai: 'mon', ngay: kh.tu, d: { tong: tong2, giam: giam, mon: mon }, mo: 'Danh mục mặt hàng · ngày ' + dmy(kh.tu) + ' · ' + mon.length + ' món' };
   }
@@ -1537,12 +1539,13 @@ function taiSPNgay(){ return api('nv_sapo_ds').then(function(j){ lsJ.set('gam_sp
 function veSPNgay(ds){
   var F = [['tt','Thanh toán'],['mon','Mặt hàng'],['kho','Tồn kho'],['tq','Tổng quan']];
   $('spNgay').innerHTML = ds.map(function(x){ var co = F.filter(function(f){ return x[f[0]]; }).length, ai = String(x.tt || x.mon || x.kho || x.tq || '').split(' · ')[1] || '';
-    return '<div class="spn"><span><b>'+dmy(x.ngay).slice(0,5)+'</b>'+(x.ngay===homNay()?' · hôm nay':'')+'<small>'+F.map(function(f){ return (x[f[0]]?'✓ ':'✗ ')+f[1]; }).join(' · ')+(ai?' · '+esc(ai)+' gửi':'')+'</small></span><span class="pill '+(co===4?'g':co?'y':'m')+'">'+(co===4?'Đủ':co?'Thiếu '+(4-co)+' file':'Chưa gửi')+'</span></div>'; }).join('');
+    var cu = x.ngay < '2026-11-10' && co < 4;
+    return '<div class="spn"'+(cu?' style="opacity:.6"':'')+'><span><b>'+dmy(x.ngay).slice(0,5)+'</b>'+(x.ngay===homNay()?' · hôm nay':'')+'<small>'+F.map(function(f){ return (x[f[0]]?'✓ ':cu?'– ':'✗ ')+f[1]; }).join(' · ')+(ai?' · '+esc(ai)+' gửi':'')+'</small></span><span class="pill '+(co===4?'g':cu?'m':co?'y':'m')+'">'+(co===4?'Đủ':cu?'Số cũ':co?'Thiếu '+(4-co)+' file':'Chưa gửi')+'</span></div>'; }).join('');
 }
 function veSP(){
   var ok = SP.ds.filter(function(x){ return !x.loi; });
   $('spDs').innerHTML = SP.ds.map(function(x){ return '<div class="spf '+(x.loi?(x.loai==='cc'?'i':'r'):'')+'">'+(x.loi ? '⚠ '+esc(x.loi) : '✓ '+esc(x.mo))+'</div>'; }).join('') +
-    (function(){ if (!ok.length || ok.every(function(x){ return x.loai==='khoky' || x.loai==='monky'; })) return ''; var th = [['tt','Phương thức thanh toán'],['mon','Danh mục mặt hàng'],['kho','Báo cáo kho hàng'],['tq','Doanh thu tổng quan']].filter(function(f){ return !ok.some(function(x){ return x.loai===f[0]; }); }).map(function(f){ return f[1]; });
+    (function(){ if (!ok.length || ok.every(function(x){ return x.loai==='khoky' || x.loai==='monky' || x.loai==='monkg'; })) return ''; var th = [['tt','Phương thức thanh toán'],['mon','Danh mục mặt hàng'],['kho','Báo cáo kho hàng'],['tq','Doanh thu tổng quan']].filter(function(f){ return !ok.some(function(x){ return x.loai===f[0]; }); }).map(function(f){ return f[1]; });
       return th.length ? '<div class="spf i">Còn thiếu: '+th.join(', ')+' (gửi trước phần đã có cũng được).</div>' : ''; })() +
     (ok.length ? '<button class="btn" id="spGui" style="margin-top:10px">📤 Gửi cho anh Đạt ('+ok.length+' file)</button>' : '');
   var b = $('spGui'); if (b) b.onclick = function(){ b.disabled = true; b.textContent = 'Đang gửi…';
@@ -1559,7 +1562,7 @@ $('spFile').onchange = function(){
     catch(e){ return { ten: f.name, loi: 'Không mở được file ' + f.name }; } }); })); }).then(function(ds){
     ds = [].concat.apply([], ds);
     var seen = {}; ds = ds.filter(function(x){ var k = x.loi ? x.ten : x.ngay + x.loai; if (seen[k]) return false; seen[k] = 1; return true; });
-    var ngs = {}; ds.forEach(function(x){ if (x.ngay && x.loai !== 'khoky' && x.loai !== 'monky') ngs[x.ngay] = 1; });
+    var ngs = {}; ds.forEach(function(x){ if (x.ngay && x.loai !== 'khoky' && x.loai !== 'monky' && x.loai !== 'monkg') ngs[x.ngay] = 1; });
     if (Object.keys(ngs).length > 1) ds.push({ ten: '', loi: 'Các file không cùng 1 ngày – em kiểm tra lại ngày khi xuất nhé (vẫn gửi được).', loai: 'cc' });
     SP.ds = ds; veSP();
   }).catch(function(e){ $('spDs').innerHTML = '<div class="spf r">⚠ '+esc(e.message)+'</div>'; });
