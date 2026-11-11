@@ -2027,7 +2027,8 @@ function vePL(){
   var h = '';
   // cảnh báo dữ liệu
   var bao = [];
-  if (j.vao.thieu.length) bao.push('Chưa có doanh thu ' + j.vao.thieu.length + ' ngày (' + j.vao.thieu.slice(0,8).map(dm).join(', ') + (j.vao.thieu.length>8?'…':'') + ') → gửi file Sapo <b>Doanh thu tổng quan</b> (chọn nhiều ngày 1 lần cũng được).');
+  var thieu = j.vao.thieu.filter(function(d){ return d !== j.homNay; });
+  if (thieu.length) bao.push('Chưa có doanh thu ' + thieu.length + ' ngày (' + thieu.slice(0,8).map(dm).join(', ') + (thieu.length>8?'…':'') + ') → gửi file Sapo <b>Doanh thu tổng quan</b> (chọn nhiều ngày 1 lần cũng được).');
   var tam = (j.vao.nguon.tn||0) + (j.vao.nguon.tncu||0) + (j.vao.nguon.tt||0);
   if (tam) bao.push(tam + ' ngày đang tạm lấy doanh thu từ sổ thu ngân / phương thức thanh toán (chưa trừ phí Grab/Shopee) – có file Doanh thu tổng quan thì app tự thay.');
   if (j.cdNguon==='macdinh') bao.push('Chưa nhập chi phí cố định (lương, nhà, điện…) → <button data-cd="1">⚙ nhập ngay</button>, không thì lời/lỗ bị cao hơn thật.');
