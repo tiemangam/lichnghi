@@ -3,9 +3,9 @@
  * Mỗi nhân viên: tên, mã PIN 4 số (không trùng), vai trò, các chức năng được dùng trong Sổ Quán, nghỉ làm.
  * Mật khẩu của anh Đạt: tạo lần đầu bằng mã quản lý (QL_KEY), sau đó đổi trong app.
  */
-var SQ_CHUC_NANG = { hd: 'Chụp hóa đơn', dicho: 'Đi chợ', td: 'Hóa đơn quen', tn: 'Thu ngân cuối ca', sapo: 'Gửi số Sapo', huy: 'Hủy hàng', kho: 'Xem kho (cần đặt, tủ bếp, kiểm tủ)' };
+var SQ_CHUC_NANG = { hd: 'Chụp hóa đơn', dicho: 'Đi chợ', td: 'Hóa đơn quen', tn: 'Thu ngân cuối ca', sapo: 'Gửi số Sapo', huy: 'Hủy hàng', kho: 'Xem kho (cần đặt, tủ bếp, kiểm tủ)', kiemchi: 'Kiểm chi phí ngày (dò hóa đơn, đi chợ, chi tại quầy)' };
 var SQ_VAI_MAC_DINH = {
-  'ke toan': ['hd', 'dicho', 'td', 'huy'], 'di cho': ['dicho', 'hd', 'td', 'huy'], 'thu ngan': ['tn', 'sapo', 'hd', 'td', 'huy'],
+  'ke toan': ['hd', 'dicho', 'td', 'huy', 'kiemchi'], 'di cho': ['dicho', 'hd', 'td', 'huy'], 'thu ngan': ['tn', 'sapo', 'hd', 'td', 'huy'],
   'quan ly': ['tn', 'sapo', 'kho', 'hd', 'dicho', 'td', 'huy'], 'bep': ['huy', 'hd', 'td', 'dicho'], 'phuc vu': ['huy']
 };
 function sqTachCN_(s, vai) {

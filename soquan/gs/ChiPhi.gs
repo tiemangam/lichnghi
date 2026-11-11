@@ -12,7 +12,7 @@ var CP_LUAN_CHUYEN = /(^| )(tien cho|di cho|dua cho|giao ca|doan|cho doan|ung)( 
 function sqCpMuc_(pct) { return pct < 0 ? (pct <= -0.05 ? 'g' : '') : pct > 0.2 ? 'rr' : pct >= 0.1 ? 'r' : pct >= 0.005 ? 'y' : ''; }
 function sqCpKhoaMoi_(x) {
   if (x.loai === LOAI.HD || x.loai === LOAI.TD) { var m = x.moi || x.nhom.replace(/^HĐ /, ''); return { khoa: 'm:' + khongDau_(m), ten: m }; }
-  if (x.loai === LOAI_CHU) return { khoa: 'c:' + khongDau_(x.nhom), ten: x.nhom + (x.mon && x.mon[0] ? ' · ' + x.mon[0].ten : '') };
+  if (x.loai === LOAI_CHU) return { khoa: x.moi ? 'm:' + khongDau_(x.moi) : 'c:' + khongDau_(x.nhom), ten: (x.moi || x.nhom) + (x.mon && x.mon[0] ? ' · ' + x.mon[0].ten : '') };
   var t = (x.nguoi ? x.nguoi + ' – ' : '') + x.nhom;
   return { khoa: 'n:' + khongDau_(x.nhom) + '|' + khongDau_(x.nguoi), ten: t };
 }
@@ -35,6 +35,7 @@ function sqCpNgay_(p) {
   var metas = {};
   sqMetaRows_().forEach(function (m) { metas[m.id] = m; });
   var gia = sqTinhGia_(sqDongMua_());
+  var kcMap = {}; try { kcMap = plKCMap_(tu, den); } catch (e) { }
   var ds = sqPhieuTrong_(tu, den).filter(function (x) { return x.loai !== LOAI.BILL; }).map(function (x) {
     var m = metas[x.id] || {}, k = sqCpKhoaMoi_(x), cb = [];
     var gp = (gia.theoPhieu[x.id] || []).map(function (g) { return { stt: g.stt, ten: g.ten, khoa: g.khoa, dv: g.dv, gia: g.gia, sl: g.sl, pct: g.pct, muc: sqCpMuc_(g.pct), chenh: g.chenh, traThem: g.traThem, truoc: g.truoc }; });
@@ -46,6 +47,7 @@ function sqCpNgay_(p) {
     var dongAi = (m.dong || []).map(function (d) { return { ten: d.ten, chu: d.chu, anh: d.anh, vung: d.vung, sua: d.sua, aiTen: d.aiTen, aiTien: d.aiTien }; });
     return { id: x.id, ngay: x.ngay, loai: x.loai, nhom: x.nhom, moi: x.moi, nguoi: m.nguoi || x.nguoi, tong: x.tong, tongAnh: x.tongAnh, mon: x.mon, ghiChu: x.ghiChu,
       tt: x.tt, hoi: x.hoi, traLoi: x.traLoi, anh: x.anh || [], khoa: k.khoa, tenMoi: k.ten, gia: gp, cb: cb, dongAi: dongAi,
+      kc: kcMap[x.ngay + '|' + x.id] || null,
       lc: (function () { try { return plLoaiChinh_(Object.assign({}, x, { meta: metas[x.id] || null })); } catch (e) { return null; } })(), lcTay: !!(m.them && m.them.loaiChi),
       thumb: coThumb && m.them ? (m.them.thumb || '') : '', kiemBoi: m.them ? (m.them.kiemBoi || '') : '', chuSua: m.them ? (m.them.chuSua || '') : '', suaLuc: x.suaLuc };
   }).sort(function (a, b) { return a.ngay < b.ngay ? 1 : a.ngay > b.ngay ? -1 : b.tong - a.tong; });
@@ -59,7 +61,7 @@ function sqCpNgay_(p) {
   tn.filter(function (x) { return x.ngay >= tu && x.ngay <= den; }).forEach(function (x) {
     var dong = x.chi.filter(function (r) { return r.amount; }).map(function (r) { return tinhDong(x, r); });
     if (!dong.length) return;
-    quay.push({ ngay: x.ngay, ca: x.ca, nguoi: x.nguoi, luc: x.luc, dong: dong, tong: dong.reduce(function (s, d) { return s + (d.tinh ? d.amount : 0); }, 0) });
+    quay.push({ ngay: x.ngay, ca: x.ca, nguoi: x.nguoi, luc: x.luc, dong: dong, kc: kcMap[x.ngay + '|quay|' + x.ca] || null, tong: dong.reduce(function (s, d) { return s + (d.tinh ? d.amount : 0); }, 0) });
   });
   quay.sort(function (a, b) { return a.ngay < b.ngay ? 1 : a.ngay > b.ngay ? -1 : a.ca - b.ca; });
 
@@ -93,7 +95,7 @@ function sqCpNgay_(p) {
   });
   cbQuay.sort(function (a, b) { return b.pct - a.pct; });
 
-  return { tu: tu, den: den, homNay: hn, ds: ds, quay: quay,
+  return { tu: tu, den: den, homNay: hn, ds: ds, quay: quay, loaiTen: (function () { try { return plTenLoai_(); } catch (e) { return {}; } })(),
     canhBao: { gia: cbGia, hd: ds.filter(function (x) { return x.cb.length; }).map(function (x) { return { id: x.id, ngay: x.ngay, tenMoi: x.tenMoi, tong: x.tong, cb: x.cb }; }), quay: cbQuay } };
 }
 

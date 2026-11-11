@@ -147,6 +147,14 @@ var SQ_API = {
   chu_cp_daxoa: function (p) { sqChu_(p.pass); return plDaXoa_(); },
   chu_cp_khoiphuc: function (p) { sqChu_(p.pass); return plKhoiPhuc_(p); },
   chu_quen_ds: function (p) { sqChu_(p.pass); return { ds: sqQuenRows_().map(function (q) { delete q._row; return q; }) }; },
+  chu_ten_ds: function (p) { sqChu_(p.pass); return plTenDs_(); },
+  chu_ten_moi: function (p) { sqChu_(p.pass); return plDoiTenMoi_(p); },
+  chu_ten_nhom: function (p) { sqChu_(p.pass); return plDoiTenNhom_(p); },
+  chu_ten_loai: function (p) { sqChu_(p.pass); return plDoiTenLoai_(p); },
+  chu_quen_luu: function (p) { sqChu_(p.pass); return sqQuenLuu_({ ten: 'anh Đạt' }, p); },
+  chu_quen_xoa: function (p) { sqChu_(p.pass); return sqQuenXoa_(p.id); },
+  nv_kc: function (p) { var nv = sqNV_(p.pin); return plKCNgay_(nv, p); },
+  nv_kc_danh: function (p) { var nv = sqNV_(p.pin); return plKCDanh_(nv, p); },
   nv_kho: function (p) { var nv = sqNV_(p.pin); return sqKhoNV_(nv, p); },
   nv_kho_bep: function (p) { var nv = sqNV_(p.pin); return sqKhoBepNV_(nv, p); },
   nv_kho_tuan: function (p) { var nv = sqNV_(p.pin); return sqKhoTuanNV_(nv, p); },
@@ -376,7 +384,24 @@ function sqGoiGemini_(key, model, parts, schema) {
   if (quaTai) throw new Error('Máy đọc hóa đơn của Google đang quá tải. Đợi 1–2 phút rồi bấm đọc lại nhé (ảnh không bị mất).');
   throw new Error('Gemini báo lỗi ' + loiCuoi);
 }
-function sqChuanDong_(d, alias, tenDm) {
+// khóa so chữ: bỏ dấu, số, đơn vị, ký hiệu → "Húng quế 0,7kg x 30" = "hung que"
+var SQ_DV_BO = { kg: 1, kgs: 1, k: 1, ky: 1, ki: 1, g: 1, gr: 1, gram: 1, x: 1, bich: 1, goi: 1, cai: 1, hop: 1, thung: 1, chai: 1, lon: 1, bao: 1, vi: 1, d: 1, tr: 1, ngan: 1, nghin: 1, lang: 1 };
+function sqKhoaChu_(s) {
+  var k = khongDau_(s).replace(/([0-9])(kg|k|g|gr)\b/g, '$1 ').replace(/[^a-z ]+/g, ' ').split(' ').filter(function (w) { return w && !SQ_DV_BO[w]; }).join(' ');
+  return k.length >= 3 ? k : '';
+}
+// bản đồ học: chữ (đã chuẩn hóa) → tên đúng; ưu tiên của đúng mối, rồi của mọi mối; thêm tên danh mục
+function sqHocMap_(hoc, alias, moi, tenDm) {
+  var km = khongDau_(moi), out = { moi: {}, chung: {}, dm: {} };
+  var dat = function (o, k, v) { if (k && !o[k]) o[k] = v; };
+  (hoc || []).forEach(function (h) { var v = { ten: h.ten, dv: h.dv || '' }, k = sqKhoaChu_(h.chu);
+    if (km && khongDau_(h.moi) === km) { dat(out.moi, k, v); dat(out.moi, sqKhoaChu_(h.ten), v); } else { dat(out.chung, k, v); } });
+  (alias || []).forEach(function (a) { var v = { ten: a.ten, dv: '' }, k = sqKhoaChu_(a.chu);
+    if (km && khongDau_(a.moi) === km) dat(out.moi, k, v); else dat(out.chung, k, v); });
+  Object.keys(tenDm || {}).forEach(function (k) { dat(out.dm, sqKhoaChu_(tenDm[k]), tenDm[k]); });
+  return out;
+}
+function sqChuanDong_(d, alias, tenDm, hocMap) {
   var o = {
     chu: chu_(d.chu, 80), ten: chu_(d.ten || d.chu, 80), sl: soHoacRong_(d.sl), dv: chu_(d.dv, 15),
     gia: soHoacRong_(d.gia), tien: Math.round(so_(d.tien)), chacChan: d.chacChan !== false, lyDo: chu_(d.lyDo, 120),
@@ -384,7 +409,14 @@ function sqChuanDong_(d, alias, tenDm) {
   };
   var kc = khongDau_(o.chu);
   for (var i = 0; i < alias.length; i++) if (khongDau_(alias[i].chu) === kc) { o.ten = alias[i].ten; o.daNho = true; break; }
+  // đã học từ những lần nhân viên sửa: so theo chữ đã bỏ số, đơn vị, dấu (vd "Húng quế 0,7 x 30" = "húng quế")
+  if (!o.daNho && hocMap) {
+    var hk = sqKhoaChu_(o.chu), hm = hk && (hocMap.moi[hk] || hocMap.chung[hk]);
+    if (!hm) { var hk2 = sqKhoaChu_(o.ten); hm = hk2 && (hocMap.moi[hk2] || hocMap.chung[hk2]); }
+    if (hm) { o.ten = hm.ten; o.daNho = true; if (!o.dv && hm.dv) o.dv = hm.dv; }
+  }
   var kt = khongDau_(o.ten);
+  if (!tenDm[kt] && hocMap && hocMap.dm) { var kd2 = sqKhoaChu_(o.ten); if (kd2 && hocMap.dm[kd2]) { o.ten = hocMap.dm[kd2]; kt = khongDau_(o.ten); } } // "Húng quế 0,7" → "Húng quế"
   if (tenDm[kt]) o.ten = tenDm[kt];
   else if (!o.daNho && o.ten && !/ph[ií] (giao|ship)|ship|v[aậ]n chuy[eể]n/i.test(o.ten)) {
     o.moiMon = true;
@@ -903,7 +935,8 @@ function sqDocNen_(ids) {
       if (!doc || !doc.dong) throw new Error('Không đọc được, chụp lại rõ hơn nhé.');
       var moi = sqGhepMoi_(doc.moi, doc.dong, moiBiet, hoc);
       var aliasMoi = alias.filter(function (a) { return !a.moi || !moi || khongDau_(a.moi) === khongDau_(moi); });
-      var dong = doc.dong.map(function (d) { var o = sqChuanDong_(d, aliasMoi, tenDm); o.cachTinh = chu_(d.cachTinh, 80); return o; });
+      var hocMap = sqHocMap_(hoc, alias, moi, tenDm);
+      var dong = doc.dong.map(function (d) { var o = sqChuanDong_(d, aliasMoi, tenDm, hocMap); o.cachTinh = chu_(d.cachTinh, 80); return o; });
       return { ok: true, moi: moi, ngay: /^\d{4}-\d{2}-\d{2}$/.test(doc.ngay || '') ? doc.ngay : '', tongAnh: so_(doc.tongTrenAnh), dong: dong };
     } catch (e) { return { ok: false, loi: String(e && e.message || e).slice(0, 200) }; }
   });

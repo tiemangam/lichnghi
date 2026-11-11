@@ -78,6 +78,8 @@ function sqTongQuan_(p) {
   if (gio >= 23 && tHn.length) viec.push({ muc: 'r', loai: 'Số Sapo', tab: 'tong', ngay: hn, text: 'Đã quá 23h, chưa có ' + (tHn.length === 4 ? 'số Sapo' : tHn.join(', ')) + ' ngày ' + sqDM_(hn) + ' – nhắc Sơn gửi' });
   if (tHq.length) viec.push({ muc: tHq.length === 4 ? 'y' : 'i', loai: 'Số Sapo', tab: 'tong', ngay: congNgay_(hn, -1), text: 'Ngày ' + sqDM_(congNgay_(hn, -1)) + ' còn thiếu: ' + tHq.join(', ') });
   try { sqKhoViec_().forEach(function (v) { viec.push(v); }); } catch (e) { }
+  try { plKCRows_().filter(function (x) { return x.tt === 'sai' && x.ngay >= congNgay_(hn, -7); }).forEach(function (x) {
+    viec.push({ muc: 'r', loai: 'Kế toán báo sai', tab: 'cp', ngay: x.ngay, text: sqDM_(x.ngay) + ' · ' + (x.ten || (/^quay\|/.test(x.khoa) ? 'Chi tại quầy ca ' + x.khoa.split('|')[1] : 'hóa đơn')) + ': ' + [x.loaiSai, x.ghi].filter(String).join(' – ') + ' (' + x.nguoi + ')' }); }); } catch (e) { }
   if (hoiLai) viec.push({ muc: 'i', loai: 'Hóa đơn', tab: 'cp', text: hoiLai + ' hóa đơn anh hỏi lại, nhân viên chưa trả lời' });
   if (choKiem) viec.push({ muc: 'y', loai: 'Hóa đơn', tab: 'cp', text: choKiem + ' hóa đơn ảnh nhân viên chưa kiểm tra / xác nhận' });
   var chuaGia = 0; try { chuaGia = sqGiaHuy_().filter(function (x) { return x.gia === ''; }).length; } catch (e) { }
