@@ -809,7 +809,7 @@ function veDS(){
     return '<div class="day"><b>'+tenNgay(n)+'</b><span>'+g.length+' hóa đơn · '+tien(tong)+'</span></div>' + g.map(function(x){
       var im = x.thumb ? '<span class="im" style="background-image:url(data:image/jpeg;base64,'+x.thumb+')"></span>' : '<span class="im">'+(x.loai==='Hàng tự đặt'?'⭐':'🧾')+'</span>';
       var ten = x.moi || (x.tt==='Đang đọc' ? 'Đang đọc…' : 'Chưa rõ mối');
-      var sub = (x.gio||'') + ' · ' + (x.loai==='Hàng tự đặt' ? 'nhập tay' : 'gửi') + ' bởi ' + esc(x.nguoi) + (x.kiemBoi && x.kiemBoi!==x.nguoi ? ' · ' + esc(x.kiemBoi) + ' kiểm' : '') + (x.soAnh>1 ? ' · '+x.soAnh+' ảnh' : '') + (x.tt==='Chờ kiểm tra' && x.vang ? ' · ⚠ '+x.vang+' dòng cần xem' : '');
+      var sub = (x.gio||'') + ' · ' + (x.loai==='Hàng tự đặt' ? 'nhập tay' : 'gửi') + ' bởi ' + esc(x.nguoi) + (x.kiemBoi && x.kiemBoi!==x.nguoi ? ' · ' + esc(x.kiemBoi) + ' kiểm' : '') + (x.soAnh>1 ? ' · '+x.soAnh+' ảnh' : '') + (x.tt==='Chờ kiểm tra' && x.vang ? ' · ⚠ '+x.vang+' dòng cần xem' : '') + (x.chuSua ? ' · <b style="color:#8a5d10">✎ anh Đạt đã sửa '+esc(x.chuSua)+'</b>' : '');
       return '<button class="hdc" data-id="'+esc(x.id)+'">'+im+'<span class="m"><b>'+esc(ten)+'</b><small>'+sub+'</small></span><span class="r"><b class="num">'+(x.tt==='Đang đọc'?'—':tien(x.tong).replace('đ',''))+'</b>'+pillHD(x)+'</span></button>';
     }).join(''); }).join('');
   ganChoGui();
