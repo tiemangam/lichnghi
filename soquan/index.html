@@ -1517,12 +1517,13 @@ function spDoc(ten, rows){
   }
   if (co('BÁO CÁO MẶT HÀNG')) {
     var h2 = hi('Tên mặt hàng'); if (h2 < 0) return { ten: ten, loi: 'Không đọc được bảng mặt hàng.' };
-    var H = rows[h2], c = function(t){ return H.indexOf(t); }, cDm = c('Tên danh mục'), cTen = c('Tên mặt hàng'), cSl = c('Số lượng'), cTien = c('Tổng tiền'), cGiam = c('Tổng giảm giá');
+    var H = rows[h2], c = function(t){ return H.indexOf(t); }, cDm = c('Tên danh mục'), cTen = c('Tên mặt hàng'), cSl = c('Số lượng'), cTien = c('Tổng tiền'), cGiam = c('Tổng giảm giá'), cDv = c('Giá mặt hàng');
     var gom = {}, tong2 = 0, giam = 0;
     for (var k = h2+1; k < rows.length; k++) { var q = rows[k], b0 = String(q[0]).trim();
       if (b0 === 'Tổng') { tong2 = so(q[cTien]); giam = so(q[cGiam]); break; }
       if (!b0 || !q[cTen]) continue;
-      var key = String(q[cDm]).trim() + '|' + String(q[cTen]).trim(), g = gom[key] || (gom[key] = { dm: String(q[cDm]).trim(), ten: String(q[cTen]).trim(), sl: 0, tien: 0 });
+      var dvM = cDv >= 0 ? String(q[cDv] == null ? '' : q[cDv]).trim() : '', tenM = String(q[cTen]).trim() + (dvM && dvM.toLowerCase() !== 'giá thường' ? ' (' + dvM + ')' : ''); // tách biến thể (Mẹt nhỏ / Mẹt lớn, 0,2kg / 0,5kg…) để tính định lượng
+      var key = String(q[cDm]).trim() + '|' + tenM, g = gom[key] || (gom[key] = { dm: String(q[cDm]).trim(), ten: tenM, sl: 0, tien: 0 });
       g.sl += so(q[cSl]); g.tien += so(q[cTien]); }
     var mon = Object.keys(gom).map(function(x){ return gom[x]; }).sort(function(a,b){ return b.tien - a.tien; });
     if (!tong2) tong2 = mon.reduce(function(s2,m){ return s2 + m.tien; }, 0);
