@@ -1549,7 +1549,7 @@ function bangNgay(x, j){
         ss = can == null ? '<span class="sub">lần đầu có số</span>' : can < tb * 0.5 ? tag('r', 'cách '+cach+' ngày') : can < tb * 0.75 ? tag('y', 'cách '+cach+' ngày') : tag('g', 'cách '+cach+' ngày'); }
       return [a, v, dung, ss]; }).reverse().map(function(z){ var a = z[0], v = z[1], dung = z[2], ss = z[3];
       return '<tr><td><b>'+THU2[dow(a[0])]+' '+dm(a[0])+'</b></td><td>'+soK(v[0])+'</td>'+(v[1] ? '<td class="kth">+'+soK(v[1])+'</td>' : '<td class="kz">·</td>')+'<td'+(dung>0?' class="kgi"':'')+'>'+(dung ? soK(dung) : '·')+'</td><td><b>'+soK(v[3])+'</b></td><td>'+ss+'</td></tr>'; }).join('') +
-    '</table></div><p class="sub" style="margin-top:4px">Dùng = bán + giảm trong ngày ('+dv+'), so với định mức '+esc(dmTxt(x))+'.'+(r > 0 && r < 1 ? ' Món dùng ít: so số ngày từ lần dùng trước (bình thường ~'+soK(Math.round(10/r)/10)+' ngày/1 '+dv+').' : '')+'</p></div>';
+    '</table></div><p class="sub" style="margin-top:4px">Dùng = bán + giảm trong ngày ('+dv+'), so với định mức '+esc(dmTxt(x))+'.'+(r > 0 && r < 1 ? ' Món dùng ít: so số ngày từ lần dùng trước (bình thường ≈'+soK(Math.round(10/r)/10)+' ngày/1 '+dv+').' : '')+'</p></div>';
 }
 function moSuaKho(x){
   var j = KH.data, ov = moOv(false), p = ov.querySelector('.pane');
@@ -1656,7 +1656,7 @@ function veXD(){
   var nHien = KH.moXd ? con.length : 0, dt3 = (td.filter(function(x){ return x.dt3; })[0] || {}).dt3;
   var gv = function(x){ var p = x.theoDt;
     return '<button class="xm ' + (x.muc || '') + '" data-xk="' + esc(x.t) + '"><span><b class="t">' + esc(x.t) + '</b> <span class="sub">' + dvt(x) + '</span><small>' + (p ? 'Dùng ' + soK(x.dung3) + ' · mỗi 10 tr doanh thu: ' + soK(x.p10) + ' (thường ' + soK(x.p10b) + ')' : 'Dùng ' + kbSo(x.dung3) + ' trong ' + x.soNgay3 + ' ngày · định mức ' + esc(dmTxt(x))) + '</small></span>' +
-      '<span class="brw">' + bar(x.dung3, x.exp3) + '<small>dùng ' + kbSo(x.dung3) + (x.exp3 != null ? ' · ' + (p ? 'theo doanh thu ~' : 'định mức ~') + soK(x.exp3) : '') + '</small></span><span></span>' +
+      '<span class="brw">' + bar(x.dung3, x.exp3) + '<small>dùng ' + kbSo(x.dung3) + (x.exp3 != null ? ' · ' + (p ? 'theo doanh thu ≈' : 'định mức ≈') + soK(x.exp3) : '') + '</small></span><span></span>' +
       '<span class="pl ' + (x.muc || (x.tile != null ? 'g' : 'm')) + '">' + (x.muc === 'r' ? '🔴 gấp ' + soK(Math.round(x.tile * 10) / 10) : x.muc === 'y' ? '🟡 +' + Math.round((x.tile - 1) * 100) + '%' : x.tile != null ? 'bình thường' : 'chưa đủ số') + '</span></button>'; };
   h += '<div class="sec" style="margin-top:14px"><span>Gia vị · bao bì · đồ khô – so với doanh thu</span><span>' + (dt3 ? '3 ngày: ' + tr(dt3) : '') + '</span></div>' +
     (lech.map(gv).join('') || '<p class="sub" style="padding:4px 0">Không món nào dùng nhiều bất thường so với doanh thu. 👍</p>') + con.slice(0, nHien).map(gv).join('') +
@@ -1741,7 +1741,7 @@ function veKB(){
       ds.map(function(x){ var d0 = x.days[0] || { ds: [] }, mon = d0.ds.slice(0, 4).map(function(m){ return esc(kbTenGon(m.t)) + ' ' + soK(m.sl); }).join(' · ');
         return '<tr class="' + (x.muc === 'r' ? 'r' : x.muc === 'y' ? 'y' : '') + '" data-kb="' + esc(x.t) + '"><td><b>' + esc(x.t) + '</b> <span class="sub">' + dvt(x) + '</span><small>' + (mon || (x.links.length ? (x.dung == null ? esc(x.nhan) : 'hôm nay không bán món liên quan') : 'chưa tick món nào dùng nguyên liệu này')) + '</small><small class="dt">trước ' + kbSo(x.prev) + ' + xuất ' + kbSo(x.xuat) + ' − bán ' + kbSo(x.dung) + '</small></td>' +
           '<td>' + kbSo(x.prev) + '</td><td' + (x.xuat > 0 ? ' class="kgi"' : '') + '>' + kbSo(x.xuat) + '</td><td>' + kbSo(x.dung) + '</td>' +
-          '<td><b' + (x.bep < 0 ? ' style="color:#C0392B"' : '') + '>' + (x.links.length && x.quy ? kbSo(x.bep) : '–') + '</b>' + (x.kiem ? '<small>đã kiểm tủ</small>' : x.duNgay != null ? '<small>đủ ~' + soK(x.duNgay) + ' ngày</small>' : x.bep < 0 ? '<small>bán nhiều hơn đã xuất</small>' : '') + (x.links.length && x.quy ? '<button class="btk" data-ktu="' + esc(x.t) + '">🧊 Kiểm tủ</button>' : '') + '</td>' +
+          '<td><b' + (x.bep < 0 ? ' style="color:#C0392B"' : '') + '>' + (x.links.length && x.quy ? kbSo(x.bep) : '–') + '</b>' + (x.kiem ? '<small>đã kiểm tủ</small>' : x.duNgay != null ? '<small>đủ ≈' + soK(x.duNgay) + ' ngày</small>' : x.bep < 0 ? '<small>bán nhiều hơn đã xuất</small>' : '') + (x.links.length && x.quy ? '<button class="btk" data-ktu="' + esc(x.t) + '">🧊 Kiểm tủ</button>' : '') + '</td>' +
           '<td><span class="pl ' + x.muc + '">' + (x.muc === 'r' ? '🔴 ' : x.muc === 'y' ? '🟡 ' : '') + esc(x.nhan) + '</span></td></tr>'; }).join('') + '</table></div>' : '<p class="sub" style="padding:6px 0">Chưa có nguyên liệu nào để tính.</p>') +
     '<p class="sub" style="margin-top:8px">🟡 xuất dư trong ngày, hoặc còn ở bếp nhiều hơn 2 ngày dùng · 🔴 bếp còn đủ hàng mà vẫn xuất thêm · 🔴 âm = bán nhiều hơn số đã xuất (quên bấm xuất, hoặc định lượng chưa đúng). Số là ước tính theo định lượng.' +
       (lang ? ' ' + lang + ' nguyên liệu khác chưa xuất, chưa bán nên không hiện.' : '') + (tuTru.length ? ' ' + tuTru.length + ' nguyên liệu Sapo tự trừ theo món bán (' + esc(tuTru.slice(0, 3).map(function(x){ return x.t.toLowerCase(); }).join(', ')) + '…) không tính tồn bếp – bấm vào món đó trong bảng Nhập – xuất để xem món liên quan.' : '') + '</p>';
@@ -1801,7 +1801,7 @@ function kbKhung(x){
         return '<div class="ng"><div class="hd"><b>' + THU2[dow(d.d)] + ' ' + dm(d.d) + '</b><span class="pl ' + d.muc + '">' + esc(d.nhan) + '</span></div><div class="bd">' + bd + cal + '</div></div>'; }).join('');
   }
   h += '<div class="khf"><label>Món liên quan · định lượng mỗi phần <button class="lnk" id="kbSua" style="float:right;text-transform:none;letter-spacing:0;font-size:12.5px">✎ sửa / thêm món</button></label>' +
-    (links.length ? links.map(function(l){ return '<div class="mlq' + (l.bat ? '' : ' off') + '"><span class="ck' + (l.bat ? '' : ' o') + '">' + (l.bat ? '✓' : '') + '</span><span>' + esc(l.mon) + '</span><span class="sl">' + (l.bat ? '<b>' + soK(l.sl) + ' ' + dvg + '</b> / phần' + (quy && l.sl > 0 ? ' <span class="sub">· 1 ' + dv + ' ra ~' + soK(Math.round(quy * (1 - ((b && b.hao) || 0)) / l.sl * 10) / 10) + ' phần</span>' : '') : 'không tính') + '</span></div>'; }).join('')
+    (links.length ? links.map(function(l){ return '<div class="mlq' + (l.bat ? '' : ' off') + '"><span class="ck' + (l.bat ? '' : ' o') + '">' + (l.bat ? '✓' : '') + '</span><span>' + esc(l.mon) + '</span><span class="sl">' + (l.bat ? '<b>' + soK(l.sl) + ' ' + dvg + '</b> / phần' + (quy && l.sl > 0 ? ' <span class="sub">· 1 ' + dv + ' ra ≈' + soK(Math.round(quy * (1 - ((b && b.hao) || 0)) / l.sl * 10) / 10) + ' phần</span>' : '') : 'không tính') + '</span></div>'; }).join('')
       : '<p class="sub">Chưa tick món nào dùng nguyên liệu này. Bấm <b>✎ sửa / thêm món</b> để chọn.</p>') +
     '<p class="sub" style="margin-top:6px">' + (quy ? '1 ' + dv + ' = ' + soK(quy) + ' ' + dvg + (b && b.hao ? ' · hao hụt ' + Math.round(b.hao * 100) + '%' : '') : 'Chưa có quy đổi 1 ' + dv + ' = ? ' + dvg + ' – bấm ✎ để điền') + '</p>' +
     (links.some(function(l){ return l.bat; }) ? '<p class="sub" style="margin-top:4px">Định mức tính theo món bán: app so <b>thực xuất</b> với <b>số phần bán × định lượng</b>, nên ngày đông hay vắng đều tính đúng.</p>' : '') + '</div>' +
@@ -1938,7 +1938,7 @@ function ktNav(){
 function veKTD(){
   var j = KT.data, I = j.tuanInfo, cur = I.length - 1, T = I[cur], x = j.items.filter(function(y){ return y.k === KT.chon; })[0]; if (!x) return;
   var dv = dvt(x), h = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="font-size:20px;color:var(--xanh)">' + esc(x.t) + ' <span class="sub">· ' + dv + '</span></h3>' + ktPill(x) + '</div>' +
-    '<div class="sub">Tuần ' + dm(T.tu) + ' – ' + dm(T.den) + ' · dùng <b>' + soT(x.dung) + ' ' + dv + '</b> · tuần trước ' + soT(x.truoc) + (x.exp != null ? ' · theo doanh thu lẽ ra ~' + soT(x.exp) : '') + '</div>';
+    '<div class="sub">Tuần ' + dm(T.tu) + ' – ' + dm(T.den) + ' · dùng <b>' + soT(x.dung) + ' ' + dv + '</b> · tuần trước ' + soT(x.truoc) + (x.exp != null ? ' · theo doanh thu lẽ ra ≈' + soT(x.exp) : '') + '</div>';
   var coNgay = x.d7.some(function(v){ return v != null; });
   if (coNgay) {
     var m7 = d7Muc(x.d7);
@@ -1946,7 +1946,7 @@ function veKTD(){
     var ds = []; x.d7.forEach(function(v, i){ if (v > 0) ds.push(i); });
     var gaps = []; for (var q = 1; q < ds.length; q++) gaps.push(ds[q] - ds[q - 1]);
     h += '<div class="sub" style="margin-top:6px">' + (ds.length ? 'Dùng vào ' + ds.map(function(i){ return THU7[i]; }).join(', ') + (gaps.length ? ' · cách nhau ' + gaps.join(', ') + ' ngày' : '') : 'Tuần này chưa dùng') +
-      (x.avgW ? ' · bình thường ~' + soT(x.avgW) + ' ' + dv + '/tuần' : '') + (x.d7.some(function(v){ return v == null; }) ? ' · ô "?" = chưa có file kho ngày đó' : '') + '</div>';
+      (x.avgW ? ' · bình thường ≈' + soT(x.avgW) + ' ' + dv + '/tuần' : '') + (x.d7.some(function(v){ return v == null; }) ? ' · ô "?" = chưa có file kho ngày đó' : '') + '</div>';
   } else h += '<div class="cb i" style="margin-top:8px">Tuần này chỉ có file kho <b>cả tuần</b> – chưa có số từng ngày. Từ khi Sơn gửi file mỗi tối sẽ có 7 ô T2 → CN.</div>';
   if (x.dau) {
     h += '<div class="bx"><b style="font-family:var(--H);color:var(--xanh)">So với món chiên bán ra</b>' +
@@ -2073,12 +2073,12 @@ function plLine(k, ten, v, p){ return '<button class="pln'+(PL.chon===k?' sel':'
 function plHoaVon(j){
   var hv = j.hv; if (!hv) return '<div class="plsec"><span>Điểm hòa vốn '+pThang(j.thang)+'</span></div><p>Chưa đủ số để tính (chưa có doanh thu).</p>';
   var dat = Math.min(1, hv.dat), h = '<div class="plsec"><span>Điểm hòa vốn '+pThang(j.thang)+'</span></div>' +
-    '<span class="big">≈ '+tr0(hv.BE)+'</span> <span class="f">= chi phí cố định '+tr0(hv.F)+' ÷ (1 − '+pPct(hv.v)+' nguyên liệu, ga, bánh mì, chi quầy) · ~'+tr0(hv.BEngay)+'/ngày</span>' +
+    '<span class="big">≈ '+tr0(hv.BE)+'</span> <span class="f">= chi phí cố định '+tr0(hv.F)+' ÷ (1 − '+pPct(hv.v)+' nguyên liệu, ga, bánh mì, chi quầy) · ≈'+tr0(hv.BEngay)+'/ngày</span>' +
     '<div class="plpr"><i style="width:'+Math.round(dat*100)+'%"></i><span>'+tr0(j.vao.R)+' · '+Math.round(hv.dat*100)+'%</span></div>';
-  if (hv.can > 0 && !j.full) h += 'Còn thiếu <b>'+tr0(hv.can)+'</b> để hòa vốn → cần bán <b>~'+tr0(hv.canNgay)+' / ngày</b> cho '+hv.conNgay+' ngày còn lại.<br>';
+  if (hv.can > 0 && !j.full) h += 'Còn thiếu <b>'+tr0(hv.can)+'</b> để hòa vốn → cần bán <b>≈'+tr0(hv.canNgay)+' / ngày</b> cho '+hv.conNgay+' ngày còn lại.<br>';
   else if (hv.can > 0) h += 'Cả tháng còn thiếu <b>'+tr0(hv.can)+'</b> mới hòa vốn.<br>';
   else h += '<b style="color:var(--xanh)">Đã qua điểm hòa vốn ✓</b>'+(j.ngayHV ? ' (từ ngày '+dm(j.ngayHV)+')' : '')+'<br>';
-  if (!j.full) h += 'Đang bán TB <b>'+tr0(hv.tb)+' / ngày</b> → dự kiến cuối tháng <b>~'+tr0(hv.duKien)+'</b>, '+(hv.loiDuKien>=0?'<b style="color:var(--xanh)">lời ~'+tr0(hv.loiDuKien)+'</b>':'<b style="color:var(--do)">lỗ ~'+tr0(-hv.loiDuKien)+'</b>')+(hv.ngayHV && hv.ngayHV <= j.nd ? ' (hòa vốn khoảng ngày '+hv.ngayHV+'/'+(+j.thang.slice(5))+')' : hv.ngayHV ? ' (tháng này chưa tới điểm hòa vốn)' : '')+'.';
+  if (!j.full) h += 'Đang bán TB <b>'+tr0(hv.tb)+' / ngày</b> → dự kiến cuối tháng <b>≈'+tr0(hv.duKien)+'</b>, '+(hv.loiDuKien>=0?'<b style="color:var(--xanh)">lời ≈'+tr0(hv.loiDuKien)+'</b>':'<b style="color:var(--do)">lỗ ≈'+tr0(-hv.loiDuKien)+'</b>')+(hv.ngayHV && hv.ngayHV <= j.nd ? ' (hòa vốn khoảng ngày '+hv.ngayHV+'/'+(+j.thang.slice(5))+')' : hv.ngayHV ? ' (tháng này chưa tới điểm hòa vốn)' : '')+'.';
   return h;
 }
 function plChart(j){
