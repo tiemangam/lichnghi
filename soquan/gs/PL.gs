@@ -131,10 +131,10 @@ function plTok_(s) { return String(s || '').toLowerCase().normalize('NFC').split
 function plLaGa_(s) { var t = plTok_(s); return t.indexOf('ga') >= 0 || t.indexOf('gas') >= 0; }
 function plLaBanhMi_(s) { return /(^|[^a-z])banh mi([^a-z]|$)/.test(khongDau_(s)); }
 // tên mối / nhóm → loại chi (khi anh chưa chọn loại)
-var PL_TU_KHOA = [
-  [/ dau tu /, 'dautu'], [/ cap nuoc | nuoc sinh hoat | sawaco | tien nuoc /, 'cd', 'nuoc'], [/ dien luc | evn | tien dien /, 'cd', 'dien'],
-  [/ tien nha | thue nha | mat bang /, 'cd', 'nha'], [/ internet | fpt | vnpt | cuoc mang /, 'cd', 'net'], [/ thu gom rac | tien rac | ve sinh moi truong /, 'cd', 'rac'],
-  [/ sua chua | tho sua | sua may /, 'sua']
+var PL_TU_KHOA = [   // so trên chữ CÓ DẤU (vd "sữa chua" ≠ "sửa chữa")
+  [/ đầu tư /, 'dautu'], [/ cấp nước | nước sinh hoạt | sawaco | tiền nước /, 'cd', 'nuoc'], [/ điện lực | evn | tiền điện /, 'cd', 'dien'],
+  [/ tiền nhà | thuê nhà | mặt bằng /, 'cd', 'nha'], [/ internet | fpt | vnpt | cước mạng /, 'cd', 'net'], [/ thu gom rác | tiền rác | vệ sinh môi trường /, 'cd', 'rac'],
+  [/ sửa chữa | thợ sửa | sửa máy /, 'sua']
 ];
 function plLoaiTuNhom_(nhom) {
   for (var k in PL_LOAI) if (PL_LOAI[k].phieu && PL_LOAI[k].phieu === nhom) return k;
@@ -147,7 +147,7 @@ function plTach_(x) {
   if (k0 === 'quen') k0 = 'nvl';
   if (k0) return [{ k: k0, khoan: them.khoan || '', tien: x.tong, dong: x.mon }];
   var dau = (x.moi || '') + ' ' + (x.nhom || '');
-  var dk = ' ' + khongDau_(dau).replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ') + ' ';
+  var dk = ' ' + String(dau).toLowerCase().normalize('NFC').replace(/[^0-9a-zà-ỹđ]+/g, ' ').trim() + ' ';
   for (var i = 0; i < PL_TU_KHOA.length; i++) if (PL_TU_KHOA[i][0].test(dk)) return [{ k: PL_TU_KHOA[i][1], khoan: PL_TU_KHOA[i][2] || '', tien: x.tong, dong: x.mon }];
   if (plLaGa_(dau)) return [{ k: 'ga', tien: x.tong, dong: x.mon }];
   if (plLaBanhMi_(dau)) return [{ k: 'banhmi', tien: x.tong, dong: x.mon }];
