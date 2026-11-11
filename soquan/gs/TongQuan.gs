@@ -120,7 +120,7 @@ function sqSapoLuu_(p, nguoi) {
             don: Math.round(so_(q.don)), huy: Math.round(so_(q.huy)), tienHuy: Math.round(so_(q.tienHuy)), sl: so_(q.sl) }
         : loai === 'tt'
         ? { tong: Math.round(so_(x.d && x.d.tong)), don: Math.round(so_(x.d && x.d.don)), kenh: (x.d && x.d.kenh || []).slice(0, 20).map(function (k) { return { ten: chu_(k.ten, 40), don: Math.round(so_(k.don)), huy: Math.round(so_(k.huy)), tien: Math.round(so_(k.tien)) }; }) }
-        : { tong: Math.round(so_(x.d && x.d.tong)), giam: Math.round(so_(x.d && x.d.giam)), mon: (x.d && x.d.mon || []).slice(0, 300).map(function (m) { return { dm: chu_(m.dm, 30), ten: chu_(m.ten, 60), sl: so_(m.sl), tien: Math.round(so_(m.tien)) }; }) };
+        : { tong: Math.round(so_(x.d && x.d.tong)), giam: Math.round(so_(x.d && x.d.giam)), mon: (x.d && x.d.mon || []).slice(0, 300).map(function (m) { return { dm: chu_(m.dm, 30), ten: chu_(m.ten, 80), sl: so_(m.sl), tien: Math.round(so_(m.tien)) }; }) };
       if (loai === 'monky' || loai === 'monkg') d.den = /^\d{4}-\d{2}-\d{2}$/.test(String(q.den || '')) && String(q.den) >= ngay ? String(q.den) : ngay;
       var row = idx[ngay + '|' + loai];
       if (!row) { row = sh.getLastRow() + 1; idx[ngay + '|' + loai] = row; }

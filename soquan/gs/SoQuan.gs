@@ -130,7 +130,11 @@ var SQ_API = {
   chu_kho_cd: function (p) { sqChu_(p.pass); return sqKhoCDLuu_(p); },
   chu_kho_tuan: function (p) { sqChu_(p.pass); return sqKhoTuan_(p); },
   chu_kho_chien: function (p) { sqChu_(p.pass); return sqKhoChienLuu_(p); },
-  chu_kho_nhom: function (p) { sqChu_(p.pass); return sqKhoNhomLuu_(p); }
+  chu_kho_nhom: function (p) { sqChu_(p.pass); return sqKhoNhomLuu_(p); },
+  chu_kho_bep: function (p) { sqChu_(p.pass); return sqKhoBep_(p); },
+  chu_dl_file: function (p) { sqChu_(p.pass); return sqDLFile_(p); },
+  chu_dl_sua: function (p) { sqChu_(p.pass); return sqDLSua_(p); },
+  chu_bep_dat: function (p) { sqChu_(p.pass); return sqBepDat_(p); }
 };
 
 /* ======================= ĐĂNG NHẬP ======================= */
