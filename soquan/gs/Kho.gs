@@ -610,7 +610,7 @@ function sqKhoBep_(p) {
         else { muc = 'g'; nhan = 'kiểm tủ khớp'; } }
       else if (z.dat) { muc = 'g'; nhan = 'anh đặt lại'; }
       else if (z.bep < -Math.max(0.1, 0.1 * (avg || 0))) { muc = 'r'; nhan = 'âm ' + soV(-z.bep) + ' ' + dv; }
-      else if (avg > 0 && z.bep > 0.5 && z.bep > 1.5 * avg) { muc = 'y'; nhan = 'tủ đủ ~' + soV(Math.round(z.bep / avg * 10) / 10) + ' ngày'; }
+      else if (avg > 0 && z.bep > 0.5 && z.bep > 1.5 * avg) { muc = 'y'; nhan = 'tủ đủ ≈' + soV(Math.round(z.bep / avg * 10) / 10) + ' ngày'; }
       else { muc = 'g'; nhan = Math.abs(z.bep) < 0.05 ? 'khớp' : 'hợp lý'; }
       z.muc = muc; z.nhan = nhan;
     });
