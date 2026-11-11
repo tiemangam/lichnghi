@@ -434,12 +434,12 @@ table.tw tr.gh td{font:700 13px var(--H);color:var(--xanh);padding-top:12px;bord
     </section>
     <section id="t-kho" class="hide">
       <div class="chips khche" id="khChe"><button class="chip on" data-che="ngay">Theo ngày</button><button class="chip" data-che="tuan">Theo tuần · so doanh thu</button></div>
+      <div class="card hide" id="khBep" style="margin-bottom:12px"></div><input type="file" id="dlFile" accept=".xlsx,.xls" class="hide">
       <div id="khTuanV" class="hide"></div>
       <div id="khNgayV">
       <div class="bar" style="justify-content:space-between"><div class="cpnav"><button id="khTruoc">‹</button><b id="khTit">Kho</b><button id="khSau">›</button><button id="khMoi">Mới nhất</button></div>
         <div class="kpis" id="khKpi" style="margin:0;flex:1;max-width:680px"></div></div>
       <div id="khBao"></div>
-      <div class="card hide" id="khBep" style="margin-bottom:12px"></div><input type="file" id="dlFile" accept=".xlsx,.xls" class="hide">
       <div class="khg"><div class="card" id="khCan"><div class="loading">Đang tải…</div></div>
         <div><div class="card" id="khXd"></div><div class="card" id="khNx" style="margin-top:12px"></div></div>
         <div class="card" id="khDc"></div></div>
@@ -1358,7 +1358,7 @@ function taiKH(){
   return api('chu_kho', { ngay: ng }).then(function(j){ if (ng !== KH.ngay) return; KH.data = j;
     var n = j.trong ? 0 : j.items.filter(function(x){ return x.muc==='r' || (x.tt==='het' && !x.dat); }).length;
     $('nKho').textContent = n; $('nKho').classList.toggle('hide', !n); if (TAB==='kho') veKH(); taiKB(); })
-  .catch(function(e){ if (TAB==='kho') $('khCan').innerHTML = '<div class="empty">Chưa tải được: '+esc(e.message)+'</div>'; });
+  .catch(function(e){ if (TAB==='kho') $('khCan').innerHTML = '<div class="empty">Chưa tải được: '+esc(e.message)+'</div>'; taiKB(); });
 }
 function veKH(){
   var j = KH.data; if (!j) return;
@@ -1550,13 +1550,14 @@ var KB = { data: null, ngay: null };
 function kk(s){ return kdv(s).replace(/\s+/g, ' '); }
 function taiKB(){
   var ng = KH.data && !KH.data.trong ? KH.data.ngay : ''; KB.ngay = ng;
-  return api('chu_kho_bep', { ngay: ng }).then(function(j){ if (ng !== KB.ngay) return; KB.data = j; if (TAB==='kho') veKB(); }).catch(function(){ });
+  if (!KB.data) { $('khBep').classList.remove('hide'); $('khBep').innerHTML = '<h3 style="font-size:17px;color:var(--xanh)">Đã xuất – chưa dùng</h3><div class="loading">Đang tính…</div>'; }
+  return api('chu_kho_bep', { ngay: ng }).then(function(j){ if (ng !== KB.ngay) return; KB.data = j; if (TAB==='kho') veKB(); }).catch(function(e){ $('khBep').classList.remove('hide'); $('khBep').innerHTML = '<h3 style="font-size:17px;color:var(--xanh)">Đã xuất – chưa dùng</h3><div class="empty">Chưa tải được: ' + esc(e.message) + ' <button class="lnk" onclick="this.disabled=true" id="kbLai">thử lại</button></div>'; if ($('kbLai')) $('kbLai').onclick = taiKB; });
 }
 function kbTim(t){ var k = kk(t); return KB.data && KB.data.items ? KB.data.items.filter(function(y){ return y.k === k; })[0] : null; }
 function kbSo(v){ return v == null ? '–' : soK(v); }
 function kbTenGon(t){ return String(t).replace(/^Bánh Tráng Cuốn /, 'Mẹt ').replace(/^Chả Cuốn Cá Trích/, 'Mẹt cá trích').replace(/\s*\((Mẹt )?([^()]*)\)\s*$/i, ' $2'); }
 function veKB(){
-  var el = $('khBep'), j = KB.data; if (!j || (KH.data && KH.data.trong)) { el.classList.add('hide'); return; }
+  var el = $('khBep'), j = KB.data; if (!j) return;
   el.classList.remove('hide');
   var hd = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3 style="font-size:17px;color:var(--xanh)">Đã xuất – chưa dùng <span class="sub">· còn ở bếp, tính theo món bán' + (j.ngay ? ' · ' + THU[dow(j.ngay)] + ' ' + dm(j.ngay) : '') + '</span></h3><div class="khbt"><button id="kbFile">📥 Tải file định lượng</button></div></div>';
   var tatCa = (j.items || []).filter(function(x){ return !x.tuTru; }), tuTru = (j.items || []).filter(function(x){ return x.tuTru; });
