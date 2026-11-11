@@ -134,7 +134,13 @@ var SQ_API = {
   chu_kho_bep: function (p) { sqChu_(p.pass); return sqKhoBep_(p); },
   chu_dl_file: function (p) { sqChu_(p.pass); return sqDLFile_(p); },
   chu_dl_sua: function (p) { sqChu_(p.pass); return sqDLSua_(p); },
-  chu_bep_dat: function (p) { sqChu_(p.pass); return sqBepDat_(p); }
+  chu_bep_dat: function (p) { sqChu_(p.pass); return sqBepDat_(p); },
+  chu_bep_kiem: function (p) { sqChu_(p.pass); return sqBepKiem_(p, 'anh Đạt'); },
+  nv_kho: function (p) { var nv = sqNV_(p.pin); return sqKhoNV_(nv, p); },
+  nv_kho_bep: function (p) { var nv = sqNV_(p.pin); return sqKhoBepNV_(nv, p); },
+  nv_kho_tuan: function (p) { var nv = sqNV_(p.pin); return sqKhoTuanNV_(nv, p); },
+  nv_kho_dat: function (p) { var nv = sqNV_(p.pin); return sqKhoDatNV_(nv, p); },
+  nv_bep_kiem: function (p) { var nv = sqNV_(p.pin); return sqBepKiemNV_(nv, p); }
 };
 
 /* ======================= ĐĂNG NHẬP ======================= */
