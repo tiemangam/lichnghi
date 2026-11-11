@@ -12,6 +12,7 @@ var CP_LUAN_CHUYEN = /(^| )(tien cho|di cho|dua cho|giao ca|doan|cho doan|ung)( 
 function sqCpMuc_(pct) { return pct < 0 ? (pct <= -0.05 ? 'g' : '') : pct > 0.2 ? 'rr' : pct >= 0.1 ? 'r' : pct >= 0.005 ? 'y' : ''; }
 function sqCpKhoaMoi_(x) {
   if (x.loai === LOAI.HD || x.loai === LOAI.TD) { var m = x.moi || x.nhom.replace(/^HĐ /, ''); return { khoa: 'm:' + khongDau_(m), ten: m }; }
+  if (x.loai === LOAI_CHU) return { khoa: 'c:' + khongDau_(x.nhom), ten: x.nhom + (x.mon && x.mon[0] ? ' · ' + x.mon[0].ten : '') };
   var t = (x.nguoi ? x.nguoi + ' – ' : '') + x.nhom;
   return { khoa: 'n:' + khongDau_(x.nhom) + '|' + khongDau_(x.nguoi), ten: t };
 }
@@ -40,11 +41,12 @@ function sqCpNgay_(p) {
     if (x.loai === LOAI.HD && x.tongAnh !== '' && x.tongAnh > 0 && Math.abs(x.tongAnh - x.tong) > 1000)
       cb.push({ loai: 'tổng lệch', text: 'Cộng các dòng ' + sqTien_(x.tong) + ' ≠ tổng trên ảnh ' + sqTien_(x.tongAnh) });
     if (x.soSua) cb.push({ loai: 'sửa tay ' + x.soSua + ' dòng', text: 'Nhân viên sửa khác chỗ app đọc' });
-    if (x.loai === LOAI.HD && (!x.anh || !x.anh.length)) cb.push({ loai: 'không ảnh', text: 'Hóa đơn không có ảnh' });
+    if (x.loai === LOAI.HD && (!x.anh || !x.anh.length) && x.nguoi !== 'anh Đạt') cb.push({ loai: 'không ảnh', text: 'Hóa đơn không có ảnh' });
     if (x.tong && x.tong % 100000 === 0 && x.mon.length > 1) cb.push({ loai: 'tổng tròn', text: 'Tổng phiếu tròn ' + sqTien_(x.tong) });
     var dongAi = (m.dong || []).map(function (d) { return { ten: d.ten, chu: d.chu, anh: d.anh, vung: d.vung, sua: d.sua, aiTen: d.aiTen, aiTien: d.aiTien }; });
     return { id: x.id, ngay: x.ngay, loai: x.loai, nhom: x.nhom, moi: x.moi, nguoi: m.nguoi || x.nguoi, tong: x.tong, tongAnh: x.tongAnh, mon: x.mon, ghiChu: x.ghiChu,
       tt: x.tt, hoi: x.hoi, traLoi: x.traLoi, anh: x.anh || [], khoa: k.khoa, tenMoi: k.ten, gia: gp, cb: cb, dongAi: dongAi,
+      lc: (function () { try { return plLoaiChinh_(Object.assign({}, x, { meta: metas[x.id] || null })); } catch (e) { return null; } })(), lcTay: !!(m.them && m.them.loaiChi),
       thumb: coThumb && m.them ? (m.them.thumb || '') : '', kiemBoi: m.them ? (m.them.kiemBoi || '') : '', chuSua: m.them ? (m.them.chuSua || '') : '', suaLuc: x.suaLuc };
   }).sort(function (a, b) { return a.ngay < b.ngay ? 1 : a.ngay > b.ngay ? -1 : b.tong - a.tong; });
 

@@ -22,6 +22,7 @@ function sqTongQuan_(p) {
   for (var i = 1; i < rows.length; i++) {
     var r = rows[i]; if (!String(r[0])) continue;
     var d = chuanNgay_(r[1]); if (d < tu || d > den) continue;
+    if (['Chi phí cố định', 'Đầu tư', 'Lương / thưởng'].indexOf(String(r[2])) >= 0) continue;
     var t = so_(r[5]), k = sqTongNhom_(r[2]), o = N(d);
     o.chi += t; o.nhom[k] = (o.nhom[k] || 0) + t;
   }

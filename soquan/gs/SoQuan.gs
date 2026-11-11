@@ -122,7 +122,7 @@ var SQ_API = {
   chu_tong: function (p) { sqChu_(p.pass); return sqTongQuan_(p); },
   chu_cp: function (p) { sqChu_(p.pass); return sqCpNgay_(p); },
   chu_cp_moi: function (p) { sqChu_(p.pass); return sqCpMoi_(p); },
-  chu_cp_sua: function (p) { sqChu_(p.pass); return sqCpSua_(p); },
+  chu_cp_sua: function (p) { sqChu_(p.pass); return plSua_(p); },
   chu_cp_quay: function (p) { sqChu_(p.pass); return sqCpQuay_(p); },
   chu_sapo_luu: function (p) { sqChu_(p.pass); return sqSapoLuu_(p, 'anh Đạt'); },
   chu_kho: function (p) { sqChu_(p.pass); return sqKhoChu_(p); },
@@ -136,6 +136,17 @@ var SQ_API = {
   chu_dl_sua: function (p) { sqChu_(p.pass); return sqDLSua_(p); },
   chu_bep_dat: function (p) { sqChu_(p.pass); return sqBepDat_(p); },
   chu_bep_kiem: function (p) { sqChu_(p.pass); return sqBepKiem_(p, 'anh Đạt'); },
+  chu_pl: function (p) { sqChu_(p.pass); return plXem_(p); },
+  chu_pl_thang: function (p) { sqChu_(p.pass); return plTongHop_(p); },
+  chu_pl_cd: function (p) { sqChu_(p.pass); return plCDXem_(p); },
+  chu_pl_cd_luu: function (p) { sqChu_(p.pass); return plCDLuu_(p); },
+  chu_pl_that: function (p) { sqChu_(p.pass); return plThatLuu_(p); },
+  chu_pl_dt_nhap: function (p) { sqChu_(p.pass); return plDTNhap_(p); },
+  chu_cp_them: function (p) { sqChu_(p.pass); return plThem_(p); },
+  chu_cp_xoa: function (p) { sqChu_(p.pass); return plXoa_(p); },
+  chu_cp_daxoa: function (p) { sqChu_(p.pass); return plDaXoa_(); },
+  chu_cp_khoiphuc: function (p) { sqChu_(p.pass); return plKhoiPhuc_(p); },
+  chu_quen_ds: function (p) { sqChu_(p.pass); return { ds: sqQuenRows_().map(function (q) { delete q._row; return q; }) }; },
   nv_kho: function (p) { var nv = sqNV_(p.pin); return sqKhoNV_(nv, p); },
   nv_kho_bep: function (p) { var nv = sqNV_(p.pin); return sqKhoBepNV_(nv, p); },
   nv_kho_tuan: function (p) { var nv = sqNV_(p.pin); return sqKhoTuanNV_(nv, p); },
@@ -598,7 +609,7 @@ function sqDongMua_() {
   if (n < 2) return [];
   return sh.getRange(2, 1, n - 1, 9).getValues().map(function (r) {
     return { id: String(r[0]), ngay: chuanNgay_(r[1]), nhom: String(r[2]), stt: so_(r[3]), ten: String(r[4]), sl: soHoacRong_(r[5]), dv: String(r[6]), gia: soHoacRong_(r[7]), tien: so_(r[8]) };
-  }).filter(function (r) { return r.id && r.ten; });
+  }).filter(function (r) { return r.id && r.ten && PL_NHOM_KHONG_HANG.indexOf(r.nhom) < 0; });
 }
 function sqDonVi_(dv) {
   var d = khongDau_(dv).replace(/\./g, '');
@@ -920,11 +931,12 @@ function sqHdDs_(nv, p) {
   var gan = congNgay_(den, -2);
   var ds = sqMetaRows_().filter(function (m) {
     if (m.loai !== LOAI.HD && m.loai !== LOAI.TD) return false;
+    if (m.nguoi === 'anh Đạt') return false;
     return m.ngay >= tu || TT_CHUA_XAC_NHAN.indexOf(m.tt) >= 0;
   }).map(function (m) {
     var t = m.them || {};
     return { id: m.id, loai: m.loai, ngay: m.ngay, nguoi: m.nguoi, moi: m.moi, tong: m.tong || m.cong, tt: m.tt, gio: String(m.taoLuc).slice(11, 16), taoLuc: m.taoLuc,
-      thumb: t.thumb || '', soAnh: (m.anh || []).length, soDong: (m.dong || []).length, loi: t.loi || '', kiemBoi: t.kiemBoi || '', guiLuc: t.guiLuc || 0, docLuc: t.docLuc || 0,
+      thumb: t.thumb || '', chuSua: t.chuSua || '', soAnh: (m.anh || []).length, soDong: (m.dong || []).length, loi: t.loi || '', kiemBoi: t.kiemBoi || '', guiLuc: t.guiLuc || 0, docLuc: t.docLuc || 0,
       quen: t.quenId ? (quen[t.quenId] || '') : '', vang: (m.dong || []).filter(function (d) { return d.chacChan === false && !d.sua; }).length, hoi: m.hoi,
       ct: (TT_CHUA_XAC_NHAN.indexOf(m.tt) >= 0 || m.tt === TT.HOI || m.ngay >= gan) ? { dong: m.dong, tongAnh: m.tongAnh, ghiChu: m.ghiChu, anh: m.anh, aiNgay: m.ai && m.ai.ngay || '', loi: t.loi || '', traLien: !!t.traLien, quenId: t.quenId || '' } : null };
   });
