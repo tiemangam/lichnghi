@@ -166,11 +166,15 @@ function aiDuLieu_(ngay, soNgay) {
   var tq = sqTongQuan_({ thang: ngay.slice(0, 7) }), N = tq.ngay, hn = tq.homNay;
   if (!ngay) ngay = aiNgayNX_(N, hn);
   soNgay = soNgay || 14;
+  // chi tại quầy thật: bỏ tiền đi chợ / giao ca (luân chuyển), theo cách anh chỉnh trong Chi phí
+  var quay = {}, doi = {}; try { doi = sqQuayDoi_(); } catch (e) { }
+  sqTnRows_().forEach(function (x) { (x.chi || []).forEach(function (r) { if (!r.amount) return; var auto = !CP_LUAN_CHUYEN.test(khongDau_(r.note)), k = x.ngay + '|' + x.ca + '|' + khongDau_(r.note);
+    if (doi[k] === undefined ? auto : doi[k]) quay[x.ngay] = (quay[x.ngay] || 0) + r.amount; }); });
   var ngayDs = [];
   for (var i = soNgay - 1; i >= 0; i--) {
     var d = congNgay_(ngay, -i), o = N[d] || {};
     var kenh = (o.kenh || []).filter(function (k) { return k.tien; }).map(function (k) { return k.ten + ' ' + k.tien + (k.don ? ' (' + k.don + ' đơn)' : ''); });
-    ngayDs.push({ ngay: d, thu: aiThu_(d), doanhThu: aiDt_(o), soDon: (o.tq && o.tq.don) || o.don || null, chiHoaDon: o.chi || 0, chiTaiQuay: o.chiQuay || 0, huyHang: o.huy || 0,
+    ngayDs.push({ ngay: d, thu: aiThu_(d), doanhThu: aiDt_(o), soDon: (o.tq && o.tq.don) || o.don || null, chiHoaDon: o.chi || 0, chiTaiQuay: quay[d] || 0, huyHang: o.huy || 0,
       phiSanGiaoHang: o.tq ? (o.tq.phiDoiTac || 0) + (o.tq.thueSan || 0) : null, giamGia: o.tq ? o.tq.giam : null, kenh: kenh, chiTheoNhom: o.nhom || {} });
   }
   var cungThu = [7, 14, 21, 28].map(function (k) { var d = congNgay_(ngay, -k); return { ngay: d, doanhThu: aiDt_(N[d]) }; });
@@ -184,7 +188,7 @@ function aiDuLieu_(ngay, soNgay) {
     return { mon: t, hom: hom[t] || 0, tb7: soNgayMon ? Math.round((tb[t] || 0) / soNgayMon * 10) / 10 : null };
   }).filter(function (m) { return m.hom >= 1 || (m.tb7 || 0) >= 2; }).sort(function (a, b) { return b.hom - a.hom; }).slice(0, 40);
   // lũy kế tháng so cùng kỳ tháng trước
-  var lk = function (th, denNgay) { var dt = 0, chi = 0; for (var k = 1; k <= denNgay; k++) { var o = N[th + '-' + ('0' + k).slice(-2)]; if (!o) continue; dt += aiDt_(o) || 0; chi += (o.chi || 0) + (o.chiQuay || 0); } return { doanhThu: dt, chi: chi }; };
+  var lk = function (th, denNgay) { var dt = 0, chi = 0; for (var k = 1; k <= denNgay; k++) { var o = N[th + '-' + ('0' + k).slice(-2)]; if (!o) continue; dt += aiDt_(o) || 0; chi += (o.chi || 0) + (quay[th + '-' + ('0' + k).slice(-2)] || 0); } return { doanhThu: dt, chi: chi }; };
   var nd = +ngay.slice(8, 10);
   var viec = (tq.viec || []).slice(0, 14).map(function (v) { return v.loai + ': ' + v.text; });
   return { ngay: ngay, thu: aiThu_(ngay), homNay: hn, cacNgay: ngayDs, cungThuTuanTruoc: cungThu, monBan: mon, soNgayCoSoMon: soNgayMon,
@@ -202,7 +206,7 @@ var AI_LUAT = 'Bạn là trợ lý số liệu của anh Đạt, chủ Tiệm Ă
 function aiNhanXet_(p) {
   var props = PropertiesService.getScriptProperties(), hn = homNay_();
   var luu = props.getProperty('AI_NX_' + hn), cu = luu ? JSON.parse(luu) : null;
-  if (cu && !p.lai) return cu;
+  if (cu && cu.v === 2 && !p.lai) return cu;
   if (cu && p.lai && (cu.lanViet || 1) >= AI_VIET_LAI_MAX) throw new Error('Hôm nay đã viết lại ' + AI_VIET_LAI_MAX + ' lần, mai viết tiếp nhé.');
   var cache = CacheService.getScriptCache();
   if (cache.get('AI_DANG_VIET')) throw new Error('AI đang viết nhận xét, đợi chút rồi tải lại nhé.');
@@ -215,7 +219,7 @@ function aiNhanXet_(p) {
     var r = aiGoi_(prompt, { type: 'OBJECT', properties: { dong: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['dong'] });
     var dong = ((r.kq && r.kq.dong) || []).map(function (s) { return String(s).trim().slice(0, 300); }).filter(String).slice(0, 7);
     if (!dong.length) throw new Error('AI chưa viết được, thử lại sau nhé.');
-    var o = { ngay: dl.ngay, viet: hn, dong: dong, luc: Utilities.formatDate(new Date(), TZ, 'HH:mm'), model: r.model, lanViet: (cu ? (cu.lanViet || 1) : 0) + 1 };
+    var o = { ngay: dl.ngay, viet: hn, dong: dong, luc: Utilities.formatDate(new Date(), TZ, 'HH:mm'), model: r.model, v: 2, lanViet: (cu ? (cu.lanViet || 1) : 0) + 1 };
     props.setProperty('AI_NX_' + hn, JSON.stringify(o));
     // dọn bản cũ hơn 10 ngày
     Object.keys(props.getProperties()).forEach(function (k) { var m = /^AI_(NX|HOI)_(\d{4}-\d{2}-\d{2})$/.exec(k); if (m && m[2] < congNgay_(hn, -10)) props.deleteProperty(k); });
