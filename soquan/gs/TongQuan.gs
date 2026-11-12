@@ -147,3 +147,92 @@ function sqSapoDs_(n) {
   for (var i = 0; i < n; i++) { var d = congNgay_(hn, -i), x = m[d] || {}; ds.push({ ngay: d, tt: x.tt || '', mon: x.mon || '', kho: x.kho || '', tq: x.tq || '' }); }
   return { homNay: hn, ds: ds };
 }
+
+/* =====================================================================
+ * AI NHẬN XÉT SỐ LIỆU (anh Đạt) – Gemini Flash Lite, dùng chung khóa GEMINI_KEY (khóa miễn phí).
+ * Nhận xét viết 1 lần/ngày (lần đầu anh mở Tổng quan), lưu lại; ô hỏi tối đa AI_HOI_MAX câu/ngày.
+ * KHÔNG gửi định lượng / công thức món, tên nhân viên, PIN.
+ * ===================================================================== */
+var AI_MODEL = 'gemini-3.5-flash-lite', AI_HOI_MAX = 20, AI_VIET_LAI_MAX = 3;
+var AI_THU = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+function aiThu_(d) { var p = d.split('-'); return AI_THU[new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay()]; }
+function aiDt_(o) { if (!o) return null; if (o.tq && o.tq.dtThuc) return o.tq.dtThuc; return o.dt != null ? o.dt : null; }
+// ngày để nhận xét: hôm qua, nếu chưa có số Sapo thì lùi tối đa 3 ngày
+function aiNgayNX_(N, hn) {
+  for (var i = 1; i <= 4; i++) { var d = congNgay_(hn, -i); if (aiDt_(N[d]) != null) return d; }
+  return congNgay_(hn, -1);
+}
+function aiDuLieu_(ngay, soNgay) {
+  var tq = sqTongQuan_({ thang: ngay.slice(0, 7) }), N = tq.ngay, hn = tq.homNay;
+  if (!ngay) ngay = aiNgayNX_(N, hn);
+  soNgay = soNgay || 14;
+  var ngayDs = [];
+  for (var i = soNgay - 1; i >= 0; i--) {
+    var d = congNgay_(ngay, -i), o = N[d] || {};
+    var kenh = (o.kenh || []).filter(function (k) { return k.tien; }).map(function (k) { return k.ten + ' ' + k.tien + (k.don ? ' (' + k.don + ' đơn)' : ''); });
+    ngayDs.push({ ngay: d, thu: aiThu_(d), doanhThu: aiDt_(o), soDon: (o.tq && o.tq.don) || o.don || null, chiHoaDon: o.chi || 0, chiTaiQuay: o.chiQuay || 0, huyHang: o.huy || 0,
+      phiSanGiaoHang: o.tq ? (o.tq.phiDoiTac || 0) + (o.tq.thueSan || 0) : null, giamGia: o.tq ? o.tq.giam : null, kenh: kenh, chiTheoNhom: o.nhom || {} });
+  }
+  var cungThu = [7, 14, 21, 28].map(function (k) { var d = congNgay_(ngay, -k); return { ngay: d, doanhThu: aiDt_(N[d]) }; });
+  // món bán: ngày nhận xét so trung bình 7 ngày trước đó (số phần)
+  var monNgay = {}, tu7 = congNgay_(ngay, -7);
+  sqSapoRows_().forEach(function (x) { if (x.loai === 'mon' && x.ngay >= tu7 && x.ngay <= ngay) monNgay[x.ngay] = x.d.mon || []; });
+  var hom = {}, tb = {}, soNgayMon = 0;
+  (monNgay[ngay] || []).forEach(function (m) { hom[m.ten] = (hom[m.ten] || 0) + so_(m.sl); });
+  Object.keys(monNgay).forEach(function (d) { if (d === ngay) return; soNgayMon++; monNgay[d].forEach(function (m) { tb[m.ten] = (tb[m.ten] || 0) + so_(m.sl); }); });
+  var mon = Object.keys(hom).concat(Object.keys(tb).filter(function (t) { return !(t in hom); })).map(function (t) {
+    return { mon: t, hom: hom[t] || 0, tb7: soNgayMon ? Math.round((tb[t] || 0) / soNgayMon * 10) / 10 : null };
+  }).filter(function (m) { return m.hom >= 1 || (m.tb7 || 0) >= 2; }).sort(function (a, b) { return b.hom - a.hom; }).slice(0, 40);
+  // lũy kế tháng so cùng kỳ tháng trước
+  var lk = function (th, denNgay) { var dt = 0, chi = 0; for (var k = 1; k <= denNgay; k++) { var o = N[th + '-' + ('0' + k).slice(-2)]; if (!o) continue; dt += aiDt_(o) || 0; chi += (o.chi || 0) + (o.chiQuay || 0); } return { doanhThu: dt, chi: chi }; };
+  var nd = +ngay.slice(8, 10);
+  var viec = (tq.viec || []).slice(0, 14).map(function (v) { return v.loai + ': ' + v.text; });
+  return { ngay: ngay, thu: aiThu_(ngay), homNay: hn, cacNgay: ngayDs, cungThuTuanTruoc: cungThu, monBan: mon, soNgayCoSoMon: soNgayMon,
+    luyKeThang: { thangNay: lk(ngay.slice(0, 7), nd), cungKyThangTruoc: lk(tq.truoc, nd) }, viecCanXuLy: viec };
+}
+function aiGoi_(prompt, schema) {
+  var key = PropertiesService.getScriptProperties().getProperty('GEMINI_KEY');
+  if (!key) throw new Error('Chưa cài mã Gemini (GEMINI_KEY).');
+  var r = sqGoiGemini_(key, AI_MODEL, [{ text: prompt }], schema);
+  var j = JSON.parse(r.body), txt = j.candidates[0].content.parts.map(function (x) { return x.text || ''; }).join('');
+  return { kq: sqJ_(txt, null), model: r.model };
+}
+var AI_LUAT = 'Bạn là trợ lý số liệu của anh Đạt, chủ Tiệm Ăn Gặm (quán ăn Việt ở TP.HCM). Xưng "em", gọi "anh". Tiếng Việt, ngắn, rõ, thực tế.\n' +
+  'Chỉ dùng số có trong dữ liệu JSON, không bịa; thiếu số thì nói "chưa có số". Tiền là đồng VN: viết kiểu 18,6 tr / 450k. "doanhThu" đã trừ giảm giá; null = chưa có số Sapo. Không nhắc chữ JSON hay tên trường.\n';
+function aiNhanXet_(p) {
+  var props = PropertiesService.getScriptProperties(), hn = homNay_();
+  var luu = props.getProperty('AI_NX_' + hn), cu = luu ? JSON.parse(luu) : null;
+  if (cu && !p.lai) return cu;
+  if (cu && p.lai && (cu.lanViet || 1) >= AI_VIET_LAI_MAX) throw new Error('Hôm nay đã viết lại ' + AI_VIET_LAI_MAX + ' lần, mai viết tiếp nhé.');
+  var cache = CacheService.getScriptCache();
+  if (cache.get('AI_DANG_VIET')) throw new Error('AI đang viết nhận xét, đợi chút rồi tải lại nhé.');
+  cache.put('AI_DANG_VIET', '1', 120);
+  try {
+    var dl = aiDuLieu_('', 14);
+    var prompt = AI_LUAT + 'Viết NHẬN XÉT ngày ' + dl.thu + ' ' + dl.ngay.slice(8, 10) + '/' + dl.ngay.slice(5, 7) + ' cho anh: 4–6 dòng, mỗi dòng tối đa 30 chữ, bắt đầu bằng 1 emoji.\n' +
+      'Thứ tự: (1) doanh thu, số đơn so với cùng thứ 4 tuần trước và trung bình gần đây; (2) món tăng/giảm rõ so với trung bình 7 ngày (chỉ nêu món chênh nhiều); (3) kênh giao hàng / phí sàn nếu đáng chú ý; (4) chi phí: % chi so doanh thu, nhóm chi tăng, giá nhập tăng, hủy hàng; (5) kho / việc cần xử lý quan trọng nếu có; dòng cuối bắt đầu "👉 Gợi ý:" 1–2 việc nên làm hôm nay.\n' +
+      'Dữ liệu:\n' + JSON.stringify(dl);
+    var r = aiGoi_(prompt, { type: 'OBJECT', properties: { dong: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['dong'] });
+    var dong = ((r.kq && r.kq.dong) || []).map(function (s) { return String(s).trim().slice(0, 300); }).filter(String).slice(0, 7);
+    if (!dong.length) throw new Error('AI chưa viết được, thử lại sau nhé.');
+    var o = { ngay: dl.ngay, viet: hn, dong: dong, luc: Utilities.formatDate(new Date(), TZ, 'HH:mm'), model: r.model, lanViet: (cu ? (cu.lanViet || 1) : 0) + 1 };
+    props.setProperty('AI_NX_' + hn, JSON.stringify(o));
+    // dọn bản cũ hơn 10 ngày
+    Object.keys(props.getProperties()).forEach(function (k) { var m = /^AI_(NX|HOI)_(\d{4}-\d{2}-\d{2})$/.exec(k); if (m && m[2] < congNgay_(hn, -10)) props.deleteProperty(k); });
+    return o;
+  } finally { cache.remove('AI_DANG_VIET'); }
+}
+function aiHoi_(p) {
+  var cau = chu_(p.cau, 300); if (!cau) throw new Error('Anh gõ câu hỏi nhé.');
+  var props = PropertiesService.getScriptProperties(), hn = homNay_(), k = 'AI_HOI_' + hn, n = +(props.getProperty(k) || 0);
+  if (n >= AI_HOI_MAX) throw new Error('Hôm nay đã hỏi ' + AI_HOI_MAX + ' câu (giữ khóa miễn phí), mai hỏi tiếp nhé.');
+  props.setProperty(k, String(n + 1));
+  var cache = CacheService.getScriptCache(), s = cache.get('AI_DL28'), dl = s ? JSON.parse(s) : null;
+  if (!dl) { dl = aiDuLieu_('', 28); try { cache.put('AI_DL28', JSON.stringify(dl), 1800); } catch (e) { } }
+  var prompt = AI_LUAT + 'Trả lời CÂU HỎI của anh dựa trên dữ liệu 28 ngày dưới đây (món bán chỉ có ngày gần nhất và trung bình 7 ngày trước đó). Tối đa 120 chữ, có số cụ thể; nếu dữ liệu không đủ để trả lời thì nói rõ cần thêm gì.\n' +
+    'Câu hỏi: ' + cau + '\nDữ liệu:\n' + JSON.stringify(dl);
+  var r = aiGoi_(prompt, { type: 'OBJECT', properties: { traLoi: { type: 'STRING' } }, required: ['traLoi'] });
+  var tl = String((r.kq && r.kq.traLoi) || '').trim();
+  if (!tl) throw new Error('AI chưa trả lời được, thử lại nhé.');
+  return { cau: cau, traLoi: tl.slice(0, 1500), conLai: AI_HOI_MAX - n - 1 };
+}

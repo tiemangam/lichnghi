@@ -151,6 +151,8 @@ var SQ_API = {
   chu_ten_moi: function (p) { sqChu_(p.pass); return plDoiTenMoi_(p); },
   chu_ten_nhom: function (p) { sqChu_(p.pass); return plDoiTenNhom_(p); },
   chu_ten_loai: function (p) { sqChu_(p.pass); return plDoiTenLoai_(p); },
+  chu_ai_nx: function (p) { sqChu_(p.pass); return { nx: aiNhanXet_(p) }; },
+  chu_ai_hoi: function (p) { sqChu_(p.pass); return aiHoi_(p); },
   chu_quen_luu: function (p) { sqChu_(p.pass); return sqQuenLuu_({ ten: 'anh Đạt' }, p); },
   chu_quen_xoa: function (p) { sqChu_(p.pass); return sqQuenXoa_(p.id); },
   nv_kc: function (p) { var nv = sqNV_(p.pin); return plKCNgay_(nv, p); },

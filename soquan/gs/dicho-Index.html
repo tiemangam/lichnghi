@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 /* Gặm · phong cách Cộng: giấy kem, xanh rêu, đỏ ớt, chữ đứng hẹp + chữ máy đánh */
 :root{
@@ -181,6 +181,33 @@ h3{margin:14px 2px 8px;font-size:17px}
 .anhbtn input{display:none}
 .anhrow img,.anhrow .aph{flex:none;width:34px;height:34px;object-fit:cover;border-radius:3px;border:1px solid var(--vien);background:var(--kem2);display:grid;place-items:center;font-size:14px;padding:0}
 .anhrow small{font:500 11px var(--M);color:var(--muc2);white-space:nowrap}
+</style>
+<style>/* ===== CHỮ DỄ ĐỌC (12/11/2026): đồng bộ Sổ Quán – Baloo 2 + Be Vietnam Pro, bỏ chữ in hoa nhỏ + giãn thưa ===== */
+:root{--H:'Baloo 2','Be Vietnam Pro',sans-serif;--M:'Be Vietnam Pro',system-ui,sans-serif}
+html,body{font-size:15.5px}
+.logo,.thu,h3,.tongbox b,.btn.pri,.sheet h2,.ttable tr.total td:first-child{font-weight:700;letter-spacing:0}
+h3,.btn.pri,.sheet h2,.ttable tr.total td:first-child,.loading,.tab,.field label,.hint,table.view th,.tongbox,.gc label,.foot,.sub{text-transform:none}
+.sub,.stamp,.tab,.field label,h3 small,.hint,table.view th,.tongbox,.gc label,.loading,.foot,.status,.lnk,.pchip,.note,.toast,.sg span,.chip i,.du,.anhrow small,.anhbtn{letter-spacing:0!important}
+.tab{font-size:13.5px!important;font-weight:700;border-radius:999px}
+.card .field label,.field label{font-size:13px!important;font-weight:700;color:var(--muc2)}
+h3{font-size:20px!important}
+h3 small{font-size:12px;font-weight:600}
+.hint{font-size:12px;font-weight:700}
+table.view th{font-size:12px}
+.tongbox{font-size:12.5px!important;font-weight:700}
+.tongbox b{font-size:26px!important;line-height:1.1}
+.gc label{font-size:11.5px!important;font-weight:700}
+.status{font-size:13px!important;font-weight:600}
+.ln input{font-family:var(--M);font-weight:600;font-size:16px}
+.ln .f-ten{font-weight:700;font-size:16px}
+.no{font-family:var(--M);font-weight:700}
+.chip{font-weight:700}
+.chip i,.sg span,.pchip,.du,.lnk,.note,.toast,.anhbtn,.anhrow small{font-family:var(--M);font-weight:700}
+.note{font-weight:500;font-size:13px}
+.btn.pri{font-size:19px!important}
+input[type=date]{font-family:var(--M);font-weight:600}
+.ttable td.r,table.view td.r,.hi b,.gc .inp{font-family:var(--M)}
+/* ===== HẾT CHỮ DỄ ĐỌC ===== */
 </style>
 </head>
 <body>
@@ -750,7 +777,7 @@ function makeImage(){
   if (!p.mon.length) return;
   var go = function(){ drawImage(p, ST.tab, g.ngay); };
   if (document.fonts && document.fonts.load) {
-    Promise.race([Promise.all([document.fonts.load('400 40px "Anton"'), document.fonts.load('600 20px "Be Vietnam Pro"'), document.fonts.load('500 18px "IBM Plex Mono"'), document.fonts.load('700 18px "IBM Plex Mono"')]), new Promise(function(r){ setTimeout(r, 1500); })]).then(go, go);
+    Promise.race([Promise.all([document.fonts.load('700 40px "Baloo 2"'), document.fonts.load('600 20px "Be Vietnam Pro"'), document.fonts.load('500 18px "Be Vietnam Pro"'), document.fonts.load('700 18px "Be Vietnam Pro"')]), new Promise(function(r){ setTimeout(r, 1500); })]).then(go, go);
   } else go();
 }
 function drawImage(p, nhom, ngay){
@@ -758,7 +785,7 @@ function drawImage(p, nhom, ngay){
   var H = 200 + 44 + p.mon.length * rowH + 30 + 84 + (gc ? 96 : 0) + (p.ghiChu ? 50 : 0) + 120;
   var c = document.createElement('canvas'); c.width = W*S; c.height = H*S;
   var x = c.getContext('2d'); x.scale(S,S);
-  var F = '"Be Vietnam Pro", system-ui, sans-serif', FH = '"Anton", "Be Vietnam Pro", sans-serif', FM = '"IBM Plex Mono", ui-monospace, monospace';
+  var F = '"Be Vietnam Pro", system-ui, sans-serif', FH = '"Baloo 2", "Be Vietnam Pro", sans-serif', FM = '"Be Vietnam Pro", system-ui, sans-serif';
   var XANH = '#445803', KEM = '#F8E8C4', DO = '#B11002', VANG = '#F2C230', MUC = '#2A2216', MUC2 = '#6E604A';
   // giấy kem + chấm halftone
   x.fillStyle = '#EFE6D2'; x.fillRect(0,0,W,H);
@@ -768,11 +795,11 @@ function drawImage(p, nhom, ngay){
   x.fillStyle = XANH; x.fillRect(0,0,W,156);
   x.fillStyle = DO; x.fillRect(0,156,W,5);
   x.textBaseline = 'alphabetic';
-  x.fillStyle = KEM; x.font = '400 64px '+FH; x.fillText('GẶM', 32, 84);
+  x.fillStyle = KEM; x.font = '700 64px '+FH; x.fillText('GẶM', 32, 84);
   var lw = x.measureText('GẶM').width;
   x.fillStyle = DO; x.fillRect(32+lw+16, 36, 4, 48);
   x.fillStyle = KEM; x.font = '600 15px '+FM; x.fillText('PHIẾU CHI', 32+lw+30, 56); x.fillText('ĐI CHỢ', 32+lw+30, 78);
-  x.font = '400 30px '+FH; x.fillText(String(nhom).toUpperCase(), 32, 132);
+  x.font = '700 30px '+FH; x.fillText(String(nhom).toUpperCase(), 32, 132);
   x.textAlign = 'right'; x.font = '700 19px '+FM; x.fillText(THU_DAI[dow(ngay)].toUpperCase() + ' · ' + dmy(ngay), W-32, 56);
   x.font = '500 16px '+FM; if (p.nguoiMua) x.fillText('Người mua: ' + p.nguoiMua, W-32, 92);
   x.fillText(p.mon.length + ' món', W-32, 128);
@@ -800,8 +827,8 @@ function drawImage(p, nhom, ngay){
   // tổng: khối đỏ chữ vàng
   var t = tong(p);
   x.fillStyle = DO; x.fillRect(32, y, 6, 56);
-  x.fillStyle = XANH; x.font = '400 40px '+FH; x.fillText('TỔNG CHI', 50, y+48);
-  var tt = fmtD(t); x.font = '400 40px '+FH; var tw = x.measureText(tt).width + 44;
+  x.fillStyle = XANH; x.font = '700 40px '+FH; x.fillText('TỔNG CHI', 50, y+48);
+  var tt = fmtD(t); x.font = '700 40px '+FH; var tw = x.measureText(tt).width + 44;
   x.fillStyle = 'rgba(42,34,22,.22)'; x.fillRect(W-32-tw+5, y+5, tw, 60);
   x.fillStyle = DO; x.fillRect(W-32-tw, y, tw, 60);
   x.fillStyle = VANG; x.textAlign = 'center'; x.fillText(tt, W-32-tw/2, y+48); x.textAlign = 'left';
@@ -810,7 +837,7 @@ function drawImage(p, nhom, ngay){
     var du = p.tienNhan - t;
     x.font = '500 18px '+FM; x.fillStyle = MUC;
     x.fillText('NHẬN GIAO CA', 32, y+28); x.textAlign = 'right'; x.font = '700 19px '+FM; x.fillText(fmtD(p.tienNhan), W-32, y+28); x.textAlign = 'left';
-    x.font = '400 30px '+FH; x.fillStyle = du >= 0 ? XANH : DO;
+    x.font = '700 30px '+FH; x.fillStyle = du >= 0 ? XANH : DO;
     x.fillText(du >= 0 ? 'CÒN DƯ' : 'THIẾU', 32, y+74); x.textAlign = 'right'; x.fillText(fmtD(Math.abs(du)), W-32, y+74); x.textAlign = 'left';
     y += 96;
   }
@@ -826,7 +853,7 @@ function drawImage(p, nhom, ngay){
   x.save(); x.translate(W-96, H-128); x.rotate(-0.2); x.globalAlpha = .85;
   x.strokeStyle = DO; x.lineWidth = 3; x.beginPath(); x.arc(0,0,46,0,Math.PI*2); x.stroke();
   x.lineWidth = 1.2; x.setLineDash([3,3]); x.beginPath(); x.arc(0,0,38,0,Math.PI*2); x.stroke(); x.setLineDash([]);
-  x.fillStyle = DO; x.textAlign = 'center'; x.font = '400 24px '+FH; x.fillText('GẶM', 0, 6); x.font = '600 9.5px '+FM; x.fillText('TỪ NĂM 2015', 0, 22);
+  x.fillStyle = DO; x.textAlign = 'center'; x.font = '700 24px '+FH; x.fillText('GẶM', 0, 6); x.font = '600 9.5px '+FM; x.fillText('TỪ NĂM 2015', 0, 22);
   x.restore();
 
   IMG.name = 'Gam_' + norm(nhom).replace(/[^a-z0-9]+/g,'-') + '_' + ngay + '.png';
