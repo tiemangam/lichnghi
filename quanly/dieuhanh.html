@@ -124,7 +124,7 @@ tr.sua td{background:var(--xanhn)}
 #lErr{color:var(--do);font-weight:600;min-height:22px;margin-top:8px}
 /* AI nhận xét + nhãn đang cập nhật */
 /* tiền mặt: doanh thu ngày + kỳ 10 ngày */
-.dtn{position:relative;background:var(--the);border:2px solid var(--xanh);border-radius:16px;padding:14px 14px 10px;margin:4px 0 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px 10px;align-items:center}
+.dtn{position:relative;background:var(--the);border:2px solid var(--xanh);border-radius:16px;padding:14px 14px 10px;margin:4px 0 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px 10px;align-items:center}
 .dtn .mo{position:absolute;top:-11px;left:14px;background:var(--xanh);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:2px 10px;letter-spacing:.04em;white-space:nowrap;max-width:calc(100% - 28px);overflow:hidden;text-overflow:ellipsis}
 .dtn small{display:block;font-size:12px;color:var(--muc2);font-weight:700}.dtn b{font:700 20px var(--H);font-variant-numeric:tabular-nums}
 .dtn .tg{background:var(--xanh);border-radius:12px;padding:8px 12px}.dtn .tg small{color:var(--kem)}.dtn .tg b{color:#fff;font-size:24px}
@@ -202,7 +202,9 @@ tr.click{cursor:pointer} tr.click:hover td,tr.on td{background:var(--vangn)}
 .tmnav input{border:1.5px solid var(--vien);border-radius:10px;padding:5px 8px;background:#fff}
 .live{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--xanh);background:var(--xanhn);border-radius:999px;padding:3px 10px}
 .live i{width:8px;height:8px;border-radius:50%;background:#5f8f2f;box-shadow:0 0 0 3px rgba(95,143,47,.2)}
-.tmg{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;align-items:start}
+.tmg{display:grid;grid-template-columns:minmax(320px,440px) minmax(0,1fr);gap:12px;align-items:start}
+@media(max-width:900px){.tmg{grid-template-columns:1fr}}
+.tmcat{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}.tmcat button{flex:1;border:1.5px solid var(--vien);background:#fff;border-radius:12px;padding:7px 10px;font-weight:700;color:var(--muc2);display:flex;justify-content:space-between;align-items:center;gap:6px}.tmcat button.on{border-color:var(--xanh);background:var(--xanhn);color:var(--xanh)}
 .ca-bad{box-shadow:0 0 0 2px var(--do),var(--bong)}
 .ld2{display:grid;grid-template-columns:minmax(0,1fr) auto;font-variant-numeric:tabular-nums;font-size:13.5px}
 .ld2>div{padding:5px 0;border-bottom:1px dashed var(--vien)}
@@ -540,7 +542,7 @@ table.plln button{border:0;background:none;color:var(--do);font-weight:800}
     </section>
     <section id="t-cp" class="hide">
       <div class="bar" style="justify-content:space-between"><div class="cpnav"><button id="cpTruoc">‹</button><b id="cpTit"></b><button id="cpSau">›</button><button data-k="1">Hôm nay</button><button data-k="hq">Hôm qua</button><button data-k="7">7 ngày</button><button id="cpThemB">＋ Thêm hóa đơn</button><button id="cpXoaB">🗑 Đã xóa</button><button id="cpTongB">📊 Tổng theo mối</button><button id="cpTenB">✎ Đặt tên</button></div>
-        <div class="kpis" id="cpKpi" style="margin:0;flex:1;max-width:680px"></div></div>
+        <div class="kpis" id="cpKpi" style="margin:0;flex:1 1 100%"></div></div>
       <div class="cpg"><div class="card" id="cpCb"><div class="loading">Đang tải…</div></div>
         <div><div class="card" style="padding:10px 12px" id="cpDs"></div><div class="card" style="margin-top:12px;padding:10px 12px"><div class="sec" style="margin-top:0"><span>Xem theo mối / người mua</span></div><div class="mchips" id="cpMoi"></div></div></div>
         <div class="card cpdet" id="cpDet"><p class="sub">Bấm 1 hóa đơn để xem ảnh thật và các dòng.</p></div></div>
@@ -1602,7 +1604,7 @@ function tmKyCua(ngay){ var d = +ngay.slice(8,10), th = ngay.slice(0,7); return 
 function tmTien(x){ return (x.tmtt||0) - (x.tip||0); }
 function tmBang(ngay){
   var j = TM.data, lim = j.lechDo, th = ngay.slice(0,7), hn = homNay();
-  var h = '<div class="card" style="grid-column:1/-1"><div class="cah"><h3>Tháng '+th.slice(5,7)+' · tiền mặt theo kỳ</h3><button class="btn o" id="tmCsv">⬇ Tải Excel tháng</button></div>' +
+  var h = '<div class="card"><div class="cah"><h3>Tháng '+th.slice(5,7)+' · tiền mặt theo kỳ</h3><button class="btn o" id="tmCsv">⬇ Tải Excel tháng</button></div>' +
     '<div class="tmrg"><button data-che="ky"'+(TM.che!=='chon'?' class="on"':'')+'>Theo kỳ 10 ngày</button><button data-che="chon"'+(TM.che==='chon'?' class="on"':'')+'>Chọn ngày</button>' +
     (TM.che==='chon' ? '<input type="date" id="tmTu" value="'+TM.tu+'" max="'+hn+'"> → <input type="date" id="tmDen" value="'+TM.den+'" max="'+hn+'">' : '') + '</div>';
   var row = function(x){ var m = tmMuc(x.lech, lim);
@@ -1662,7 +1664,11 @@ function veTM(){
   var thang = j.ds.filter(function(x){ return x.ngay.slice(0,7) === ngay.slice(0,7); });
   var bang = tmBang(ngay);
   var dtn = $('tmDtn'); if (dtn) dtn.innerHTML = veDTN(ngay, ca);
-  $('tmCa').innerHTML = (ca.length ? ca.map(the).join('') : '<div class="empty">Ngày '+dmy(ngay)+' chưa có ca nào lưu trên Sổ Quán.</div>') + bang;
+  // 1 ca hiện 1 lúc, bấm Ca 1 / Ca 2 để đổi – bảng kỳ nằm bên phải
+  if (ca.length && !ca.some(function(x){ return x.ca === TM.ca; })) { var xau = ca.filter(function(x){ return tmMuc(x.lech, lim) === 'r' && !x.xuLy; })[0]; TM.ca = (xau || ca[ca.length-1]).ca; }
+  var caTab = ca.length > 1 ? '<div class="tmcat">' + ca.map(function(x){ var m = tmMuc(x.lech, lim); return '<button data-cat="'+x.ca+'"'+(x.ca===TM.ca?' class="on"':'')+'>Ca '+x.ca+' · '+esc(x.nguoi)+' <span class="pill '+m+'">'+(x.lech?tmD(x.lech):'Khớp')+'</span></button>'; }).join('') + '</div>' : '';
+  $('tmCa').innerHTML = '<div>' + caTab + (ca.length ? ca.filter(function(x){ return x.ca === TM.ca; }).map(the).join('') : '<div class="empty">Ngày '+dmy(ngay)+' chưa có ca nào lưu trên Sổ Quán.</div>') + '</div>' + bang;
+  [].forEach.call($('tmCa').querySelectorAll('[data-cat]'), function(b){ b.onclick = function(){ TM.ca = +b.getAttribute('data-cat'); veTM(); }; });
   [].forEach.call($('tmCa').querySelectorAll('tr[data-ngay]'), function(r){ r.onclick = function(){ TM.ngay = r.getAttribute('data-ngay'); veTM(); }; });
   [].forEach.call($('tmCa').querySelectorAll('tr[data-ky]'), function(r){ r.onclick = function(){ var k = r.getAttribute('data-ky'), mo = TM.mo[k] !== undefined ? TM.mo[k] : (k === tmKyCua(ngay).join('|')); TM.mo[k] = !mo; veTM(); }; });
   [].forEach.call($('tmCa').querySelectorAll('[data-che]'), function(b){ b.onclick = function(){ TM.che = b.getAttribute('data-che'); if (TM.che === 'chon' && !TM.tu) { var kk = tmKyCua(ngay); TM.tu = kk[0]; TM.den = kk[1] > homNay() ? homNay() : kk[1]; } veTM(); }; });
