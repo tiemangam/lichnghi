@@ -153,10 +153,12 @@ function sqCpTong_(p) {
   if (tu < congNgay_(den, -95)) tu = congNgay_(den, -95);
   var tuT = sqThangLui_(tu), denT = sqThangLui_(den);
   var moiDs = [], moiIdx = {}, ph = [], dong = [], truoc = { moi: {}, mon: {} };
+  var nhomDC = {}; try { (docCaiDat_().nhom || []).forEach(function (n) { nhomDC[khongDau_(n)] = 1; }); } catch (e) { }
   var khoaMoi = function (x) {
     if (x.loai === LOAI.DC) return { k: 'd:' + khongDau_(x.nhom), ten: x.nhom, dc: 1 };
-    if (x.loai === LOAI.HD || x.loai === LOAI.TD) { var m = x.moi || x.nhom.replace(/^HĐ /, ''); return { k: 'm:' + khongDau_(m), ten: m }; }
-    return x.moi ? { k: 'm:' + khongDau_(x.moi), ten: x.moi } : { k: 'd:' + khongDau_(x.nhom), ten: x.nhom }; // không mối → gộp với nhóm đi chợ cùng tên
+    var m = (x.loai === LOAI.HD || x.loai === LOAI.TD) ? (x.moi || x.nhom.replace(/^HĐ /, '')) : (x.moi || x.nhom), km = khongDau_(m);
+    // mối trùng tên nhóm đi chợ (vd hóa đơn ảnh ghi mối "Đi chợ hằng ngày") hoặc không có mối → gộp vào nhóm đó
+    return (nhomDC[km] || (!x.moi && x.loai === LOAI_CHU)) ? { k: 'd:' + km, ten: m } : { k: 'm:' + km, ten: m };
   };
   var metas = {}; sqMetaRows_().forEach(function (m) { metas[m.id] = m; });
   sqPhieuTrong_(tuT < tu ? tuT : tu, den).forEach(function (x) {
