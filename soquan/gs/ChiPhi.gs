@@ -158,8 +158,11 @@ function sqCpTong_(p) {
     if (x.loai === LOAI.HD || x.loai === LOAI.TD) { var m = x.moi || x.nhom.replace(/^HĐ /, ''); return { k: 'm:' + khongDau_(m), ten: m }; }
     return x.moi ? { k: 'm:' + khongDau_(x.moi), ten: x.moi } : { k: 'c:' + khongDau_(x.nhom), ten: x.nhom };
   };
+  var metas = {}; sqMetaRows_().forEach(function (m) { metas[m.id] = m; });
   sqPhieuTrong_(tuT < tu ? tuT : tu, den).forEach(function (x) {
     if (x.loai === LOAI.BILL || PL_NHOM_KHONG_HANG.indexOf(x.nhom) >= 0 || !x.tong) return;
+    // chỉ hàng mua (nguyên liệu, ga, bánh mì) – bỏ cố định (điện nước), đầu tư, sửa chữa, lương, chi khác
+    try { var lc = plLoaiChinh_(Object.assign({}, x, { meta: metas[x.id] || null })); if (['nvl', 'ga', 'banhmi'].indexOf(lc.k) < 0) return; } catch (e) { }
     var km = khoaMoi(x);
     if (x.ngay >= tuT && x.ngay <= denT && x.ngay < tu) { // cùng kỳ tháng trước
       truoc.moi[km.k] = (truoc.moi[km.k] || 0) + x.tong;
