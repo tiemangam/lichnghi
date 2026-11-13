@@ -59,11 +59,11 @@ function sqTnThang_(nv, p) {
   return { thang: thang, ds: ds };
 }
 
-function sqTnLuu_(nv, p) {
-  sqTnQuyen_(nv);
+function sqTnLuu_(nv, p, chu) {
+  if (!chu) sqTnQuyen_(nv);
   var ngay = sqKiemNgay_(p.ngay), hn = homNay_();
   if (ngay > hn) throw new Error('Không lưu trước cho ngày mai được.');
-  if (ngay < congNgay_(hn, -7)) throw new Error('Chỉ sửa được sổ trong 7 ngày gần nhất. Ngày cũ hơn nhờ anh Đạt sửa.');
+  if (!chu && ngay < congNgay_(hn, -7)) throw new Error('Chỉ sửa được sổ trong 7 ngày gần nhất. Ngày cũ hơn nhờ anh Đạt sửa.');
   var ca = so_(p.ca);
   if (ca !== 1 && ca !== 2) throw new Error('Chọn Ca 1 hoặc Ca 2.');
   var o = sqTnTinh_({
@@ -78,7 +78,7 @@ function sqTnLuu_(nv, p) {
       JSON.stringify(o.ck), JSON.stringify(o.chi), JSON.stringify(o.nhan), o.luc, 'Đang gửi', '']]);
     o.row = row;
   });
-  o.guiSoCu = sqTnGuiSoCu_(o);
+  o.guiSoCu = chu ? 'anh Đạt nhập hộ' : sqTnGuiSoCu_(o); // anh nhập hộ: ca đã có ở sổ cũ, không gửi lại
   try { sqTabTN_().getRange(o.row, 17).setValue(o.guiSoCu); } catch (e) { }
   return { ca: sqTnGon_(o) };
 }

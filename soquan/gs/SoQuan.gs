@@ -119,6 +119,7 @@ var SQ_API = {
   chu_huy_gia: function (p) { sqChu_(p.pass); return sqHuyDatGia_(p); },
   chu_tn: function (p) { sqChu_(p.pass); return sqTnChu_(p); },
   chu_tn_xuly: function (p) { sqChu_(p.pass); return sqTnXuLy_(p); },
+  chu_tn_luu: function (p) { sqChu_(p.pass); return sqTnLuu_({ ten: chu_(p.nguoi, 40) || 'anh Đạt' }, p, true); },
   chu_tong: function (p) { sqChu_(p.pass); return sqTongQuan_(p); },
   chu_cp: function (p) { sqChu_(p.pass); return sqCpNgay_(p); },
   chu_cp_moi: function (p) { sqChu_(p.pass); return sqCpMoi_(p); },
