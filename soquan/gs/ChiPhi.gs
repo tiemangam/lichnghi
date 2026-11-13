@@ -156,7 +156,7 @@ function sqCpTong_(p) {
   var khoaMoi = function (x) {
     if (x.loai === LOAI.DC) return { k: 'd:' + khongDau_(x.nhom), ten: x.nhom, dc: 1 };
     if (x.loai === LOAI.HD || x.loai === LOAI.TD) { var m = x.moi || x.nhom.replace(/^HĐ /, ''); return { k: 'm:' + khongDau_(m), ten: m }; }
-    return x.moi ? { k: 'm:' + khongDau_(x.moi), ten: x.moi } : { k: 'c:' + khongDau_(x.nhom), ten: x.nhom };
+    return x.moi ? { k: 'm:' + khongDau_(x.moi), ten: x.moi } : { k: 'd:' + khongDau_(x.nhom), ten: x.nhom }; // không mối → gộp với nhóm đi chợ cùng tên
   };
   var metas = {}; sqMetaRows_().forEach(function (m) { metas[m.id] = m; });
   sqPhieuTrong_(tuT < tu ? tuT : tu, den).forEach(function (x) {
@@ -172,6 +172,7 @@ function sqCpTong_(p) {
     if (x.ngay < tu) return;
     var mi = moiIdx[km.k];
     if (mi === undefined) { mi = moiIdx[km.k] = moiDs.length; moiDs.push({ k: km.k, ten: km.ten, dc: km.dc || 0, nguoi: [] }); }
+    if (km.dc) moiDs[mi].dc = 1;
     if (x.nguoi && moiDs[mi].nguoi.indexOf(x.nguoi) < 0 && moiDs[mi].nguoi.length < 6) moiDs[mi].nguoi.push(x.nguoi);
     var pi = ph.length; ph.push([x.id, x.ngay, mi, x.tong]);
     x.mon.forEach(function (d) { if (d.ten) dong.push([pi, d.ten, d.sl === '' ? '' : so_(d.sl), d.dv || '', d.gia === '' ? '' : so_(d.gia), so_(d.tien)]); });
