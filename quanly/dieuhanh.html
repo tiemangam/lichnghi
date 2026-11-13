@@ -232,6 +232,7 @@ td.r{color:var(--do);font-weight:700} td.y{color:#8a5d10;font-weight:700}
 .kpi .sub2 b{font:700 11.5px var(--B);display:inline;color:inherit}
 .kpi.lead{background:var(--xanh)} .kpi.lead small,.kpi.lead .sub2{color:var(--kem)} .kpi.lead b{color:#fff}
 .g32{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:12px}
+.g32.tqcol{align-items:start}
 @media (min-width:1000px){.g32{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}}
 .al{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:10px;align-items:start;padding:9px 0;border-bottom:1px dashed var(--vien)}
 .al:last-child{border-bottom:0}
@@ -523,15 +524,15 @@ table.plln button{border:0;background:none;color:var(--do);font-weight:800}
       <div class="dstrip" id="tqStrip"></div>
       <div id="tqAI"></div>
       <div class="kpis" id="tqKpi"><div class="loading">Đang tải…</div></div>
-      <div class="g32"><div class="card chart2"><h3 style="font-size:17px;color:var(--xanh)">Doanh thu & chi nguyên liệu theo ngày <span class="sub" id="tqChartSub"></span></h3><div id="tqChart"></div>
+      <div class="g32 tqcol"><div><div class="card chart2"><h3 style="font-size:17px;color:var(--xanh)">Doanh thu & chi nguyên liệu theo ngày <span class="sub" id="tqChartSub"></span></h3><div id="tqChart"></div>
         <div class="lg2"><span><i style="background:var(--xanh)"></i>Doanh thu Sapo</span><span><i style="background:var(--xanh);opacity:.35"></i>DTTM sổ thu ngân (ngày chưa có Sapo)</span><span><i style="background:var(--vang)"></i>Chi hóa đơn + đi chợ</span></div></div>
-        <div class="card"><h3 style="font-size:17px;color:var(--xanh)">Việc cần xử lý <span class="sub" id="tqViecSub"></span></h3><div id="tqViec"></div></div></div>
-      <div class="g32"><div><div class="card"><h3 style="font-size:17px;color:var(--xanh)">Chi theo nhóm <span class="sub" id="tqNhomSub"></span></h3><div id="tqNhom"></div></div>
+<div class="card" style="margin-top:12px"><h3 style="font-size:17px;color:var(--xanh)">Chi theo nhóm <span class="sub" id="tqNhomSub"></span></h3><div id="tqNhom"></div></div>
         <div class="card" style="margin-top:12px"><h3 style="font-size:17px;color:var(--xanh)">Kênh bán & món bán chạy <span class="sub" id="tqMonSub"></span></h3><div id="tqMon"></div></div></div>
-        <div><div class="card"><h3 style="font-size:17px;color:var(--xanh)">Ngày đang chọn <span class="sub" id="tqNgaySub"></span></h3><div id="tqNgay"></div></div>
+        <div><div class="card"><h3 style="font-size:17px;color:var(--xanh)">Việc cần xử lý <span class="sub" id="tqViecSub"></span></h3><div id="tqViec"></div></div>
+        <div style="margin-top:12px"><div class="card"><h3 style="font-size:17px;color:var(--xanh)">Ngày đang chọn <span class="sub" id="tqNgaySub"></span></h3><div id="tqNgay"></div></div>
         <div class="sapo" style="margin-top:12px;flex-direction:column;align-items:stretch"><div style="display:flex;gap:12px;align-items:center"><span style="font-size:28px">📥</span><div style="flex:1"><b>Số Sapo cuối ngày</b><br><span id="spGoi">Sơn gửi mỗi tối trong Sổ Quán. Anh tự tải cũng được: 4 file của 1 ngày – <b>Thanh toán</b>, <b>Mặt hàng</b>, <b>Kho hàng</b>, <b>Doanh thu tổng quan</b>; hoặc file kho cả tháng để tính trung bình.</span></div>
           <label class="btn" style="cursor:pointer;white-space:nowrap">Chọn file<input type="file" id="spFile" accept=".xls,.xlsx" multiple class="hide"></label></div>
-          <div id="spDs"></div></div></div></div>
+          <div id="spDs"></div></div></div></div></div>
     </section>
     <section id="t-tm" class="hide">
       <div class="bar" style="justify-content:space-between"><div class="tmnav"><button id="tmTruoc">‹</button><input type="date" id="tmNgay"><button id="tmSau">›</button><button id="tmHom">Hôm nay</button></div><span class="live"><i></i>Tự cập nhật khi thu ngân bấm Lưu ca trên Sổ Quán</span></div>
