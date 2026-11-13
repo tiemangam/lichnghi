@@ -153,6 +153,7 @@ function sqSapoDs_(n) {
  * Nhận xét viết 1 lần/ngày (lần đầu anh mở Tổng quan), lưu lại; ô hỏi tối đa AI_HOI_MAX câu/ngày.
  * KHÔNG gửi định lượng / công thức món, tên nhân viên, PIN.
  * ===================================================================== */
+var AI_BO_NHOM = /giai khat|trang mieng|an kem|do uong|nuoc uong|bia|ruou/, AI_BO_TEN = /(^| )(tra da|binh tra|nuoc suoi|banh mi them|com them|bun them)( |$)/;
 var AI_MODEL = 'gemini-3.5-flash-lite', AI_HOI_MAX = 20, AI_VIET_LAI_MAX = 3;
 var AI_THU = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 function aiThu_(d) { var p = d.split('-'); return AI_THU[new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay()]; }
@@ -179,8 +180,9 @@ function aiDuLieu_(ngay, soNgay) {
   }
   var cungThu = [7, 14, 21, 28].map(function (k) { var d = congNgay_(ngay, -k); return { ngay: d, doanhThu: aiDt_(N[d]) }; });
   // món bán: ngày nhận xét so trung bình 7 ngày trước đó (số phần)
-  var monNgay = {}, tu7 = congNgay_(ngay, -7);
-  sqSapoRows_().forEach(function (x) { if (x.loai === 'mon' && x.ngay >= tu7 && x.ngay <= ngay) monNgay[x.ngay] = x.d.mon || []; });
+  // chỉ món ăn chính: bỏ nhóm Sapo "Giải khát", "Tráng miệng", "Ăn kèm" (trà đá, bánh mì thêm, cơm thêm…)
+  var monNgay = {}, tu7 = congNgay_(ngay, -7), laMonChinh = function (m) { return !AI_BO_NHOM.test(khongDau_(m.dm)) && !AI_BO_TEN.test(khongDau_(m.ten)); };
+  sqSapoRows_().forEach(function (x) { if (x.loai === 'mon' && x.ngay >= tu7 && x.ngay <= ngay) monNgay[x.ngay] = (x.d.mon || []).filter(laMonChinh); });
   var hom = {}, tb = {}, soNgayMon = 0;
   (monNgay[ngay] || []).forEach(function (m) { hom[m.ten] = (hom[m.ten] || 0) + so_(m.sl); });
   Object.keys(monNgay).forEach(function (d) { if (d === ngay) return; soNgayMon++; monNgay[d].forEach(function (m) { tb[m.ten] = (tb[m.ten] || 0) + so_(m.sl); }); });
@@ -206,7 +208,7 @@ var AI_LUAT = 'Bạn là trợ lý số liệu của anh Đạt, chủ Tiệm Ă
 function aiNhanXet_(p) {
   var props = PropertiesService.getScriptProperties(), hn = homNay_();
   var luu = props.getProperty('AI_NX_' + hn), cu = luu ? JSON.parse(luu) : null;
-  if (cu && cu.v === 2 && !p.lai) return cu;
+  if (cu && cu.v === 3 && !p.lai) return cu;
   if (cu && p.lai && (cu.lanViet || 1) >= AI_VIET_LAI_MAX) throw new Error('Hôm nay đã viết lại ' + AI_VIET_LAI_MAX + ' lần, mai viết tiếp nhé.');
   var cache = CacheService.getScriptCache();
   if (cache.get('AI_DANG_VIET')) throw new Error('AI đang viết nhận xét, đợi chút rồi tải lại nhé.');
@@ -214,12 +216,12 @@ function aiNhanXet_(p) {
   try {
     var dl = aiDuLieu_('', 14);
     var prompt = AI_LUAT + 'Viết NHẬN XÉT ngày ' + dl.thu + ' ' + dl.ngay.slice(8, 10) + '/' + dl.ngay.slice(5, 7) + ' cho anh: 4–6 dòng, mỗi dòng tối đa 30 chữ, bắt đầu bằng 1 emoji.\n' +
-      'Thứ tự: (1) doanh thu, số đơn so với cùng thứ 4 tuần trước và trung bình gần đây; (2) món tăng/giảm rõ so với trung bình 7 ngày (chỉ nêu món chênh nhiều); (3) kênh giao hàng / phí sàn nếu đáng chú ý; (4) chi phí: % chi so doanh thu, nhóm chi tăng, giá nhập tăng, hủy hàng; (5) kho / việc cần xử lý quan trọng nếu có; dòng cuối bắt đầu "👉 Gợi ý:" 1–2 việc nên làm hôm nay.\n' +
+      'Thứ tự: (1) doanh thu, số đơn so với cùng thứ 4 tuần trước và trung bình gần đây; (2) món ăn chính tăng/giảm rõ so với trung bình 7 ngày (chỉ nêu món chênh nhiều; danh sách món đã bỏ nước uống, tráng miệng, món ăn kèm – không nhắc tới các món đó); (3) kênh giao hàng / phí sàn nếu đáng chú ý; (4) chi phí: % chi so doanh thu, nhóm chi tăng, giá nhập tăng, hủy hàng; (5) kho / việc cần xử lý quan trọng nếu có; dòng cuối bắt đầu "👉 Gợi ý:" 1–2 việc nên làm hôm nay.\n' +
       'Dữ liệu:\n' + JSON.stringify(dl);
     var r = aiGoi_(prompt, { type: 'OBJECT', properties: { dong: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['dong'] });
     var dong = ((r.kq && r.kq.dong) || []).map(function (s) { return String(s).trim().slice(0, 300); }).filter(String).slice(0, 7);
     if (!dong.length) throw new Error('AI chưa viết được, thử lại sau nhé.');
-    var o = { ngay: dl.ngay, viet: hn, dong: dong, luc: Utilities.formatDate(new Date(), TZ, 'HH:mm'), model: r.model, v: 2, lanViet: (cu ? (cu.lanViet || 1) : 0) + 1 };
+    var o = { ngay: dl.ngay, viet: hn, dong: dong, luc: Utilities.formatDate(new Date(), TZ, 'HH:mm'), model: r.model, v: 3, lanViet: (cu ? (cu.lanViet || 1) : 0) + 1 };
     props.setProperty('AI_NX_' + hn, JSON.stringify(o));
     // dọn bản cũ hơn 10 ngày
     Object.keys(props.getProperties()).forEach(function (k) { var m = /^AI_(NX|HOI)_(\d{4}-\d{2}-\d{2})$/.exec(k); if (m && m[2] < congNgay_(hn, -10)) props.deleteProperty(k); });
