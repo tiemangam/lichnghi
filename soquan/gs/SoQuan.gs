@@ -122,6 +122,7 @@ var SQ_API = {
   chu_tong: function (p) { sqChu_(p.pass); return sqTongQuan_(p); },
   chu_cp: function (p) { sqChu_(p.pass); return sqCpNgay_(p); },
   chu_cp_moi: function (p) { sqChu_(p.pass); return sqCpMoi_(p); },
+  chu_cp_tong: function (p) { sqChu_(p.pass); return sqCpTong_(p); },
   chu_cp_sua: function (p) { sqChu_(p.pass); return plSua_(p); },
   chu_cp_quay: function (p) { sqChu_(p.pass); return sqCpQuay_(p); },
   chu_sapo_luu: function (p) { sqChu_(p.pass); return sqSapoLuu_(p, 'anh Đạt'); },

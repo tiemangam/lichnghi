@@ -142,3 +142,36 @@ function sqCpQuay_(p) {
     return { tinh: tinh };
   });
 }
+
+// Tổng theo mối: mọi hóa đơn (ảnh, quen, anh nhập) + phiếu đi chợ trong khoảng ngày, kèm cùng kỳ tháng trước.
+// Trả dòng thô để Điều hành tự cộng theo mối / theo món / tìm món.
+function sqThangLui_(d) { var p = d.split('-'), y = +p[0], m = +p[1] - 1; if (!m) { m = 12; y--; } var cuoi = new Date(Date.UTC(y, m, 0)).getUTCDate(); return y + '-' + ('0' + m).slice(-2) + '-' + ('0' + Math.min(+p[2], cuoi)).slice(-2); }
+function sqCpTong_(p) {
+  var hn = homNay_(), N = /^\d{4}-\d{2}-\d{2}$/;
+  var den = N.test(String(p.den || '')) ? p.den : hn, tu = N.test(String(p.tu || '')) ? p.tu : den.slice(0, 8) + '01';
+  if (tu > den) { var t0 = tu; tu = den; den = t0; }
+  if (tu < congNgay_(den, -95)) tu = congNgay_(den, -95);
+  var tuT = sqThangLui_(tu), denT = sqThangLui_(den);
+  var moiDs = [], moiIdx = {}, ph = [], dong = [], truoc = { moi: {}, mon: {} };
+  var khoaMoi = function (x) {
+    if (x.loai === LOAI.DC) return { k: 'd:' + khongDau_(x.nhom), ten: x.nhom, dc: 1 };
+    if (x.loai === LOAI.HD || x.loai === LOAI.TD) { var m = x.moi || x.nhom.replace(/^HĐ /, ''); return { k: 'm:' + khongDau_(m), ten: m }; }
+    return x.moi ? { k: 'm:' + khongDau_(x.moi), ten: x.moi } : { k: 'c:' + khongDau_(x.nhom), ten: x.nhom };
+  };
+  sqPhieuTrong_(tuT < tu ? tuT : tu, den).forEach(function (x) {
+    if (x.loai === LOAI.BILL || PL_NHOM_KHONG_HANG.indexOf(x.nhom) >= 0 || !x.tong) return;
+    var km = khoaMoi(x);
+    if (x.ngay >= tuT && x.ngay <= denT && x.ngay < tu) { // cùng kỳ tháng trước
+      truoc.moi[km.k] = (truoc.moi[km.k] || 0) + x.tong;
+      x.mon.forEach(function (d) { var k = km.k + '|' + khongDau_(d.ten); truoc.mon[k] = (truoc.mon[k] || 0) + so_(d.tien); });
+      return;
+    }
+    if (x.ngay < tu) return;
+    var mi = moiIdx[km.k];
+    if (mi === undefined) { mi = moiIdx[km.k] = moiDs.length; moiDs.push({ k: km.k, ten: km.ten, dc: km.dc || 0, nguoi: [] }); }
+    if (x.nguoi && moiDs[mi].nguoi.indexOf(x.nguoi) < 0 && moiDs[mi].nguoi.length < 6) moiDs[mi].nguoi.push(x.nguoi);
+    var pi = ph.length; ph.push([x.id, x.ngay, mi, x.tong]);
+    x.mon.forEach(function (d) { if (d.ten) dong.push([pi, d.ten, d.sl === '' ? '' : so_(d.sl), d.dv || '', d.gia === '' ? '' : so_(d.gia), so_(d.tien)]); });
+  });
+  return { tu: tu, den: den, tuT: tuT, denT: denT, homNay: hn, moi: moiDs, p: ph, d: dong, truoc: truoc };
+}

@@ -108,7 +108,10 @@ function sqTnChu_(p) {
   var ds = sqTnRows_().filter(function (o) { return o.ngay >= tu && o.ngay <= den; }).map(sqTnGon_)
     .sort(function (a, b) { return (a.ngay + a.ca) < (b.ngay + b.ca) ? 1 : -1; });
   var coNoi = !!PropertiesService.getScriptProperties().getProperty('TN_SYNC_URL');
-  return { tu: tu, den: den, ds: ds, lechDo: TN_LECH_DO, coNoiSoCu: coNoi };
+  // doanh thu theo phương thức thanh toán (file Sapo Sơn gửi cuối ngày) – để anh thấy doanh thu sàn Grab / Shopee / Be
+  var san = {};
+  try { sqSapoRows_().forEach(function (x) { if (x.loai === 'tt' && x.ngay >= tu && x.ngay <= den) san[x.ngay] = { kenh: x.d.kenh || [], tong: x.d.tong, don: x.d.don, luc: x.luc }; }); } catch (e) { }
+  return { tu: tu, den: den, ds: ds, san: san, lechDo: TN_LECH_DO, coNoiSoCu: coNoi };
 }
 function sqTnXuLy_(p) {
   var ngay = sqKiemNgay_(p.ngay), ca = so_(p.ca), ghi = chu_(p.ghi, 120) || ('Đã xử lý ' + bayGio_());
