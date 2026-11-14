@@ -222,12 +222,13 @@ td.r{color:var(--do);font-weight:700} td.y{color:#8a5d10;font-weight:700}
 .tqh h2{font-size:26px;color:var(--xanh)} .tqh h2 span{color:var(--muc)}
 .dstrip{display:flex;gap:4px;overflow-x:auto;padding:2px 0 10px;margin-bottom:6px}
 .dchip{flex:none;width:40px;border:1.5px solid transparent;background:var(--the);border-radius:12px;padding:5px 0 4px;display:flex;flex-direction:column;align-items:center;gap:1px;box-shadow:var(--bong)}
-.dchip .bb{width:12px;height:30px;border-radius:4px;background:var(--xanhn);display:flex;align-items:flex-end;overflow:hidden}
-.dchip .bb i{display:block;width:100%;background:var(--xanh);opacity:.7}
+.dchip .bb{width:20px;height:30px;border-radius:4px;background:var(--xanhn);display:flex;align-items:flex-end;justify-content:center;gap:2px;overflow:hidden;padding:0 2px}
+.dchip .bb i{display:block;width:7px;border-radius:2px 2px 0 0;background:var(--xanh);opacity:.75}.dchip .bb i.c{background:#E08A3C;opacity:.9}
 .dchip b{font:700 14px var(--H)} .dchip small{font-size:9.5px;color:var(--muc2)} .dchip.cn small{color:var(--do)}
 .dchip .dt{width:6px;height:6px;border-radius:50%;background:transparent}.dchip .dt.r{background:var(--do)}.dchip .dt.y{background:var(--vang)}
-.dchip.on{background:var(--xanh);border-color:var(--xanh)} .dchip.on b,.dchip.on small{color:#fff} .dchip.on .bb{background:rgba(248,232,196,.3)} .dchip.on .bb i{background:var(--kem);opacity:1}
+.dchip.on{background:var(--xanh);border-color:var(--xanh)} .dchip.on b,.dchip.on small{color:#fff} .dchip.on .bb{background:rgba(248,232,196,.3)} .dchip.on .bb i{background:var(--kem);opacity:1}.dchip.on .bb i.c{background:#F2A65A}
 .dchip.tl{opacity:.35}
+.dleg{font-size:12px;color:var(--muc2);margin:-4px 0 10px 2px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}.dleg i{width:9px;height:9px;border-radius:2px;background:var(--xanh);opacity:.75;display:inline-block}.dleg i.c{background:#E08A3C;opacity:.9;margin-left:8px}
 .kpi .sub2{display:block;font-size:11.5px;color:var(--muc2);margin-top:1px}
 .kpi .sub2 b{font:700 11.5px var(--B);display:inline;color:inherit}
 .kpi.lead{background:var(--xanh)} .kpi.lead small,.kpi.lead .sub2{color:var(--kem)} .kpi.lead b{color:#fff}
@@ -521,7 +522,7 @@ table.plln button{border:0;background:none;color:var(--do);font-weight:800}
   <main>
     <section id="t-tong" class="hide">
       <div class="tqh"><h2 id="tqTit"></h2><div class="tmnav"><button id="tqThTruoc">‹ Tháng trước</button><button id="tqHom">Hôm nay</button><button id="tqThSau">Tháng sau ›</button></div></div>
-      <div class="dstrip" id="tqStrip"></div>
+      <div class="dstrip" id="tqStrip"></div><div class="dleg"><i></i>doanh thu <i class="c"></i>chi phí trong ngày <span>· bấm vào ngày để xem số</span></div>
       <div id="tqAI"></div>
       <div class="kpis" id="tqKpi"><div class="loading">Đang tải…</div></div>
       <div class="g32 tqcol"><div><div class="card chart2"><h3 style="font-size:17px;color:var(--xanh)">Doanh thu & chi nguyên liệu theo ngày <span class="sub" id="tqChartSub"></span></h3><div id="tqChart"></div>
@@ -1080,7 +1081,7 @@ function veTQ(){
   $('tqTit').innerHTML = '<span>'+THU[dow(ng)]+'</span>, '+dmy(ng);
   var maxV = Math.max(1, Math.max.apply(null, days.map(function(d){ var o = D(d); return Math.max(o.rev||0, o.chi); })));
   $('tqStrip').innerHTML = days.map(function(d){ var o = D(d), v = Math.max(o.rev||0, o.chi), dot = o.lechDo ? 'r' : (o.huyChuaGia ? 'y' : '');
-    return '<button class="dchip'+(d===ng?' on':'')+(dow(d)===0?' cn':'')+(d>hn?' tl':'')+'" data-d="'+d+'"'+(d>hn?' disabled':'')+'><span class="bb"><i style="height:'+Math.round(v/maxV*100)+'%"></i></span><b>'+(+d.slice(8))+'</b><small>'+THU2[dow(d)]+'</small><span class="dt '+dot+'"></span></button>'; }).join('');
+    return '<button class="dchip'+(d===ng?' on':'')+(dow(d)===0?' cn':'')+(d>hn?' tl':'')+'" data-d="'+d+'"'+(d>hn?' disabled':'')+'><span class="bb" title="Doanh thu '+(o.rev==null?'chưa có':tien(o.rev))+' · Chi '+tien(o.chi)+'"><i style="height:'+Math.round((o.rev||0)/maxV*100)+'%"></i><i class="c" style="height:'+Math.round(o.chi/maxV*100)+'%"></i></span><b>'+(+d.slice(8))+'</b><small>'+THU2[dow(d)]+'</small><span class="dt '+dot+'"></span></button>'; }).join('');
   [].forEach.call($('tqStrip').querySelectorAll('[data-d]'), function(b){ b.onclick = function(){ TQ.ngay = b.getAttribute('data-d'); veTQ(); }; });
   var on = $('tqStrip').querySelector('.on'); if (on && on.scrollIntoView) on.scrollIntoView({ inline:'center', block:'nearest' });
   // số tháng này đến ngày đang chọn, so cùng kỳ tháng trước
