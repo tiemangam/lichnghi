@@ -229,13 +229,14 @@ function plNap_(tu, den) {
   var huy = sqHuyRows_().filter(function (h) { return h.ngay >= tu && h.ngay <= den; });
   return { phieu: plPhieuThang_(tu, den), quay: quay, huy: huy, dt: plNapDT_(tu, den), rows: plThangRows_() };
 }
-function plTinh_(N, th, n, ngayCuoi) {
-  var nd = plSoNgay_(th), tu = th + '-01', den = th + '-' + ('0' + n).slice(-2), full = n >= nd;
+function plTinh_(N, th, n, ngayCuoi, t0) {
+  t0 = Math.max(1, Math.min(n, Math.round(t0 || 1)));   // t0 > 1: chỉ tính khoảng ngày t0 → n (anh chọn Từ ngày → đến ngày)
+  var nd = plSoNgay_(th), tu = th + '-' + ('0' + t0).slice(-2), den = th + '-' + ('0' + n).slice(-2), full = t0 === 1 && n >= nd, soN = n - t0 + 1;
   var cd = plCD_(N.rows, th), that = cd.that || {};
   var T = function (k) { return full && that[k] !== undefined ? that[k] : null; };
   // tiền vào
   var vao = { R: 0, tm: 0, ck: 0, app: 0, appGop: 0, phi: 0, chua: 0, soNgay: 0, thieu: [], nguon: {} }, ngay = [];
-  for (var i = 1; i <= n; i++) {
+  for (var i = t0; i <= n; i++) {
     var d = th + '-' + ('0' + i).slice(-2), o = N.dt[d];
     ngay.push(o ? { d: d, R: o.R, tm: o.tm, ck: o.ck, app: o.app, phi: o.phi, chua: o.chua, nguon: o.nguon, bd: 0, khac: 0 } : { d: d, R: null, bd: 0, khac: 0 });
     if (!o) { if (!ngayCuoi || d <= ngayCuoi) vao.thieu.push(d); continue; }
@@ -244,7 +245,7 @@ function plTinh_(N, th, n, ngayCuoi) {
   }
   var dtThat = T('dt');
   if (dtThat !== null) { vao.thatDT = dtThat; vao.Rapp = vao.R; vao.R = dtThat; }
-  var nIdx = function (d) { return +d.slice(8) - 1; };
+  var nIdx = function (d) { return +d.slice(8) - t0; };
   // tiền ra theo loại
   var L = {}; ['nvl', 'ga', 'banhmi', 'quay', 'luongkhac', 'sua', 'khac', 'dautu'].forEach(function (k) { L[k] = { tien: 0, ct: [] }; });
   var cdHD = {}, cdLe = [];
@@ -280,7 +281,7 @@ function plTinh_(N, th, n, ngayCuoi) {
   ['nvl', 'ga', 'banhmi', 'quay', 'sua', 'khac'].forEach(function (k) { var t = T(k); if (t !== null) { L[k].app = L[k].tien; L[k].tien = t; L[k].that = true; } });
   var tN = T('thuongNong'); if (tN !== null) { L.luongkhac.app = L.luongkhac.tien; L.luongkhac.tien = tN; L.luongkhac.that = true; }
   // chi phí cố định: số thật > hóa đơn thật > ước tính; chia theo ngày
-  var heSo = n / nd, cdRows = [], F = 0;
+  var heSo = soN / nd, cdRows = [], F = 0;
   cd.ds.forEach(function (c) {
     var hd = cdHD[c.id], th2 = that[c.id], thang, ghi, nguon;
     if (th2 !== undefined) { thang = th2; nguon = 'that'; }
@@ -289,14 +290,14 @@ function plTinh_(N, th, n, ngayCuoi) {
     F += thang;
     var tien = Math.round(thang * heSo);
     ghi = nguon === 'that' ? 'số thật cuối tháng' : nguon === 'hd' ? 'hóa đơn thật ' + sqTr_(hd.tien) : (thang ? sqTr_(thang) + '/tháng' : 'chưa nhập số');
-    if (!full) ghi += ' × ' + n + '/' + nd;
-    var ct = [{ ngay: '', ten: nguon === 'uoc' ? 'Ước tính mỗi tháng' : nguon === 'that' ? 'Số thật cuối tháng' : 'Hóa đơn thật trong tháng', nd: full ? '' : 'chia đều ' + n + '/' + nd + ' ngày', tien: thang, uoc: 1 }].concat(hd ? hd.ct : []);
+    if (!full) ghi += ' × ' + soN + '/' + nd;
+    var ct = [{ ngay: '', ten: nguon === 'uoc' ? 'Ước tính mỗi tháng' : nguon === 'that' ? 'Số thật cuối tháng' : 'Hóa đơn thật trong tháng', nd: full ? '' : 'chia đều ' + soN + '/' + nd + ' ngày', tien: thang, uoc: 1 }].concat(hd ? hd.ct : []);
     cdRows.push({ k: 'cd:' + c.id, id: c.id, ten: c.ten, icon: c.icon, nhom: 'cd', tien: tien, thang: thang, nguon: nguon, ghi: ghi, ct: ct, chuaNhap: !thang });
     if (hd) delete cdHD[c.id];
   });
   Object.keys(cdHD).forEach(function (id) {   // hóa đơn cố định không thuộc khoản nào trong bảng
     var h = cdHD[id]; F += h.tien;
-    cdRows.push({ k: 'cd:' + id, id: id, ten: h.ten, icon: '📌', nhom: 'cd', tien: Math.round(h.tien * heSo), thang: h.tien, nguon: 'hd', ghi: 'hóa đơn ' + sqTr_(h.tien) + (full ? '' : ' × ' + n + '/' + nd), ct: h.ct });
+    cdRows.push({ k: 'cd:' + id, id: id, ten: h.ten, icon: '📌', nhom: 'cd', tien: Math.round(h.tien * heSo), thang: h.tien, nguon: 'hd', ghi: 'hóa đơn ' + sqTr_(h.tien) + (full ? '' : ' × ' + soN + '/' + nd), ct: h.ct });
   });
   // dòng P&L
   var R = vao.R, pc = function (v) { return R > 0 ? v / R : null; };
@@ -323,13 +324,13 @@ function plTinh_(N, th, n, ngayCuoi) {
   var luy = 0, gop = 0, fNgay = F / nd, ngayHVthat = null;
   ngay.forEach(function (g) { var l = (g.R || 0) - g.bd - g.khac - fNgay; g.loi = Math.round(l); luy += l; g.luy = Math.round(luy); gop += (g.R || 0) - g.bd - g.khac; if (ngayHVthat === null && F > 0 && gop >= F) ngayHVthat = g.d; });
   var dauTu = mk('dautu');
-  return { thang: th, n: n, nd: nd, den: den, full: full, vao: vao, ra: ra, tong: Math.round(tong), bien: Math.round(bien), cd: Math.round(cdT), khac: Math.round(khac), loi: Math.round(loi), bienLoi: pc(loi),
+  return { thang: th, n: n, nd: nd, den: den, tu: tu, t0: t0, soN: soN, full: full, vao: vao, ra: ra, tong: Math.round(tong), bien: Math.round(bien), cd: Math.round(cdT), khac: Math.round(khac), loi: Math.round(loi), bienLoi: pc(loi),
     hv: hv, ngay: ngay, ngayHV: ngayHVthat, huy: { tien: Math.round(huy.tien), chuaGia: huy.chuaGia, ct: huy.ct.sort(function (a, b) { return a.ngay < b.ngay ? 1 : -1; }), pctNVL: L.nvl.tien ? huy.tien / L.nvl.tien : null, pct: pc(huy.tien) },
     dauTu: { tien: dauTu.tien, ct: dauTu.ct }, cdNguon: cd.nguon, cdTu: cd.tu || '', that: that, du: th >= PL_DU_TU };
 }
 function sqTr_(n) { var a = Math.abs(n); return a >= 1e6 ? (Math.round(n / 1e5) / 10).toString().replace('.', ',') + ' tr' : a >= 1e3 ? Math.round(n / 1e3) + 'k' : Math.round(n) + 'đ'; }
 function plGon_(r) { // bỏ chi tiết để so sánh tháng trước nhẹ hơn
-  return { thang: r.thang, n: r.n, nd: r.nd, R: r.vao.R, tong: r.tong, loi: r.loi, bien: r.bien, cd: r.cd, khac: r.khac, du: r.du, huy: r.huy.tien,
+  return { thang: r.thang, n: r.n, nd: r.nd, t0: r.t0, tu: r.tu, R: r.vao.R, tong: r.tong, loi: r.loi, bien: r.bien, cd: r.cd, khac: r.khac, du: r.du, huy: r.huy.tien,
     ra: r.ra.map(function (x) { return { k: x.k, ten: x.ten, tien: x.tien, pct: x.pct }; }), vao: { tm: r.vao.tm, ck: r.vao.ck, app: r.vao.app, chua: r.vao.chua } };
 }
 
@@ -340,7 +341,10 @@ function plXem_(p) {
   if (ngay > hn) ngay = hn;
   var th = ngay.slice(0, 7), n = +ngay.slice(8), tr = plThangTruoc_(th), ndTr = plSoNgay_(tr);
   var N = plNap_(tr + '-01', ngay);
-  var a = plTinh_(N, th, n, hn), b = plTinh_(N, tr, Math.min(n, ndTr), hn);
+  // khoảng ngày (Từ → đến) trong cùng tháng; không có thì từ đầu tháng
+  var tuC = /^\d{4}-\d{2}-\d{2}$/.test(String(p.tu || '')) && String(p.tu).slice(0, 7) === th && p.tu < ngay ? String(p.tu) : '', t0 = tuC ? +tuC.slice(8) : 1;
+  var a = plTinh_(N, th, n, hn, t0), b = plTinh_(N, tr, Math.min(n, ndTr), hn, Math.min(t0, Math.min(n, ndTr)));
+  if (t0 > 1) { var aT = plTinh_(N, th, n, hn); a.hv = aT.hv; a.ngayHV = aT.ngayHV; }   // hòa vốn vẫn tính theo cả tháng tới ngày chọn
   a.truoc = plGon_(b);
   a.ngayChon = ngay; a.homNay = hn; a.loaiTen = plTenLoai_();
   return a;
