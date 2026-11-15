@@ -122,3 +122,89 @@ function sqTnXuLy_(p) {
     return { xuLy: p.bo ? '' : ghi };
   });
 }
+
+/* =====================================================================
+ * 🏦 NGÂN HÀNG – anh Đạt nạp file Excel sao kê (Techcombank, MB…), app đọc trên trình duyệt,
+ * gửi từng giao dịch lên lưu tab SQ_NganHang (trùng mã thì bỏ qua). Chỉ anh Đạt xem (mật khẩu chủ).
+ * Cài đặt (tên TK, mức khoản nhỏ, giờ khuya, tên TK vợ, % sàn, nội dung quen → mục) ở Script Property NH_CAI.
+ * ===================================================================== */
+var SQ_NH = 'SQ_NganHang', H_SQ_NH = ['Mã', 'TK', 'Ngày', 'Giờ', 'Nội dung', 'Đối tác', 'Ra (nợ)', 'Vào (có)', 'Số dư', 'Mục', 'Duyệt', 'Nạp lúc'];
+function sqTabNH_() { return sqTab_(SQ_NH, H_SQ_NH, function (sh) { sh.getRange('A:F').setNumberFormat('@'); sh.getRange('J:L').setNumberFormat('@'); }); }
+function nhCai_() {
+  var c = sqJ_(PropertiesService.getScriptProperties().getProperty('NH_CAI'), {}) || {};
+  c.tk = c.tk || {}; c.quen = c.quen || {};
+  if (!(c.nho > 0)) c.nho = 500000;
+  if (c.khuyaTu == null) c.khuyaTu = 23; if (c.khuyaDen == null) c.khuyaDen = 6;
+  c.pct = Object.assign({ shopee: 19, grab: 19.5, be: 19.5 }, c.pct || {});
+  if (c.vo == null) c.vo = '';
+  return c;
+}
+function nhCaiGhi_(c) { PropertiesService.getScriptProperties().setProperty('NH_CAI', JSON.stringify(c)); }
+function nhTien_(v) { var n = Math.round(Math.abs(so_(v))); return n > 0 ? n : 0; }
+function nhLuu_(p) {
+  var tk = chu_(p.tk, 30); if (!/^[0-9A-Za-z]{4,30}$/.test(tk)) throw new Error('Không đọc được số tài khoản trong file.');
+  var ds = (Array.isArray(p.ds) ? p.ds : []).slice(0, 5000); if (!ds.length) throw new Error('File không có giao dịch nào.');
+  return khoa_(function () {
+    var sh = sqTabNH_(), n = sh.getLastRow(), co = {};
+    if (n > 1) sh.getRange(2, 1, n - 1, 1).getValues().forEach(function (r) { co[String(r[0])] = 1; });
+    var luc = bayGio_(), moi = [], trung = 0, tu = '', den = '';
+    ds.forEach(function (x) {
+      var ngay = chuanNgay_(x.ngay); if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay)) return;
+      var no = nhTien_(x.no), cov = nhTien_(x.co); if (!no && !cov) return;
+      var ref = chu_(x.ref, 40), ma = tk + '|' + (ref || (ngay + '|' + no + '|' + cov + '|' + Math.round(so_(x.sd))));
+      if (!tu || ngay < tu) tu = ngay; if (!den || ngay > den) den = ngay;
+      if (co[ma]) { trung++; return; } co[ma] = 1;
+      var gio = /^\d{1,2}:\d{2}/.test(String(x.gio || '')) ? String(x.gio).slice(0, 5) : '';
+      moi.push([ma, tk, ngay, gio, chu_(x.nd, 300), chu_(x.dt, 80), no || '', cov || '', Math.round(so_(x.sd)) || '', '', '', luc]);
+    });
+    if (moi.length) sh.getRange(sh.getLastRow() + 1, 1, moi.length, H_SQ_NH.length).setValues(moi);
+    var c = nhCai_(), t = c.tk[tk] || {};
+    c.tk[tk] = { ten: chu_(p.ten, 40) || t.ten || ('TK ··' + tk.slice(-4)), nh: chu_(p.nh, 30) || t.nh || '', vai: t.vai || '', tu: !t.tu || (tu && tu < t.tu) ? tu : t.tu, den: !t.den || den > t.den ? den : t.den, luc: luc };
+    nhCaiGhi_(c);
+    return { moi: moi.length, trung: trung, tu: tu, den: den };
+  });
+}
+function nhXem_(p) {
+  var hn = homNay_(), den = /^\d{4}-\d{2}-\d{2}$/.test(String(p.den || '')) ? p.den : hn, tu = /^\d{4}-\d{2}-\d{2}$/.test(String(p.tu || '')) ? p.tu : den;
+  if (tu > den) { var t0 = tu; tu = den; den = t0; }
+  var tuDoc = congNgay_(tu, -40);   // đọc lùi để biết người nhận / nội dung đã từng gặp
+  var sh = sqTabNH_(), n = sh.getLastRow(), ds = [], cu = {};
+  if (n > 1) sh.getRange(2, 1, n - 1, H_SQ_NH.length).getValues().forEach(function (r) {
+    var ngay = chuanNgay_(r[2]); if (ngay < tuDoc || ngay > den) return;
+    var x = [String(r[0]), String(r[1]), ngay, String(r[3] || ''), String(r[4] || ''), String(r[5] || ''), so_(r[6]), so_(r[7]), so_(r[8]), String(r[9] || ''), String(r[10] || '')];
+    if (ngay < tu) { if (x[6]) cu[khongDau_(x[5] || x[4]).replace(/[0-9]+/g, '').slice(0, 40)] = 1; return; }
+    ds.push(x);
+  });
+  var c = nhCai_();
+  return { tu: tu, den: den, homNay: hn, cai: c, ds: ds, cu: Object.keys(cu) };
+}
+function nhTimDong_(sh, ma) {
+  var n = sh.getLastRow(); if (n < 2) return 0;
+  var a = sh.getRange(2, 1, n - 1, 1).getValues();
+  for (var i = 0; i < a.length; i++) if (String(a[i][0]) === ma) return i + 2;
+  return 0;
+}
+function nhDanh_(p) {
+  return khoa_(function () {
+    var c = nhCai_(), sh = sqTabNH_(), out = {};
+    if (p.ma) {
+      var row = nhTimDong_(sh, String(p.ma)); if (!row) throw new Error('Không thấy giao dịch.');
+      if (p.muc !== undefined) sh.getRange(row, 10).setValue(chu_(p.muc, 20));
+      if (p.duyet !== undefined) sh.getRange(row, 11).setValue(p.duyet ? chu_(p.duyet, 10) + ' · ' + bayGio_() : '');
+      out.ma = p.ma;
+    }
+    if (p.quenKey) { var k = khongDau_(p.quenKey).replace(/[0-9]+/g, '').trim().slice(0, 40); if (k) { if (p.quenMuc === null) delete c.quen[k]; else c.quen[k] = chu_(p.quenMuc || 'ok', 20); nhCaiGhi_(c); } }
+    return out;
+  });
+}
+function nhCaiLuu_(p) {
+  var c = nhCai_();
+  if (p.tk && c.tk[p.tk]) { if (p.ten !== undefined) c.tk[p.tk].ten = chu_(p.ten, 40); if (p.vai !== undefined) c.tk[p.tk].vai = chu_(p.vai, 10); }
+  if (p.nho !== undefined && so_(p.nho) > 0) c.nho = Math.round(so_(p.nho));
+  if (p.khuyaTu !== undefined) c.khuyaTu = Math.max(0, Math.min(23, Math.round(so_(p.khuyaTu))));
+  if (p.khuyaDen !== undefined) c.khuyaDen = Math.max(0, Math.min(23, Math.round(so_(p.khuyaDen))));
+  if (p.vo !== undefined) c.vo = chu_(p.vo, 60);
+  if (p.pct) ['shopee', 'grab', 'be'].forEach(function (k) { if (p.pct[k] !== undefined && so_(p.pct[k]) >= 0 && so_(p.pct[k]) < 60) c.pct[k] = so_(p.pct[k]); });
+  nhCaiGhi_(c);
+  return { cai: c };
+}
