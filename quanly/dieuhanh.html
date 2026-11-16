@@ -1108,7 +1108,7 @@ function veHuy(){
   // từng lần
   var dong = j.dong.filter(function(x){ return !H.mon || x.ten===H.mon; });
   $('hDongSub').innerHTML = H.mon ? '· '+esc(H.mon)+' <a href="#" id="hBoLoc">bỏ lọc</a>' : '· '+dong.length+' dòng gần nhất';
-  $('hDong').innerHTML = dong.map(function(x, i){ return '<div class="ent"><span><b>'+esc(x.ten)+'</b> '+soVN(x.sl)+' '+esc(x.dv||'')+'<br><small>'+dmy(x.ngay)+(x.ca?' · '+esc(x.ca):'')+' · '+esc(x.nguoi)+' · '+esc(x.lyDo)+'</small></span><span style="text-align:right">'+(x.tien===''?'<span class="cg">chưa giá</span>':'<b>'+tien(x.tien)+'</b>')+(x.anh&&x.anh.length?'<br><button data-i="'+i+'">Ảnh</button>':'')+'</span></div>'; }).join('') || '<div class="sub">–</div>';
+  $('hDong').innerHTML = dong.map(function(x, i){ return '<div class="ent"><span><b>'+esc(x.ten)+'</b> '+soVN(x.sl)+' '+esc(x.dv||'')+'<br><small>'+dmy(x.ngay)+(x.ca?' · '+esc(x.ca):'')+' · '+esc(x.nguoi)+' · '+esc(x.lyDo)+(x.ghiChu && !/^Khác/.test(x.lyDo) ? ' – '+esc(x.ghiChu) : '')+'</small></span><span style="text-align:right">'+(x.tien===''?'<span class="cg">chưa giá</span>':'<b>'+tien(x.tien)+'</b>')+(x.anh&&x.anh.length?'<br><button data-i="'+i+'">Ảnh</button>':'')+'</span></div>'; }).join('') || '<div class="sub">–</div>';
   var bl = $('hBoLoc'); if (bl) bl.onclick = function(e){ e.preventDefault(); H.mon=''; veHuy(); };
   [].forEach.call($('hDong').querySelectorAll('button[data-i]'), function(b){ b.onclick = function(){
     var x = dong[+b.getAttribute('data-i')], f = document.createElement('div'); f.className='full';
