@@ -8,11 +8,31 @@
  */
 var SQ_TN = 'SQ_ThuNgan';
 var H_SQ_TN = ['Ngày', 'Ca', 'Thu ngân', 'Giao ca', 'DTTM', 'Thẻ/CK', 'Chi', 'Nhận thêm', 'Tip', 'TM dự kiến (gồm tip)', 'TMTT', 'Chênh lệch',
-  'Chi tiết CK (JSON)', 'Chi tiết Chi (JSON)', 'Chi tiết Nhận (JSON)', 'Lưu lúc', 'Gửi sổ cũ', 'Đã xử lý'];
+  'Chi tiết CK (JSON)', 'Chi tiết Chi (JSON)', 'Chi tiết Nhận (JSON)', 'Lưu lúc', 'Gửi sổ cũ', 'Đã xử lý',
+  'Lý do lệch', 'Đếm tiền (JSON)', 'Chia tiền (JSON)'];
 var TN_LECH_DO = 50000;
 
 function sqTabTN_() {
   return sqTab_(SQ_TN, H_SQ_TN, function (sh) { sh.getRange('A:A').setNumberFormat('@'); sh.getRange('P:Q').setNumberFormat('@'); });
+}
+// tab cũ chưa có 3 cột mới (Lý do lệch, Đếm tiền, Chia tiền) → thêm tiêu đề
+function sqTnCotMoi_(sh) {
+  if (String(sh.getRange(1, 19).getValue()) === H_SQ_TN[18]) return;
+  sh.getRange(1, 19, 1, 3).setValues([H_SQ_TN.slice(18, 21)]).setFontWeight('bold').setBackground('#445803').setFontColor('#F8E8C4');
+  sh.getRange('T:U').setNumberFormat('@');
+}
+var TN_MENH_GIA = [500000, 200000, 100000, 50000, 20000, 10000, 5000, 2000, 1000];
+function sqTnDem_(d) { // {to:{500000:n,...}} → {to, tong}
+  if (!d || typeof d !== 'object') return null;
+  var to = {}, tong = 0, co = false;
+  TN_MENH_GIA.forEach(function (m) { var n = Math.max(0, Math.round(so_(d.to && d.to[m]))); if (n) { to[m] = n; tong += n * m; co = true; } });
+  return co ? { to: to, tong: tong } : null;
+}
+function sqTnChia_(d) {
+  if (!d || typeof d !== 'object') return null;
+  var phan = function (x) { var to = {}; TN_MENH_GIA.forEach(function (m) { var n = Math.max(0, Math.round(so_(x && x[m]))); if (n) to[m] = n; }); return to; };
+  return { giaoCa: Math.round(so_(d.giaoCa)), cho: Math.round(so_(d.cho)), son: Math.round(so_(d.son)), muonGiaoCa: Math.round(so_(d.muonGiaoCa)), muonCho: Math.round(so_(d.muonCho)),
+    to: { giaoCa: phan(d.to && d.to.giaoCa), cho: phan(d.to && d.to.cho), son: phan(d.to && d.to.son) } };
 }
 function sqTnQuyen_(nv) { if ((nv.chucNang || []).indexOf('tn') < 0) throw new Error('Em chưa được mở chức năng Thu ngân. Nhờ anh Đạt bật trong Điều hành → Nhân viên.'); }
 function sqTnDong_(ds) {
@@ -31,7 +51,8 @@ function sqTnTinh_(o) {
 function sqTnObj_(r, i) {
   return sqTnTinh_({
     row: i + 2, ngay: chuanNgay_(r[0]), ca: so_(r[1]), nguoi: String(r[2] || ''), giaoCa: so_(r[3]), dttm: so_(r[4]), tip: so_(r[8]), tmtt: so_(r[10]),
-    ck: sqJ_(r[12], []), chi: sqJ_(r[13], []), nhan: sqJ_(r[14], []), luc: String(r[15] || ''), guiSoCu: String(r[16] || ''), xuLy: String(r[17] || '')
+    ck: sqJ_(r[12], []), chi: sqJ_(r[13], []), nhan: sqJ_(r[14], []), luc: String(r[15] || ''), guiSoCu: String(r[16] || ''), xuLy: String(r[17] || ''),
+    lyDo: String(r[18] || ''), dem: sqJ_(r[19], null), chia: sqJ_(r[20], null)
   });
 }
 function sqTnRows_() {
@@ -41,7 +62,8 @@ function sqTnRows_() {
 }
 function sqTnGon_(o) {
   return { ngay: o.ngay, ca: o.ca, nguoi: o.nguoi, giaoCa: o.giaoCa, dttm: o.dttm, tip: o.tip, tmtt: o.tmtt, ck: o.ck, chi: o.chi, nhan: o.nhan,
-    tr: o.tr, ex: o.ex, rec: o.rec, duKien: o.duKien, duKienTip: o.duKienTip, lech: o.lech, luc: o.luc, guiSoCu: o.guiSoCu, xuLy: o.xuLy };
+    tr: o.tr, ex: o.ex, rec: o.rec, duKien: o.duKien, duKienTip: o.duKienTip, lech: o.lech, luc: o.luc, guiSoCu: o.guiSoCu, xuLy: o.xuLy,
+    lyDo: o.lyDo || '', dem: o.dem || null, chia: o.chia || null };
 }
 
 // Nhân viên: số 2 ca của 1 ngày + tóm tắt tháng
@@ -68,14 +90,18 @@ function sqTnLuu_(nv, p, chu) {
   if (ca !== 1 && ca !== 2) throw new Error('Chọn Ca 1 hoặc Ca 2.');
   var o = sqTnTinh_({
     ngay: ngay, ca: ca, nguoi: nv.ten, giaoCa: Math.round(so_(p.giaoCa)), dttm: Math.round(so_(p.dttm)), tip: Math.round(so_(p.tip)), tmtt: Math.round(so_(p.tmtt)),
-    ck: sqTnDong_(p.ck), chi: sqTnDong_(p.chi), nhan: sqTnDong_(p.nhan), luc: bayGio_(), guiSoCu: '', xuLy: ''
+    ck: sqTnDong_(p.ck), chi: sqTnDong_(p.chi), nhan: sqTnDong_(p.nhan), luc: bayGio_(), guiSoCu: '', xuLy: '',
+    lyDo: chu_(p.lyDo, 300), dem: sqTnDem_(p.dem), chia: sqTnChia_(p.chia)
   });
+  if (o.lech >= 0) o.lyDo = ''; // chỉ giữ lý do khi két thiếu (lệch âm)
   khoa_(function () {
     var sh = sqTabTN_(), rows = sqTnRows_(), row = -1;
+    sqTnCotMoi_(sh);
     rows.forEach(function (x) { if (x.ngay === ngay && x.ca === ca) row = x.row; });
     if (row < 0) row = sh.getLastRow() + 1;
     sh.getRange(row, 1, 1, H_SQ_TN.length).setValues([[ngay, ca, o.nguoi, o.giaoCa, o.dttm, o.tr, o.ex, o.rec, o.tip, o.duKienTip, o.tmtt, o.lech,
-      JSON.stringify(o.ck), JSON.stringify(o.chi), JSON.stringify(o.nhan), o.luc, 'Đang gửi', '']]);
+      JSON.stringify(o.ck), JSON.stringify(o.chi), JSON.stringify(o.nhan), o.luc, 'Đang gửi', '',
+      o.lyDo, o.dem ? JSON.stringify(o.dem) : '', o.chia ? JSON.stringify(o.chia) : '']]);
     o.row = row;
   });
   o.guiSoCu = chu ? 'anh Đạt nhập hộ' : sqTnGuiSoCu_(o); // anh nhập hộ: ca đã có ở sổ cũ, không gửi lại
@@ -207,4 +233,132 @@ function nhCaiLuu_(p) {
   if (p.pct) ['shopee', 'grab', 'be'].forEach(function (k) { if (p.pct[k] !== undefined && so_(p.pct[k]) >= 0 && so_(p.pct[k]) < 60) c.pct[k] = so_(p.pct[k]); });
   nhCaiGhi_(c);
   return { cai: c };
+}
+
+/**
+ * THƯỞNG NÓNG – Sổ Quán (thu ngân / quản lý bấm cuối ngày).
+ * Chọn mức 1–4 → tick người làm hôm nay (Bếp · Phục vụ · Bảo vệ) → Ca 1 / Ca 2 / Cả ngày → app tự tính tiền.
+ * Lưu ở tab SQ_ThuongNong (mỗi người 1 dòng / ngày; lưu lại thì thay cả ngày). Tiền chi ra vẫn ghi ở "Các khoản chi"
+ * của sổ thu ngân (dòng "Thưởng nóng …") để két và P&L chạy như cũ – app tự điền dòng đó.
+ * Danh sách người = nhân viên đang làm trong SQ_NhanVien (vai Bếp / Đi chợ → Bếp; Phục vụ / Thu ngân → Phục vụ)
+ * + tên thu ngân tự thêm (tab SQ_ThuongNguoi). Ai nghỉ làm (anh Đạt đánh dấu nghỉ) hoặc bị bỏ khỏi danh sách thì không hiện.
+ */
+var SQ_THUONG = 'SQ_ThuongNong', SQ_THUONG_NGUOI = 'SQ_ThuongNguoi';
+var H_SQ_THUONG = ['Ngày', 'Mức', 'Tên', 'Nhóm', 'Ca', 'Tiền theo mức', 'Tiền thưởng', 'Lý do chỉnh', 'Ghi bởi', 'Lưu lúc'];
+var H_SQ_THUONG_NGUOI = ['Tên', 'Nhóm', 'Bỏ khỏi danh sách (x)', 'Thêm bởi', 'Lúc'];
+// tiền theo mức: [cả ngày, 1 ca]
+var THUONG_MUC = { 1: [50000, 50000], 2: [100000, 70000], 3: [150000, 100000], 4: [200000, 150000] };
+var THUONG_NHOM = { bep: 'Bếp', pv: 'Phục vụ', bv: 'Bảo vệ' };
+
+function sqTabThuong_() { return sqTab_(SQ_THUONG, H_SQ_THUONG, function (sh) { sh.getRange('A:A').setNumberFormat('@'); }); }
+function sqTabThuongNguoi_() { return sqTab_(SQ_THUONG_NGUOI, H_SQ_THUONG_NGUOI); }
+function sqThuongQuyen_(nv) {
+  if ((nv.chucNang || []).indexOf('tn') < 0 && !/^(thu ngan|quan ly)$/.test(khongDau_(nv.vai)))
+    throw new Error('Thưởng nóng chỉ thu ngân hoặc quản lý bấm được.');
+}
+function sqThuongNhomVai_(vai) {
+  var v = khongDau_(vai);
+  if (/bep|di cho|phu bep/.test(v)) return 'bep';
+  if (/phuc vu|thu ngan/.test(v)) return 'pv';
+  if (/bao ve/.test(v)) return 'bv';
+  return '';
+}
+function sqThuongRows_() {
+  var sh = sqTabThuong_(), n = sh.getLastRow();
+  if (n < 2) return [];
+  return sh.getRange(2, 1, n - 1, H_SQ_THUONG.length).getValues().map(function (r, i) {
+    return { row: i + 2, ngay: chuanNgay_(r[0]), muc: so_(r[1]), ten: String(r[2] || '').trim(), nhom: String(r[3] || ''), ca: String(r[4] || ''),
+      tienMuc: so_(r[5]), tien: so_(r[6]), lyDo: String(r[7] || ''), nguoi: String(r[8] || ''), luc: String(r[9] || '') };
+  }).filter(function (x) { return x.ngay && x.ten; });
+}
+function sqThuongNguoiRows_() {
+  var sh = sqTabThuongNguoi_(), n = sh.getLastRow();
+  if (n < 2) return [];
+  return sh.getRange(2, 1, n - 1, H_SQ_THUONG_NGUOI.length).getValues().map(function (r, i) {
+    return { row: i + 2, ten: String(r[0] || '').trim(), nhom: String(r[1] || ''), bo: /x/i.test(String(r[2])), boi: String(r[3] || ''), luc: String(r[4] || '') };
+  }).filter(function (x) { return x.ten; });
+}
+// danh sách người hiện trong hộp thưởng nóng
+function sqThuongDsNguoi_() {
+  var them = {}; sqThuongNguoiRows_().forEach(function (x) { them[khongDau_(x.ten)] = x; });
+  var ds = [], co = {};
+  sqNVDs_().ds.forEach(function (x) {
+    if (x.nghi) return;
+    var k = khongDau_(x.ten), t = them[k], nhom = (t && THUONG_NHOM[t.nhom]) ? t.nhom : sqThuongNhomVai_(x.vai);
+    if (!nhom || (t && t.bo)) return;
+    co[k] = 1; ds.push({ ten: x.ten, nhom: nhom, nguon: 'nv' });
+  });
+  Object.keys(them).forEach(function (k) {
+    var t = them[k]; if (co[k] || t.bo || !THUONG_NHOM[t.nhom]) return;
+    co[k] = 1; ds.push({ ten: t.ten, nhom: t.nhom, nguon: 'them' });
+  });
+  return ds;
+}
+// p: {ngay}
+function sqThuongNgay_(nv, p) {
+  sqThuongQuyen_(nv);
+  var ngay = sqKiemNgay_(p.ngay || homNay_()), rows = sqThuongRows_();
+  var hom = rows.filter(function (x) { return x.ngay === ngay; });
+  var caCuoi = {}; // ca lần gần nhất của từng người → mặc định
+  rows.filter(function (x) { return x.ngay < ngay; }).sort(function (a, b) { return a.ngay < b.ngay ? -1 : 1; })
+    .forEach(function (x) { caCuoi[khongDau_(x.ten)] = x.ca; });
+  return {
+    ngay: ngay, muc: THUONG_MUC, nhom: THUONG_NHOM, nguoi: sqThuongDsNguoi_(), caCuoi: caCuoi,
+    daLuu: hom.length ? { muc: hom[0].muc, nguoi: hom[0].nguoi, luc: hom[0].luc,
+      ds: hom.map(function (x) { return { ten: x.ten, nhom: x.nhom, ca: x.ca, tienMuc: x.tienMuc, tien: x.tien, lyDo: x.lyDo }; }) } : null
+  };
+}
+// p: {ngay, muc (0 = không thưởng), ds:[{ten, nhom, ca:'1'|'2'|'full', tien, lyDo}]}
+function sqThuongLuu_(nv, p) {
+  sqThuongQuyen_(nv);
+  var ngay = sqKiemNgay_(p.ngay), hn = homNay_();
+  if (ngay > hn) throw new Error('Không lưu trước cho ngày mai được.');
+  if (ngay < congNgay_(hn, -7)) throw new Error('Chỉ sửa được thưởng nóng trong 7 ngày gần nhất.');
+  var muc = so_(p.muc);
+  if (muc && !THUONG_MUC[muc]) throw new Error('Mức thưởng không đúng.');
+  var luc = bayGio_(), ds = [];
+  if (muc) (Array.isArray(p.ds) ? p.ds : []).slice(0, 60).forEach(function (x) {
+    var ten = chu_(x && x.ten, 40), nhom = THUONG_NHOM[x && x.nhom] ? x.nhom : '', ca = ['1', '2', 'full'].indexOf(String(x && x.ca)) >= 0 ? String(x.ca) : 'full';
+    if (!ten || !nhom) return;
+    var tienMuc = THUONG_MUC[muc][ca === 'full' ? 0 : 1], tien = Math.max(0, Math.round(so_(x.tien === '' || x.tien == null ? tienMuc : x.tien)));
+    ds.push([ngay, muc, ten, nhom, ca, tienMuc, tien, tien !== tienMuc ? chu_(x.lyDo, 150) : '', nv.ten, luc]);
+  });
+  if (muc && !ds.length) throw new Error('Chưa tick ai được thưởng.');
+  khoa_(function () {
+    var sh = sqTabThuong_(), rows = sqThuongRows_(), giu = rows.filter(function (x) { return x.ngay !== ngay; });
+    var n = sh.getLastRow();
+    if (n > 1) sh.getRange(2, 1, n - 1, H_SQ_THUONG.length).clearContent();
+    var all = giu.map(function (x) { return [x.ngay, x.muc, x.ten, x.nhom, x.ca, x.tienMuc, x.tien, x.lyDo, x.nguoi, x.luc]; }).concat(ds)
+      .sort(function (a, b) { return String(a[0]) < String(b[0]) ? -1 : String(a[0]) > String(b[0]) ? 1 : 0; });
+    if (all.length) sh.getRange(2, 1, all.length, H_SQ_THUONG.length).setValues(all);
+  });
+  var tong = ds.reduce(function (s, r) { return s + r[6]; }, 0);
+  return { ngay: ngay, muc: muc, soNguoi: ds.length, tong: tong };
+}
+// thêm tên mới / đổi nhóm / bỏ khỏi danh sách. p: {ten, nhom, bo}
+function sqThuongNguoiLuu_(nv, p) {
+  sqThuongQuyen_(nv);
+  var ten = chu_(p.ten, 40), nhom = THUONG_NHOM[p.nhom] ? p.nhom : '';
+  if (!ten) throw new Error('Chưa ghi tên.');
+  if (!p.bo && !nhom) throw new Error('Chọn nhóm Bếp / Phục vụ / Bảo vệ.');
+  khoa_(function () {
+    var sh = sqTabThuongNguoi_(), cu = sqThuongNguoiRows_().filter(function (x) { return khongDau_(x.ten) === khongDau_(ten); })[0];
+    var vals = [[cu ? cu.ten : ten, nhom || (cu && cu.nhom) || '', p.bo ? 'x' : '', nv.ten, bayGio_()]];
+    if (cu) sh.getRange(cu.row, 1, 1, H_SQ_THUONG_NGUOI.length).setValues(vals);
+    else sh.getRange(sh.getLastRow() + 1, 1, 1, H_SQ_THUONG_NGUOI.length).setValues(vals);
+  });
+  return { nguoi: sqThuongDsNguoi_() };
+}
+// Điều hành: thưởng nóng theo tháng – tổng từng người (để làm bảng lương)
+function sqThuongThang_(p) {
+  var thang = /^\d{4}-\d{2}$/.test(String(p.thang || '')) ? p.thang : homNay_().slice(0, 7);
+  var ng = {}, ngay = {};
+  sqThuongRows_().filter(function (x) { return x.ngay.slice(0, 7) === thang; }).forEach(function (x) {
+    var k = khongDau_(x.ten), g = ng[k] || (ng[k] = { ten: x.ten, nhom: x.nhom, lan: 0, tong: 0 });
+    g.lan++; g.tong += x.tien;
+    var d = ngay[x.ngay] || (ngay[x.ngay] = { ngay: x.ngay, muc: x.muc, nguoi: 0, tong: 0, ghiBoi: x.nguoi });
+    d.nguoi++; d.tong += x.tien;
+  });
+  return { thang: thang, nguoi: Object.keys(ng).map(function (k) { return ng[k]; }).sort(function (a, b) { return b.tong - a.tong; }),
+    ngay: Object.keys(ngay).sort().map(function (k) { return ngay[k]; }) };
 }
