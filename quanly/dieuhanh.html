@@ -562,7 +562,7 @@ table.plln button{border:0;background:none;color:var(--do);font-weight:800}
 .dqm input,.dqm select,.dqc input,.dqc textarea{border:1.5px solid var(--vien);border-radius:8px;padding:5px 8px;font:inherit;font-size:13px;background:#fff;min-width:0;width:100%;box-sizing:border-box}
 .dqm .bt{display:grid;grid-template-columns:minmax(0,1fr) 96px 24px;gap:4px;margin-bottom:4px}.dqm .bt input:nth-child(2){text-align:right}
 .dqm .xb{border:0;background:none;color:var(--do);font-weight:700;padding:0}.dqm .them{border:0;background:none;color:var(--xanh);font-weight:700;font-size:12px;padding:2px 0}
-@media(min-width:1000px){#dqMs{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}}.dqm .lu{visibility:hidden}.dqm.doi .lu{visibility:visible}
+@media(min-width:1000px){#dqMs{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}#dqMs .empty{grid-column:1/-1}}.dqnh{display:flex;flex-wrap:wrap;gap:6px}.dqnh span{display:inline-flex;align-items:center;gap:2px;border:1.5px solid var(--vien);background:#fff;border-radius:999px;padding:3px 4px 3px 10px;font-size:13px;font-weight:700;color:var(--muc)}.dqnh span i{font-style:normal;color:var(--muc2);font-size:11px;margin-right:2px}.dqnh button{border:0;background:var(--xanhn);color:var(--xanh);border-radius:999px;width:24px;height:24px;font-weight:800;padding:0}.dqm .lu{visibility:hidden}.dqm.doi .lu{visibility:visible}
 .dqc label{display:block;font-size:12px;font-weight:700;color:var(--muc2);margin:10px 0 4px}.dqc .r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dqc .sh{display:grid;grid-template-columns:1fr 1fr 24px;gap:6px;margin-bottom:6px;align-items:center}
 .dqc .dqtg{display:flex;align-items:center;gap:8px;font-weight:700}.dqtg input{width:22px;height:22px;accent-color:var(--xanh)}
 @media(max-width:700px){.dqm{grid-template-columns:24px minmax(0,1fr) 70px}.dqm>.bts{grid-column:2/4}.dqm .lu{grid-row:1;grid-column:3}}
@@ -1020,8 +1020,11 @@ function dqGanMon(el){
   };
 }
 /* ---- cài đặt ---- */
+function dqNhoms(){ var c = DQ.cai, co = {}, ds = []; (c.nhom || []).concat((DQ.menu || []).map(function(x){ return x.nhom; })).forEach(function(n){ if (n && !co[n] && (DQ.menu || []).some(function(x){ return x.nhom === n; })) { co[n] = 1; ds.push(n); } }); return ds; }
+function veDQNh(){ $('dqNh').innerHTML = DQ.nh.map(function(n, i){ return '<span><i>' + (i + 1) + '</i>' + esc(n) + '<button data-i="' + i + '" data-d="-1" title="Lên trước">‹</button><button data-i="' + i + '" data-d="1" title="Xuống sau">›</button></span>'; }).join('');
+  [].forEach.call($('dqNh').querySelectorAll('button'), function(b){ b.onclick = function(){ var i = +b.getAttribute('data-i'), j = i + +b.getAttribute('data-d'); if (j < 0 || j >= DQ.nh.length) return; var t = DQ.nh[i]; DQ.nh[i] = DQ.nh[j]; DQ.nh[j] = t; veDQNh(); }; }); }
 function veDQCai(){
-  var c = DQ.cai, sh = (c.ship || []).concat([['', '']]);
+  var c = DQ.cai, sh = (c.ship || []).concat([['', '']]); DQ.nh = dqNhoms();
   var h = '<div class="card dqc"><h3>Cài đặt đặt bàn / mang về</h3>' +
     '<label class="dqtg"><input type="checkbox" id="dqMo"' + (c.mo ? ' checked' : '') + '> Đang nhận đơn online</label><div class="sub">Tắt khi quán nghỉ / quá đông – khách sẽ thấy “tạm ngưng, vui lòng gọi”.</div>' +
     '<div class="r2"><div><label>Giờ nhận khách sớm nhất</label><input id="dqGM" type="time" value="' + esc(c.gioMo) + '"></div><div><label>Giờ trễ nhất</label><input id="dqGD" type="time" value="' + esc(c.gioDong) + '"></div></div>' +
@@ -1029,15 +1032,16 @@ function veDQCai(){
     '<label>🛵 Hỗ trợ ship (mang về) – đơn từ … thì giảm …</label><div id="dqSh">' + sh.map(function(m){ return '<div class="sh"><input class="a" inputmode="numeric" placeholder="Đơn từ (vd 100.000)" value="' + (m[0] ? String(m[0]).replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '') + '"><input class="b" inputmode="numeric" placeholder="Giảm (vd 10.000)" value="' + (m[1] ? String(m[1]).replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '') + '"><span class="sub">đ</span></div>'; }).join('') + '</div>' +
     '<div class="sub">Phí ship thật quán sẽ gọi báo khách sau khi gọi xe. Để trống dòng nào thì bỏ mức đó.</div>' +
     '<label>🖼 Hình menu (tên + đường dẫn hình)</label><div id="dqHi">' + (c.hinh || []).concat([{ ten: '', url: '' }]).map(function(x){ return '<div class="sh" style="grid-template-columns:1fr 2fr 24px"><input class="a" placeholder="Tên (vd Menu chân gà)" value="' + esc(x.ten) + '"><input class="b" placeholder="https://… hoặc menu-tong.jpg" value="' + esc(x.url) + '"><span></span></div>'; }).join('') + '</div>' +
+    '<label>↔ Thứ tự nhóm món trên trang khách (bấm ‹ › để đổi chỗ)</label><div class="dqnh" id="dqNh"></div>' +
     '<div style="margin-top:14px"><button class="btn" id="dqLuu">Lưu cài đặt</button></div></div>';
-  $('dqBody').innerHTML = h;
+  $('dqBody').innerHTML = h; veDQNh();
   $('dqLuu').onclick = function(){
     var so = function(v){ return +String(v).replace(/\D/g, '') || 0; };
     var p = { mo: $('dqMo').checked, gioMo: $('dqGM').value, gioDong: $('dqGD').value, luuY: $('dqLY').value.trim(),
       ship: [].map.call($('dqSh').querySelectorAll('.sh'), function(d){ return [so(d.querySelector('.a').value), so(d.querySelector('.b').value)]; }).filter(function(m){ return m[0] && m[1]; }),
-      hinh: [].map.call($('dqHi').querySelectorAll('.sh'), function(d){ return { ten: d.querySelector('.a').value.trim(), url: d.querySelector('.b').value.trim() }; }).filter(function(x){ return x.url; }) };
+      nhom: DQ.nh.slice(), hinh: [].map.call($('dqHi').querySelectorAll('.sh'), function(d){ return { ten: d.querySelector('.a').value.trim(), url: d.querySelector('.b').value.trim() }; }).filter(function(x){ return x.url; }) };
     var nut = this; nut.disabled = true;
-    api('chu_db_cai', p).then(function(j){ DQ.cai = j.cai; veDQCai(); toast('Đã lưu cài đặt'); }).catch(function(e){ toast(e.message); nut.disabled = false; });
+    api('chu_db_cai', p).then(function(j){ DQ.cai = j.cai; var vt = function(n){ var i = j.cai.nhom.indexOf(n); return i < 0 ? 999 : i; }; if (DQ.menu) DQ.menu.sort(function(a, b){ return vt(a.nhom) - vt(b.nhom) || a.tt - b.tt; }); veDQCai(); toast('Đã lưu cài đặt'); }).catch(function(e){ toast(e.message); nut.disabled = false; });
   };
 }
 [].forEach.call(document.querySelectorAll('#dqChe .chip'), function(b){ b.onclick = function(){ DQ.che = b.getAttribute('data-v'); ls.set('gam_dq_che', DQ.che); veDQ(); taiDQ(); }; });
