@@ -14,6 +14,7 @@ function dbCai_() {
   if (!Array.isArray(c.ship)) c.ship = [[100000, 10000], [200000, 20000]];
   if (!Array.isArray(c.hinh)) c.hinh = [];
   if (c.mo == null) c.mo = true;
+  if (!Array.isArray(c.nhom)) c.nhom = [];   // thứ tự nhóm món anh xếp
   if (!c.gioMo) c.gioMo = '10:00'; if (!c.gioDong) c.gioDong = '21:30';
   return c;
 }
@@ -26,7 +27,8 @@ function dbMenu_(tatCa) {
     if (!tatCa && (!ban || !bt.length)) return;
     ds.push({ row: i + 2, nhom: String(r[0] || 'Khác'), ten: ten, bt: bt, ban: ban, tt: so_(r[4]) || 999, mo: String(r[5] || '') });
   });
-  return ds.sort(function (a, b) { return a.tt - b.tt; });
+  var nh = dbCai_().nhom, vt = function (n) { var i = nh.indexOf(n); return i < 0 ? 999 : i; };
+  return ds.sort(function (a, b) { return vt(a.nhom) - vt(b.nhom) || a.tt - b.tt; });
 }
 // mức hỗ trợ ship theo tạm tính
 function dbHoTro_(tam, c) { var h = 0; (c.ship || []).forEach(function (m) { if (tam >= so_(m[0]) && so_(m[1]) > h) h = so_(m[1]); }); return h; }
@@ -137,6 +139,7 @@ function dbCaiLuu_(p) {
   if (Array.isArray(p.ship)) c.ship = p.ship.slice(0, 6).map(function (m) { return [Math.max(0, Math.round(so_(m[0]))), Math.max(0, Math.round(so_(m[1])))]; }).filter(function (m) { return m[0] > 0 && m[1] > 0; });
   if (Array.isArray(p.hinh)) c.hinh = p.hinh.slice(0, 6).map(function (h) { return { ten: chu_(h.ten, 40), url: String(h.url || '').slice(0, 300) }; }).filter(function (h) { return /^https:\/\//.test(h.url) || /^[\w\/.-]+$/.test(h.url); });
   if (p.mo !== undefined) c.mo = !!p.mo;
+  if (Array.isArray(p.nhom)) c.nhom = p.nhom.slice(0, 40).map(function (n) { return chu_(n, 40); }).filter(String);
   if (/^\d{1,2}:\d{2}$/.test(String(p.gioMo || ''))) c.gioMo = p.gioMo; if (/^\d{1,2}:\d{2}$/.test(String(p.gioDong || ''))) c.gioDong = p.gioDong;
   PropertiesService.getScriptProperties().setProperty('DB_CAI', JSON.stringify(c));
   return { cai: c };
