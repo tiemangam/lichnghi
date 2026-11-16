@@ -78,6 +78,18 @@ function sqXuLy_(api, p) {
 }
 
 var SQ_API = {
+  /* ---- khách: đặt bàn / mang về (không cần mật khẩu) ---- */
+  kh_menu: function (p) { return khMenu_(); },
+  kh_dat: function (p) { return khDat_(p); },
+  nv_db_ds: function (p) { sqNV_(p.pin); return dbDs_(p); },
+  nv_db_cn: function (p) { var nv = sqNV_(p.pin); return dbCapNhat_(nv.ten, p); },
+  chu_db_ds: function (p) { sqChu_(p.pass); return dbDs_(p); },
+  chu_db_cn: function (p) { sqChu_(p.pass); return dbCapNhat_('anh Đạt', p); },
+  chu_db_menu: function (p) { sqChu_(p.pass); return { menu: dbMenu_(true), cai: dbCai_() }; },
+  chu_db_nap: function (p) { sqChu_(p.pass); return dbMenuNap_(p); },
+  chu_db_mon: function (p) { sqChu_(p.pass); return dbMenuLuu_(p); },
+  chu_db_ban: function (p) { sqChu_(p.pass); return dbMenuBanNhieu_(p); },
+  chu_db_cai: function (p) { sqChu_(p.pass); return dbCaiLuu_(p); },
   /* ---- nhân viên ---- */
   nv_vao: function (p) { var nv = sqNV_(p.pin); return { ten: nv.ten, vai: nv.vai, chucNang: nv.chucNang, homNay: homNay_() }; },
   nv_dulieu: function (p) { var nv = sqNV_(p.pin); return sqDuLieuNV_(nv); },
