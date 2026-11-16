@@ -130,7 +130,7 @@ h2{font-size:22px;color:var(--xanh)}
 /* phiếu đã lưu */
 .ticket{background:var(--the);border-radius:14px;overflow:hidden;box-shadow:0 6px 22px -8px rgba(44,36,24,.35);margin-top:6px}
 .ticket .hd{background:var(--xanh);padding:14px 14px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.ticket .hd .lg{width:112px;height:63px;background:var(--kem);-webkit-mask:url(../logo.png) left center/contain no-repeat;mask:url(../logo.png) left center/contain no-repeat}
+.ticket .hd .lg{width:112px;height:63px;object-fit:contain;object-position:left center;display:block}
 .ticket .hd small{display:block;color:var(--kem);font-size:10px;letter-spacing:.14em;font-weight:700;text-align:right;line-height:1.6}
 .ticket .bd{padding:12px 14px}
 .ticket .nm{font-family:var(--H);font-size:20px;line-height:1.15}
@@ -1387,11 +1387,13 @@ function themHuy(ten, moi){
     '<div class="row2" style="margin-top:8px;align-items:center"><input class="in num sl" inputmode="decimal" placeholder="Số lượng" style="flex:1.2">'+
     (x ? '<span style="flex:1;font-weight:600;color:var(--muc2)">'+esc(x.dv)+'</span><input type="hidden" class="dv" value="'+esc(x.dv)+'">' : '<input class="in dv" placeholder="Đơn vị: cuốn, kg, phần…" style="flex:1.4">')+'</div>'+
     '<div class="chips ld" style="margin-top:8px">'+LD.map(function(l){ return '<button class="chip" data-l="'+esc(l)+'">'+esc(l)+'</button>'; }).join('')+'</div>'+
-    '<input class="in gc hide" maxlength="120" placeholder="Ghi rõ lý do" style="margin-top:6px">';
+    '<input class="in gc" maxlength="150" placeholder="Ghi rõ vì sao (bắt buộc) – vd: chiên quá lửa bị cháy" style="margin-top:6px">';
   r.querySelector('.x').onclick = function(){ r.remove(); };
   [].forEach.call(r.querySelectorAll('.ld .chip'), function(c){ c.onclick = function(){
     [].forEach.call(r.querySelectorAll('.ld .chip'), function(z){ z.classList.toggle('on', z===c); });
-    r.querySelector('.gc').classList.toggle('hide', c.getAttribute('data-l')!=='Khác');
+    var g = r.querySelector('.gc'), l = c.getAttribute('data-l');
+    g.placeholder = 'Ghi rõ vì sao (bắt buộc) – ' + ({ 'Nấu / chiên hư': 'vd: chiên quá lửa bị cháy, nêm mặn', 'Để lâu, quá hạn': 'vd: nhập ngày nào, để ở đâu, bị chua/có mùi', 'Rơi đổ': 'vd: ai làm rơi, lúc nào', 'Khách trả lại': 'vd: bàn mấy, khách chê gì' }[l] || 'vd: chuyện gì xảy ra');
+    g.focus();
   }; });
   $('huyRows').appendChild(r);
   r.querySelector('.sl').focus();
@@ -1418,7 +1420,7 @@ $('huyLuu').onclick = function(){
     if (sl==='' || sl<=0) { toast('"'+ten+'" chưa ghi số lượng'); r.querySelector('.sl').focus(); return; }
     if (!dv) { toast('"'+ten+'" chưa ghi đơn vị'); r.querySelector('.dv').focus(); return; }
     if (!ly) { toast('"'+ten+'" chưa chọn lý do'); return; }
-    if (ly==='Khác' && !gc) { toast('Ghi rõ lý do hủy "'+ten+'"'); r.querySelector('.gc').focus(); return; }
+    if (gc.replace(/\s+/g, ' ').length < 8) { toast('Ghi rõ vì sao hủy "'+ten+'" (ít nhất vài chữ)'); r.querySelector('.gc').focus(); return; }
     dong.push({ ten:ten, sl:sl, dv:dv, lyDo: ly==='Khác' ? 'Khác: '+gc : ly, ghiChu: gc });
   }
   if (!HUY.anh.length) { toast('Phải chụp ảnh đồ hủy nhé'); return; }
@@ -1427,15 +1429,18 @@ $('huyLuu').onclick = function(){
     { huy:true, loai:'PHIẾU HỦY HÀNG', ten:'Hủy hàng · '+HUY.ca, sub:'Ghi bởi '+S.ten+' · '+dong.length+' món', ngay:ngay, id:HUY.id, dong:dong, anh:HUY.anh });
 };
 
+/* logo màu kem cho phiếu (html2canvas không vẽ được CSS mask → tô màu sẵn bằng canvas) */
+var LOGO_KEM = '';
+(function(){ var im = new Image(); im.onload = function(){ try { var c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; var g = c.getContext('2d'); g.drawImage(im, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#F8E8C4'; g.fillRect(0, 0, c.width, c.height); LOGO_KEM = c.toDataURL('image/png'); [].forEach.call(document.querySelectorAll('img.lgk'), function(x){ x.src = LOGO_KEM; }); } catch(e){} }; im.src = '../logo.png'; })();
 /* ---------- ĐÃ LƯU: hình phiếu ---------- */
 var XONG = null;
 function xong(p){
   XONG = p;
   $('xongSub').textContent = dmy(p.ngay);
-  $('ticket').innerHTML = '<div class="ticket" id="tk"><div class="hd"><div class="lg"></div><div><small>'+esc(p.loai)+'</small><small>'+dmy(p.ngay)+' · #'+esc(p.id.slice(-6))+'</small></div></div>'+
+  $('ticket').innerHTML = '<div class="ticket" id="tk"><div class="hd"><img class="lg lgk" alt="Gặm" src="'+(LOGO_KEM||'data:image/gif;base64,R0lGODlhAQABAAAAACw=')+'"><div><small>'+esc(p.loai)+'</small><small>'+dmy(p.ngay)+' · #'+esc(p.id.slice(-6))+'</small></div></div>'+
     '<div class="bd"><div class="nm">'+esc(p.ten)+'</div><div class="sub">'+esc(p.sub)+'</div>'+
     '<div class="lbl" style="margin-top:10px">Chi tiết</div>'+
-    (p.huy ? p.dong.map(function(d){ return '<div class="tl"><span>'+esc(d.ten)+'<small>'+esc(d.lyDo)+'</small></span><span><b>'+soVN(d.sl)+' '+esc(d.dv||'')+'</b></span></div>'; }).join('') + (p.anh ? '<div style="display:flex;gap:6px;margin-top:9px">'+p.anh.map(function(a){ return '<img src="'+a.url+'" style="width:31%;border-radius:8px">'; }).join('')+'</div>' : '') + '</div>'
+    (p.huy ? p.dong.map(function(d){ return '<div class="tl"><span>'+esc(d.ten)+'<small>'+esc(d.lyDo)+(d.ghiChu && !/^Khác/.test(d.lyDo) ? ' – '+esc(d.ghiChu) : '')+'</small></span><span><b>'+soVN(d.sl)+' '+esc(d.dv||'')+'</b></span></div>'; }).join('') + (p.anh ? '<div style="display:flex;gap:6px;margin-top:9px">'+p.anh.map(function(a){ return '<img src="'+a.url+'" style="width:31%;border-radius:8px">'; }).join('')+'</div>' : '') + '</div>'
     : p.dong.map(function(d){ return '<div class="tl"><span>'+esc(d.ten)+(d.sl!==''&&d.sl!=null?'<small>'+soVN(d.sl)+' '+esc(d.dv||'')+(d.gia?' × '+tien(d.gia):'')+'</small>':'')+'</span><span>'+tien(d.tien).replace('đ','')+'</span></div>'; }).join('')+
     '<div class="big"><div><small>'+esc(p.nhan||'TỔNG PHIẾU')+'</small><span class="sub">'+p.dong.length+' món</span></div><b class="num">'+tien(p.tong)+'</b></div></div>')+
     '<div class="tf"><span class="st"><i></i>'+(p.huy?'Đã ghi sổ hủy':p.tt==='Đã trả lời'?'Đã sửa, chờ anh xem lại':'Chờ anh Đạt duyệt')+'</span><span>Gặm · '+p.ngay.slice(5,7)+'/'+p.ngay.slice(0,4)+'</span></div></div>';
