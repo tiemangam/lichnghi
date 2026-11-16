@@ -240,6 +240,17 @@ td.r{color:var(--do);font-weight:700} td.y{color:#8a5d10;font-weight:700}
 .ngft{border-top:1px dashed var(--vien);margin-top:8px;padding-top:9px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}.ngft b{color:var(--xanh)}.ngft small{color:var(--muc2)}
 .ngft button{border:1.5px solid var(--vien);background:#fff;border-radius:10px;padding:6px 14px;font-weight:700;color:var(--xanh);white-space:nowrap}.ngft button.ok{background:var(--xanh);border-color:var(--xanh);color:#fff}.ngft button:disabled{opacity:.4}
 .dchip.in{background:var(--xanhn)}
+.ngoc h3{font:700 17px var(--H);color:var(--xanh);margin:0 0 8px}.ngoc h3 .sub{font:600 12px var(--B)}
+.nqs{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:center;margin-bottom:10px}.nqs>i{font:800 22px var(--H);color:var(--muc2);font-style:normal}
+.nqs>div{background:#fff;border:1.5px solid var(--vien);border-radius:14px;padding:6px 10px;text-align:center}.nqs small{display:block;font-weight:700;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muc2)}.nqs b{display:block;font:800 22px var(--H);line-height:1.2}.nqs span{font-size:11.5px;color:var(--muc2)}
+.nqs>div.ok{border-color:var(--xanh);background:var(--xanhn)}.nqs>div.ok b{color:var(--xanh)}.nqs>div.no{border-color:var(--do);background:var(--don)}.nqs>div.no b{color:var(--do)}
+.nqh,.nqr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 120px;gap:8px}.nqh{font:800 11.5px var(--B);text-transform:uppercase;letter-spacing:.05em;margin:4px 0 4px}.nqh span:nth-child(1){color:#8a6414}.nqh span:nth-child(2){color:var(--xanh)}.nqh span:nth-child(3){color:var(--muc2);text-align:center}
+.nqr{margin-bottom:6px;align-items:stretch}.nqc{display:flex;flex-direction:column;gap:4px}
+.nqo{background:#fff;border:1.5px solid var(--vien);border-radius:11px;padding:5px 10px;display:flex;justify-content:space-between;align-items:center;gap:6px;flex:1}.nqo b{display:block;font-size:14px}.nqo small{font-size:11.5px;color:var(--muc2)}.nqo .m{font:800 17px var(--H);white-space:nowrap}
+.nqo.u{border-left:5px solid #E0A82E}.nqo.t{border-left:5px solid #7d9a2e}.nqo.cu{opacity:.65}.nqo.no{border-style:dashed;color:var(--do);justify-content:center;font-weight:700;background:#fff7f5}
+.nqk{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:11px;font-weight:800;font-size:13px;text-align:center;padding:4px;line-height:1.25}.nqk small{font-weight:700;font-size:11.5px}
+.nqk.ok{background:var(--xanhn);color:var(--xanh)}.nqk.y{background:#FDF0C8;color:#8a6414}.nqk.r{background:var(--do);color:#fff}
+@media (max-width:640px){.nqh,.nqr{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 78px}.nqo{padding:5px 7px}.nqo .m{font-size:15px}.nqs b{font-size:17px}}
 .dch{display:flex;justify-content:space-between;align-items:baseline;gap:8px;border-bottom:2px solid var(--xanhn);padding-bottom:3px;margin-bottom:4px}.dch>b{font:700 15px var(--H);color:var(--xanh)}.dch span{font-size:12px;color:var(--muc2)}
 .kbtop{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}.kbtop .ar{font-size:13px;color:var(--muc2)}
 .kb2{border:1.5px solid var(--vien);border-radius:12px;background:#fff;padding:7px 10px;margin-bottom:6px;cursor:pointer;font-size:13px}.kb2.r{background:#FCEFEB;border-color:#ecc3b9}.kb2.y{background:#FDF6DD;border-color:#ecdca6}
@@ -581,6 +592,7 @@ table.plln button{border:0;background:none;color:var(--do);font-weight:800}
       <div class="kpis" id="tmKpi"></div>
       <div id="tmDtn"></div>
       <div class="tmg" id="tmCa"><div class="loading">Đang tải…</div></div>
+      <div id="tmNgoc" style="margin-top:12px"></div>
     </section>
     <section id="t-nh" class="hide">
       <div class="bar" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><div class="cpnav"><button id="nhNg" class="ngb"></button><span class="nhtk" id="nhTk"></span></div><div class="cpnav"><label class="btn" style="width:auto;margin:0;padding:7px 14px;cursor:pointer">📥 Nạp sao kê (Excel)<input type="file" id="nhFile" accept=".xlsx,.xls,.csv" multiple hidden></label><button id="nhCai">⚙</button></div></div>
@@ -1983,8 +1995,56 @@ function tmTaiThem(tu, den){
     Object.keys(j.san||{}).forEach(function(d){ if (!TM.data.san[d]) TM.data.san[d] = j.san[d]; }); if (tu < TM.data.tu) TM.data.tu = tu; })
   .catch(function(e){ toast(e.message); }).then(function(){ TM.dangThem = false; if (TAB==='tm') veTM(); });
 }
+/* ---------- 🤝 Ứng giùm chị Ngọc: chi "Hàng chị Ngọc" = quán ứng ra · nhận "Hàng chị Ngọc 15/11" = chị trả lại ---------- */
+var NGOC_RE = /(^| )(chi|c) ngoc( |$)/;
+function tmNgocGhep(){
+  var j = TM.data; if (!j) return null;
+  var ds = j.ds.slice().sort(function(a,b){ return (a.ngay + a.ca) < (b.ngay + b.ca) ? -1 : 1; }), ung = [], tra = [];
+  var kd = function(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/\s+/g,' ').trim(); };
+  ds.forEach(function(x){
+    (x.chi || []).forEach(function(r){ if (r.amount > 0 && NGOC_RE.test(kd(r.note))) ung.push({ ngay: x.ngay, ca: x.ca, nguoi: x.nguoi || '', tien: r.amount, con: r.amount, tra: [] }); });
+    (x.nhan || []).forEach(function(r){ if (r.amount > 0 && NGOC_RE.test(kd(r.note))) { var m = String(r.note).match(/(\d{1,2})\s*\/\s*(\d{1,2})/), cho = '';
+      if (m) { var y = +x.ngay.slice(0,4); if (+m[2] > +x.ngay.slice(5,7)) y--; cho = y + '-' + ('0'+m[2]).slice(-2) + '-' + ('0'+m[1]).slice(-2); }
+      tra.push({ ngay: x.ngay, ca: x.ca, nguoi: x.nguoi || '', tien: r.amount, cho: cho, u: null }); } });
+  });
+  var dau = ds.length ? ds[0].ngay : '';
+  tra.forEach(function(t){
+    var u = null;
+    if (t.cho) u = ung.filter(function(a){ return a.ngay === t.cho && a.con > 0 && a.ngay <= t.ngay; })[0] || ung.filter(function(a){ return a.ngay === t.cho && a.ngay <= t.ngay; })[0];
+    if (!u && t.cho && t.cho < dau) { t.truoc = true; return; }
+    if (!u) u = ung.filter(function(a){ return a.con > 0 && a.ngay <= t.ngay; })[0];
+    if (!u) { t.le = true; return; }
+    u.con -= t.tien; u.tra.push(t); t.u = u; });
+  return { ung: ung, tra: tra };
+}
+function veTMNgoc(){
+  var el = $('tmNgoc'); if (!el) return; var g = tmNgocGhep();
+  if (!g || (!g.ung.length && !g.tra.length)) { el.innerHTML = ''; return; }
+  var th = TM.ngay.slice(0,7), hn = homNay(), dn = function(a, b){ return ngSoNgay(a, b) - 1; };
+  var ungT = g.ung.filter(function(a){ return a.ngay.slice(0,7) === th; }), traT = g.tra.filter(function(t){ return t.ngay.slice(0,7) === th; });
+  var conNo = g.ung.reduce(function(s, a){ return s + Math.max(0, a.con); }, 0);
+  var tongU = ungT.reduce(function(s, a){ return s + a.tien; }, 0), traU = ungT.reduce(function(s, a){ return s + a.tra.reduce(function(s2, t){ return s2 + t.tien; }, 0); }, 0), soTraU = ungT.reduce(function(s, a){ return s + a.tra.length; }, 0);
+  var ca = function(x){ return 'Ca ' + x.ca + (x.nguoi ? ' · ' + esc(x.nguoi) : ''); };
+  var o = function(cls, d, sub, m){ return '<div class="nqo ' + cls + '"><span><b>' + THU2[dow(d)] + ' ' + dm(d) + '</b><small>' + sub + '</small></span><span class="m">' + tmD(m) + '</span></div>'; };
+  var rows = ungT.slice().reverse().map(function(a){
+    var tr = a.tra.length ? a.tra.map(function(t){ return o('t', t.ngay, ca(t), t.tien); }).join('') : '<div class="nqo no">chưa trả</div>', kq;
+    var cuoi = a.tra.length ? a.tra[a.tra.length - 1].ngay : '';
+    if (a.con === 0) kq = '<div class="nqk ok">✓ Khớp<br><small>' + (dn(a.ngay, cuoi) ? 'sau ' + dn(a.ngay, cuoi) + ' ngày' : 'trong ngày') + '</small></div>';
+    else if (a.con < 0) kq = '<div class="nqk y">🟡 Trả dư<br><small>' + tmD(-a.con) + '</small></div>';
+    else if (a.tra.length) kq = '<div class="nqk r">🔴 Trả thiếu<br><small>còn ' + tmD(a.con) + '</small></div>';
+    else { var n = dn(a.ngay, hn); kq = '<div class="nqk ' + (n >= 1 ? 'r' : 'y') + '">' + (n >= 1 ? '🔴 Chưa trả<br><small>' + n + ' ngày</small>' : '🟡 Chưa trả<br><small>hôm nay</small>') + '</div>'; }
+    return '<div class="nqr">' + o('u', a.ngay, ca(a), a.tien) + '<div class="nqc">' + tr + '</div>' + kq + '</div>'; }).join('');
+  var le = traT.filter(function(t){ return t.truoc || t.le || (t.u && t.u.ngay.slice(0,7) !== th); });
+  if (le.length) rows += le.map(function(t){ var kh = t.truoc ? 'trả khoản ứng ' + dm(t.cho) + ' (ghi sổ cũ, trước khi có app)' : t.le ? 'không thấy khoản ứng nào chưa trả' : 'trả khoản ứng ' + dm(t.u.ngay) + ' tháng trước';
+    return '<div class="nqr"><div class="nqo u cu"><span><b>' + (t.cho ? THU2[dow(t.cho)] + ' ' + dm(t.cho) : '–') + '</b><small>' + (t.truoc ? 'sổ cũ' : t.le ? 'không rõ' : 'tháng trước') + '</small></span><span class="m">' + (t.u ? tmD(t.u.tien) : t.truoc ? tmD(t.tien) : '–') + '</span></div><div class="nqc">' + o('t', t.ngay, ca(t), t.tien) + '</div><div class="nqk ' + (t.le ? 'y' : 'ok') + '"><small>' + kh + '</small></div></div>'; }).join('');
+  el.innerHTML = '<div class="card ngoc"><h3>🤝 Ứng giùm chị Ngọc <span class="sub">· ' + pThang(th) + ' · app tự đọc ghi chú "Hàng chị Ngọc" trong sổ thu ngân</span></h3>' +
+    '<div class="nqs"><div><small>Quán ứng ra</small><b style="color:#8a6414">' + tmD(tongU) + '</b><span>' + ungT.length + ' lần</span></div><i>−</i><div><small>Chị Ngọc đã trả</small><b style="color:var(--xanh)">' + tmD(traU) + '</b><span>' + soTraU + ' lần</span></div><i>=</i>' +
+    '<div class="' + (conNo > 0 ? 'no' : 'ok') + '"><small>Còn nợ quán</small><b>' + (conNo > 0 ? tmD(conNo) : '0đ ✓') + '</b><span>' + (conNo > 0 ? g.ung.filter(function(a){ return a.con > 0; }).length + ' khoản chưa trả xong' : 'khớp hết') + '</span></div></div>' +
+    (rows ? '<div class="nqh"><span>⬆ Quán ứng ra</span><span>⬇ Chị Ngọc trả lại</span><span>Kết quả</span></div>' + rows : '<p class="sub">' + pThang(th) + ' chưa có lần ứng nào.</p>') +
+    '<p class="sub" style="margin-top:6px">Nhận lại có ghi ngày (vd "Hàng chị Ngọc 15/11") → ghép đúng ngày đó; không ghi ngày → ghép khoản cũ nhất chưa trả. Ứng / trả không tính vào chi phí, P&L.</p></div>';
+}
 function veTM(){
-  var j = TM.data; if (!j) return;
+  var j = TM.data; if (!j) return; setTimeout(veTMNgoc, 0);
   var lim = j.lechDo, ngay = TM.ngay;
   ngNut($('tmNgay'), ngay, ngay);
   var ca = j.ds.filter(function(x){ return x.ngay === ngay; }).sort(function(a,b){ return a.ca - b.ca; });
