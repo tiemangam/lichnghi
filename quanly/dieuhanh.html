@@ -405,7 +405,7 @@ tr.gm td{text-align:center!important;color:var(--xanh);font-size:12px;font-weigh
 table.bep{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
 table.bep th{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muc2);text-align:right;padding:7px 6px;border-bottom:2px solid var(--vien);white-space:nowrap}
 table.bep th:first-child,table.bep td:first-child{text-align:left}
-table.bep td{text-align:right;padding:8px 6px;border-bottom:1px dashed var(--vien);font-variant-numeric:tabular-nums;vertical-align:top}
+table.bep td{text-align:right;padding:5px 6px;line-height:1.35;border-bottom:1px dashed var(--vien);font-variant-numeric:tabular-nums;vertical-align:top}
 table.bep td small{display:block;color:var(--muc2);font-size:11px;font-weight:400} table.bep tr{cursor:pointer} table.bep .pl{white-space:nowrap}
 table.bep tr.r td{background:#FCEFEB} table.bep tr.y td{background:#FDF6DD}
 table.bep small.dt{display:none}
@@ -422,7 +422,9 @@ table.bep small.dt{display:none}
 .kt3 div{background:#fff;border:1.5px solid var(--vien);border-radius:12px;padding:8px 10px}
 .kt3 small{display:block;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muc2);font-weight:700} .kt3 b{font:700 19px var(--H)}
 .kt3 .r{background:var(--don);border-color:#efc6bd} .kt3 .r b{color:var(--do)} .kt3 .g{background:var(--xanhn);border-color:#c5d08f} .kt3 .g b{color:var(--xanh)} .kt3 .y{background:var(--vangn);border-color:var(--vang)} .kt3 .y b{color:#8a5d10}
-.btk{border:1.5px solid var(--xanh);background:#fff;color:var(--xanh);border-radius:9px;padding:3px 8px;font-weight:700;font-size:11.5px;margin-top:4px}
+.btk{border:1.5px solid var(--vien);background:#fff;color:var(--xanh);border-radius:8px;padding:0 5px;font-weight:700;font-size:12px;margin-left:4px;line-height:20px;vertical-align:1px}
+.khgc{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:thin}.khgc button{flex:none;border:1.5px solid var(--vien);background:#fff;border-radius:999px;padding:5px 12px;font-weight:700;font-size:13px;color:var(--xanh);white-space:nowrap}.khgc button small{font-weight:600;color:var(--muc2);font-size:11px}.khgc button.on{background:var(--xanh);border-color:var(--xanh);color:#fff}.khgc button.on small{color:#e8ecd0}
+#khBep .ar{font-size:13px;color:var(--muc2);margin-right:2px}
 
 @media(max-width:600px){table.bep{min-width:0} table.bep th:nth-child(2),table.bep th:nth-child(3),table.bep th:nth-child(4),table.bep td:nth-child(2),table.bep td:nth-child(3),table.bep td:nth-child(4){display:none} table.bep small.dt{display:block;color:var(--muc);font-size:11.5px} table.bep td{padding:8px 4px} .tb{grid-template-columns:repeat(2,1fr)} .lq{grid-template-columns:minmax(0,1fr) auto;row-gap:0} .lq .p{grid-column:1;grid-row:2;font-size:12px} .lq .q{grid-column:2;grid-row:1 / span 2;align-self:center}}
 @media(max-width:600px){#khNxT table.kt th{white-space:normal;padding:5px 2px;font-size:9px} #khNxT table.kt td{padding:6px 2px} #khNxT table.kt td:first-child{min-width:128px;padding-right:6px} #khNxT table.kt td small{display:block}}
@@ -1995,9 +1997,6 @@ function veTM(){
       '<div class="op">+ Nhận thêm tiền mặt</div><div class="v upx">+'+tmD(x.rec)+'</div>'+lst(x.nhan) +
       '<div class="eq">= TM dự kiến (chưa tip)</div><div class="v eq">'+tmD(x.duKien)+'</div><div class="op">+ Tip</div><div class="v">'+tmD(x.tip)+'</div>' +
       '<div>TMTT (đếm thực tế)</div><div class="v">'+tmD(x.tmtt)+'</div><div class="eq">Chênh lệch</div><div class="v eq '+(x.lech?'dn':'upx')+'">'+(x.lech?tmD(x.lech):'0 – khớp')+'</div></div>' +
-      (x.lech < 0 && x.lyDo ? '<div class="cb r" style="margin-top:8px;font-size:13px"><b>Lý do thiếu:</b> '+esc(x.lyDo)+'</div>' : '') +
-      (x.dem && x.dem.tong ? '<div class="sub" style="margin-top:8px">🧮 Đếm két '+tmD(x.dem.tong)+'đ: '+[500000,200000,100000,50000,20000,10000,5000,2000,1000].filter(function(m){ return x.dem.to[m]; }).map(function(m){ return (m/1000)+'k×'+x.dem.to[m]; }).join(' · ')+
-        (x.chia ? '<br>💰 Chia: giao ca '+tmD(x.chia.giaoCa)+' · đi chợ '+tmD(x.chia.cho)+' · còn lại (gửi Sơn) '+tmD(x.chia.son) : '')+'</div>' : '') +
       (m==='r' ? '<div style="margin-top:10px"><button class="btn '+(x.xuLy?'ph':'o')+'" data-xl="'+x.ca+'">'+(x.xuLy?'Bỏ đánh dấu':'✓ Đánh dấu đã xử lý')+'</button></div>' : '') + '</div>'; };
   var thang = j.ds.filter(function(x){ return x.ngay.slice(0,7) === ngay.slice(0,7); });
   var bang = tmBang(ngay);
@@ -2030,7 +2029,7 @@ setInterval(function(){ if (TAB==='tm' && !document.hidden && TM.data) taiTM(); 
 document.addEventListener('visibilitychange', function(){ if (!document.hidden && TAB==='tm') taiTM(); });
 
 /* ================= KHO ================= */
-var KH = { ngay: '', data: null, loc: 'all', nx: 'doi', q: '', moXd: false };
+var KH = { gChon: ls.get('gam_kh_gchon') || '', ngay: '', data: null, loc: 'all', nx: 'doi', q: '', moXd: false };
 var KH_LT = { tuoi: 'Đồ tươi', kho: 'Gia vị', bb: 'Bao bì', ban: 'Bán sẵn', tp: 'Thành phẩm' };
 // nhóm hiển thị: thứ tự + mở sẵn do anh sắp (✎ Sắp xếp nhóm); bấm tiêu đề nhóm để mở / thu gọn (máy nhớ)
 var KHG = (function(){ try { return JSON.parse(ls.get('gam_kh_mo') || '{}') || {}; } catch(e){ return {}; } })(), KHT = {};
@@ -2077,7 +2076,7 @@ function veKH(){
   veXD();
   // nhập – xuất
   $('khNx').innerHTML = '<h3 style="font-size:17px;color:var(--xanh)">Nhập – xuất trong ngày <span class="sub">· '+dmy(j.ngay)+(j.luc ? ' · gửi '+esc(j.luc) : '')+'</span></h3>' +
-    '<div class="bar" style="margin:6px 0"><div class="khbt"><button id="khMoHet">Mở hết</button><button id="khGon">Thu gọn</button><button id="khNhom">✎ Sắp xếp nhóm</button></div><input id="khQ" placeholder="🔍 tìm món" value="'+esc(KH.q)+'"></div><div id="khNxT" style="overflow-x:auto"></div>' +
+    '<div class="bar" style="margin:6px 0"><div class="khbt"><button id="khMoHet">Mở hết</button><button id="khGon">Thu gọn</button><button id="khNhom">✎ Sắp xếp nhóm</button></div><input id="khQ" placeholder="🔍 tìm món" value="'+esc(KH.q)+'"></div><div class="khgc" id="khGc"></div><div id="khNxT" style="overflow-x:auto"></div>' +
     '<p class="sub" style="margin-top:6px">Thêm = nhập kho trên Sapo · Giảm = xuất dùng / hủy · Bán = Sapo tự trừ theo món bán. Bấm tên nhóm để mở / thu gọn · bấm 1 món để chỉnh mức hoặc chuyển nhóm.</p>';
   veNxT();
   // đối chiếu
@@ -2104,9 +2103,15 @@ function veNxT(){
   var doi = function(x){ return x.them || x.giam || x.ban; }, sx = function(a, b){ return a.t.localeCompare(b.t, 'vi'); };
   var c = function(v, cl, plus){ return v ? '<td class="'+cl+'">'+(plus && v>0 ? '+' : '')+soK(v)+'</td>' : '<td class="kz">·</td>'; };
   var row = function(x){ return '<tr data-sua2="'+it.indexOf(x)+'" style="cursor:pointer"><td><b>'+esc(x.t)+'</b> <small>'+dvt(x)+'</small></td><td>'+soK(x.dau)+'</td>'+c(x.ban,'kb')+c(x.them,'kth',1)+c(x.giam,'kgi')+'<td><b>'+soK(x.cuoi)+'</b></td></tr>'; };
-  var nhom = gChia(ds, it.filter(function(x){ return !q || kdv(x.t).indexOf(q) >= 0; })), h = '';
+  var nhom0 = gChia(ds, it.filter(function(x){ return !q || kdv(x.t).indexOf(q) >= 0; })), h = '', chon = KH.gChon || '';
+  if (chon && !nhom0.some(function(o){ return o.g.id === chon; })) chon = KH.gChon = '';
+  var nhom = chon && !q ? nhom0.filter(function(o){ return o.g.id === chon; }) : nhom0;
+  // nút nhóm ở trên: bấm 1 nhóm → chỉ hiện nhóm đó (mở sẵn)
+  $('khGc').innerHTML = '<button class="'+(!chon?'on':'')+'" data-gc="">Tất cả</button>' + nhom0.map(function(o){ var co = o.it.filter(doi).length;
+    return '<button class="'+(chon===o.g.id?'on':'')+'" data-gc="'+esc(o.g.id)+'">'+esc(o.g.ten)+' <small>'+(co ? co + '/' : '')+o.it.length+'</small></button>'; }).join('');
+  [].forEach.call($('khGc').querySelectorAll('[data-gc]'), function(b){ b.onclick = function(){ KH.gChon = b.getAttribute('data-gc'); ls.set('gam_kh_gchon', KH.gChon); veNxT(); var t = $('khNx'); if (t && t.getBoundingClientRect().top < 0) t.scrollIntoView({ block: 'start' }); }; });
   nhom.forEach(function(o){
-    var g = o.g, mo = q ? true : gMo(g), co = o.it.filter(doi), khong = o.it.length - co.length;
+    var g = o.g, mo = q || chon ? true : gMo(g), co = o.it.filter(doi), khong = o.it.length - co.length;
     h += '<tr class="gh2'+(mo?'':' dong')+'" data-g="'+g.id+'"><td colspan="6"><span class="ar">'+(mo?'▾':'▸')+'</span>'+esc(g.ten)+'<span class="gc">'+(co.length ? co.length+' có xuất / nhập · ' : '')+o.it.length+' món</span></td></tr>';
     if (!mo) return;
     h += (q || KHT[g.id] ? o.it.slice().sort(function(a, b){ return (!!doi(b) - !!doi(a)) || sx(a, b); }) : co.slice().sort(sx)).map(row).join('');
@@ -2312,7 +2317,7 @@ function moKiemTu(x, ovCha, apiTen, sau){
   ve();
 }
 /* ---------- TỒN BẾP: đã xuất kho – chưa dùng (món bán × định lượng) ---------- */
-var KB = { data: null, ngay: null };
+var KB = { data: null, ngay: null, gon: ls.get('gam_kb_gon') === '1' };
 function kk(s){ return kdv(s).replace(/\s+/g, ' '); }
 function taiKB(){
   var ng = KH.data && !KH.data.trong ? KH.data.ngay : ''; KB.ngay = ng;
@@ -2325,21 +2330,24 @@ function kbTenGon(t){ return String(t).replace(/^Bánh Tráng Cuốn /, 'Mẹt '
 function veKB(){
   var el = $('khBep'), j = KB.data; if (!j) return;
   el.classList.remove('hide');
-  var hd = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3 style="font-size:17px;color:var(--xanh)">Đã xuất – chưa dùng <span class="sub">· còn ở bếp, tính theo món bán' + (j.ngay ? ' · ' + THU[dow(j.ngay)] + ' ' + dm(j.ngay) : '') + '</span></h3><div class="khbt"><button id="kbFile">📥 Tải file định lượng</button></div></div>';
+  var hd = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3 style="font-size:17px;color:var(--xanh);cursor:pointer" id="kbGonT"><span class="ar">' + (KB.gon ? '▸' : '▾') + '</span> Đã xuất – chưa dùng <span class="sub">· còn ở bếp, tính theo món bán' + (j.ngay ? ' · ' + THU[dow(j.ngay)] + ' ' + dm(j.ngay) : '') + '</span></h3><div class="khbt"><button id="kbGon">' + (KB.gon ? '▸ Mở ra xem' : '▴ Thu gọn') + '</button><button id="kbFile">📥 Tải file định lượng</button></div></div>';
   var tatCa = (j.items || []).filter(function(x){ return !x.tuTru; }), tuTru = (j.items || []).filter(function(x){ return x.tuTru; });
   var ds = tatCa.filter(function(x){ return !x.links.length || !x.quy || x.tongXuat || x.tongDung || x.bep || x.dung == null; }), lang = tatCa.length - ds.length;
   if (j.trong) el.innerHTML = hd + '<p class="sub" style="padding:8px 0">Phần này tính từ 10/11 – cần file <b>Báo cáo kho hàng</b> và <b>Danh mục mặt hàng</b> từng ngày.</p>';
   else if (!j.coDL) el.innerHTML = hd + '<div class="cb i" style="margin-top:8px;line-height:1.6">Chưa có định lượng. Bấm <b>📥 Tải file định lượng</b> rồi chọn file Excel <b>Gam-dinh-luong-du-doan-NVL</b> (app đọc sheet "App"). Số định lượng chỉ lưu trong Google Sheet riêng của quán, sau mật khẩu Điều hành.</div>';
+  else if (KB.gon) { var nR = ds.filter(function(x){ return x.muc === 'r'; }).length, nY = ds.filter(function(x){ return x.muc === 'y'; }).length;
+    el.innerHTML = hd + '<p class="sub" style="margin:2px 0 0">' + ds.length + ' nguyên liệu' + (nR ? ' · <b style="color:var(--do)">🔴 ' + nR + ' cần xem</b>' : '') + (nY ? ' · 🟡 ' + nY + ' dư' : '') + (!nR && !nY ? ' · đều hợp lý 👍' : '') + ' — bấm <b>Mở ra xem</b> để thấy chi tiết.</p>'; }
   else el.innerHTML = hd + '<p class="sub" style="margin:2px 0 8px">Còn ở bếp = hôm trước còn + hôm nay xuất kho − món bán × định lượng − hủy hàng. Bấm 1 dòng để xem món bán liên quan.</p>' +
     (ds.length ? '<div style="overflow-x:auto"><table class="bep"><tr><th>Nguyên liệu</th><th>Hôm trước còn</th><th>Xuất hôm nay</th><th>Món bán quy ra</th><th>Còn trong tủ</th><th>Đánh giá</th></tr>' +
       ds.map(function(x){ var d0 = x.days[0] || { ds: [] }, mon = d0.ds.slice(0, 4).map(function(m){ return esc(kbTenGon(m.t)) + ' ' + soK(m.sl); }).join(' · ');
         return '<tr class="' + (x.muc === 'r' ? 'r' : x.muc === 'y' ? 'y' : '') + '" data-kb="' + esc(x.t) + '"><td><b>' + esc(x.t) + '</b> <span class="sub">' + dvt(x) + '</span><small>' + (mon || (x.links.length ? (x.dung == null ? esc(x.nhan) : 'hôm nay không bán món liên quan') : 'chưa tick món nào dùng nguyên liệu này')) + '</small><small class="dt">trước ' + kbSo(x.prev) + ' + xuất ' + kbSo(x.xuat) + ' − bán ' + kbSo(x.dung) + '</small></td>' +
           '<td>' + kbSo(x.prev) + '</td><td' + (x.xuat > 0 ? ' class="kgi"' : '') + '>' + kbSo(x.xuat) + '</td><td>' + kbSo(x.dung) + '</td>' +
-          '<td><b' + (x.bep < 0 ? ' style="color:#C0392B"' : '') + '>' + (x.links.length && x.quy ? kbSo(x.bep) : '–') + '</b>' + (x.kiem ? '<small>đã kiểm tủ</small>' : x.duNgay != null ? '<small>đủ ≈' + soK(x.duNgay) + ' ngày</small>' : x.bep < 0 ? '<small>bán nhiều hơn đã xuất</small>' : '') + (x.links.length && x.quy ? '<button class="btk" data-ktu="' + esc(x.t) + '">🧊 Kiểm tủ</button>' : '') + '</td>' +
+          '<td><b' + (x.bep < 0 ? ' style="color:#C0392B"' : '') + '>' + (x.links.length && x.quy ? kbSo(x.bep) : '–') + '</b>' + (x.links.length && x.quy ? ' <button class="btk" data-ktu="' + esc(x.t) + '" title="Kiểm tủ">🧊</button>' : '') + (x.kiem ? '<small>đã kiểm tủ</small>' : x.duNgay != null ? '<small>đủ ≈' + soK(x.duNgay) + ' ngày</small>' : x.bep < 0 ? '<small>bán > đã xuất</small>' : '') + '</td>' +
           '<td><span class="pl ' + x.muc + '">' + (x.muc === 'r' ? '🔴 ' : x.muc === 'y' ? '🟡 ' : '') + esc(x.nhan) + '</span></td></tr>'; }).join('') + '</table></div>' : '<p class="sub" style="padding:6px 0">Chưa có nguyên liệu nào để tính.</p>') +
     '<p class="sub" style="margin-top:8px">🟡 xuất dư trong ngày, hoặc còn ở bếp nhiều hơn 2 ngày dùng · 🔴 bếp còn đủ hàng mà vẫn xuất thêm · 🔴 âm = bán nhiều hơn số đã xuất (quên bấm xuất, hoặc định lượng chưa đúng). Số là ước tính theo định lượng.' +
       (lang ? ' ' + lang + ' nguyên liệu khác chưa xuất, chưa bán nên không hiện.' : '') + (tuTru.length ? ' ' + tuTru.length + ' nguyên liệu Sapo tự trừ theo món bán (' + esc(tuTru.slice(0, 3).map(function(x){ return x.t.toLowerCase(); }).join(', ')) + '…) không tính tồn bếp – bấm vào món đó trong bảng Nhập – xuất để xem món liên quan.' : '') + '</p>';
   $('kbFile').onclick = function(){ $('dlFile').value = ''; $('dlFile').click(); };
+  $('kbGon').onclick = $('kbGonT').onclick = function(){ KB.gon = !KB.gon; ls.set('gam_kb_gon', KB.gon ? '1' : ''); veKB(); };
   veXD();
   [].forEach.call(el.querySelectorAll('[data-ktu]'), function(bn){ bn.onclick = function(e){ e.stopPropagation(); var b = kbTim(bn.getAttribute('data-ktu')); if (b) moKiemTu(b); }; });
   [].forEach.call(el.querySelectorAll('[data-kb]'), function(r){ r.onclick = function(){ var k = kk(r.getAttribute('data-kb')), y = KH.data && !KH.data.trong ? KH.data.items.filter(function(z){ return kk(z.t) === k; })[0] : null; if (y) moSuaKho(y); }; });
