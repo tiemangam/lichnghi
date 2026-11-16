@@ -7,7 +7,7 @@
  */
 var DH_QUAY = 'DH_ChiQuay';
 var H_DH_QUAY = ['Ngày', 'Ca', 'Ghi chú', 'Tính chi phí (có/không)', 'Lúc'];
-var CP_LUAN_CHUYEN = /(^| )(tien cho|di cho|dua cho|giao ca|doan|cho doan|ung)( |$)|^cho( |$)/;
+var CP_LUAN_CHUYEN = /(^| )(tien cho|di cho|dua cho|giao ca|doan|cho doan|ung|chi ngoc|c ngoc)( |$)|^cho( |$)/;
 
 function sqCpMuc_(pct) { return pct < 0 ? (pct <= -0.05 ? 'g' : '') : pct > 0.2 ? 'rr' : pct >= 0.1 ? 'r' : pct >= 0.005 ? 'y' : ''; }
 function sqCpKhoaMoi_(x) {
