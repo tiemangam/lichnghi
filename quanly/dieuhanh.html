@@ -220,6 +220,8 @@ td.r{color:var(--do);font-weight:700} td.y{color:#8a5d10;font-weight:700}
 /* tổng quan */
 #qlBox iframe{display:block;width:100%;border:0;border-radius:16px;background:#FFFCF5;box-shadow:0 2px 12px rgba(44,36,24,.08)}
 #qlBox .ql-cho{padding:30px;text-align:center;color:var(--muc2)}
+.nvmuc{margin:0 0 12px}.nvmuc .n{display:inline-block;background:var(--do);color:#fff;border-radius:999px;font-size:11px;padding:0 6px;margin-left:5px}.nvmuc .chip.on .n{background:#fff;color:var(--do)}
+.trong-app .nvmuc .qlc{display:none}
 .snl{display:flex;flex-direction:column;gap:4px;margin:-2px 0 10px}
 .snl button{align-self:flex-start;border:0;background:var(--vangn);color:var(--muc);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;text-align:left}
 .tqh{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
@@ -350,8 +352,6 @@ table.ln input.t{text-align:left}
 .tl{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:4px 8px;align-items:center;padding:7px 4px;border-bottom:1px dashed var(--vien);font-size:13px;width:100%;border-left:0;border-right:0;border-top:0;background:none;text-align:left;cursor:pointer}
 .tl.on{background:var(--vangn);border-radius:8px}
 .tl small{grid-column:2/4;color:var(--muc2);font-size:11.5px}
-@media (min-width:1000px){.tabs{flex-wrap:wrap;row-gap:2px}}
-.trong-app .tabs .qlt{display:none}
 .tabs .spmo{margin-left:auto;opacity:1;background:rgba(248,232,196,.16);border-radius:12px;margin-bottom:6px;padding:8px 14px}
 @media (max-width:640px){.tabs .spmo{order:-1;margin-left:0;padding:7px 10px}.tabs .spmo .t{display:none}}
 /* kho */
@@ -603,7 +603,7 @@ table.plln button{border:0;background:none;color:var(--do);font-weight:800}
 </div>
 <div id="app" class="hide">
   <header><div class="in"><div class="lg"></div><h1>Điều hành</h1><div class="sp"></div><a href="https://claude.ai/artifact/4mpUW2fwMArV54EnZFhQsn" target="_blank" rel="noopener">Gặm Điều Hành (bản cũ) ↗</a></div>
-    <div class="tabs"><button data-tab="tong">Tổng quan<span class="n hide" id="nTong"></span></button><button class="qlt" data-tab="tb">🔔 Thông báo mới<span class="n hide" id="nTb"></span></button><button class="qlt" data-tab="pv">Phục vụ<span class="n hide" id="nPv"></span></button><button class="qlt" data-tab="bep">Bếp<span class="n hide" id="nBep"></span></button><button class="qlt" data-tab="vc">Voucher</button><button class="qlt" data-tab="ls">Lịch sử</button><button data-tab="tm">Tiền mặt<span class="n hide" id="nTm"></span></button><button data-tab="nh">🏦 Ngân hàng</button><button data-tab="db">📅 Đặt bàn<span class="n hide" id="nDb"></span></button><button data-tab="cp">Chi phí &amp; Hóa đơn<span class="n hide" id="nCp"></span></button><button data-tab="pl">P&amp;L · Lãi lỗ</button><span class="hide"><span id="nDuyet"></span><span id="nGia"></span></span><button data-tab="kho">Kho<span class="n hide" id="nKho"></span></button><button data-tab="huy">Hủy hàng<span class="n hide" id="nHuy"></span></button><button data-tab="nv">Nhân viên</button><button id="spMo" class="spmo">📥<span class="t"> Gửi số</span> Sapo<span class="n hide" id="nSp"></span></button></div>
+    <div class="tabs"><button data-tab="tong">Tổng quan<span class="n hide" id="nTong"></span></button><button data-tab="tm">Tiền mặt<span class="n hide" id="nTm"></span></button><button data-tab="cp">Chi phí &amp; Hóa đơn<span class="n hide" id="nCp"></span></button><button data-tab="kho">Kho<span class="n hide" id="nKho"></span></button><button data-tab="huy">Hủy hàng<span class="n hide" id="nHuy"></span></button><button data-tab="pl">P&amp;L · Lãi lỗ</button><button data-tab="nv">Nhân viên<span class="n hide" id="nNv"></span></button><button data-tab="nh">🏦 Ngân hàng</button><button data-tab="db">📅 Đặt bàn<span class="n hide" id="nDb"></span></button><span class="hide"><span id="nDuyet"></span><span id="nGia"></span></span><button id="spMo" class="spmo">📥<span class="t"> Gửi số</span> Sapo<span class="n hide" id="nSp"></span></button></div>
   </header>
   <main>
     <section id="t-tong" class="hide">
@@ -669,9 +669,11 @@ table.plln button{border:0;background:none;color:var(--do);font-weight:800}
       <div class="bar"><div class="chips" id="fTT"></div><span class="sep"></span><div class="chips" id="fLoai"></div></div>
       <div class="grid" id="dsDuyet"><div class="loading">Đang tải…</div></div>
     </section>
-    <section id="t-ql" class="hide"><div id="qlBox"></div></section>
     <section id="t-nv" class="hide">
-      <div class="split"><div>
+      <div class="chips nvmuc" id="nvMuc"></div>
+      <div id="qlBox" class="hide"></div>
+      <div id="nvLuong" class="hide"></div>
+      <div class="split" id="nvGoc"><div>
         <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="font-size:17px;color:var(--xanh)">Nhân viên dùng Sổ Quán</h3><button class="btn" id="nvThem">＋ Thêm nhân viên</button></div>
           <p class="sub">Mỗi bạn 1 mã PIN 4 số để vào tab Sổ Quán trong app Nhà Gặm. Chọn vai trò thì app tự tick chức năng hay dùng, anh tick lại tuỳ ý.</p>
           <div id="nvDs"><div class="loading">Đang tải…</div></div></div>
@@ -903,13 +905,13 @@ function ngMo(nut, tab, them){ them = them || {};
 var TAB = ls.get('gam_dh_tab') || 'tong'; if (TAB==='duyet' || TAB==='gia') TAB = 'cp';
 // mở bên trong app Quản lý Nhà Gặm (điện thoại): app đó đã có sẵn Đơn mới/Phục vụ/Bếp/Voucher/Lịch sử ở thanh trên → ẩn 5 nút trùng
 var TRONG_APP = (function(){ try { return window.top !== window && /\/quanly\/(index\.html)?$/.test(window.parent.location.pathname); } catch(e){ return false; } })();
-if (TRONG_APP) { document.documentElement.classList.add('trong-app'); if ({tb:1,pv:1,bep:1,vc:1,ls:1}[TAB]) TAB = 'tong'; }
+if ({tb:1,pv:1,bep:1,vc:1,ls:1}[TAB]) { ls.set('gam_nv_muc', TAB); TAB = 'nv'; }
+if (TRONG_APP) document.documentElement.classList.add('trong-app');
 function moTab(t){
   TAB = t; ls.set('gam_dh_tab', t);
   var pop = $('ngPop'); if (pop) pop.remove(); ngApTab(t, true);
   [].forEach.call(document.querySelectorAll('.tabs button'), function(b){ b.classList.toggle('on', b.getAttribute('data-tab')===t); });
-  $('t-nv').classList.toggle('hide', t!=='nv'); if (t==='nv') taiNV();
-  $('t-ql').classList.toggle('hide', !QL_V[t]); if (QL_V[t]) qlMo(t);
+  $('t-nv').classList.toggle('hide', t!=='nv'); if (t==='nv') nvMuc();
   $('t-tong').classList.toggle('hide', t!=='tong'); if (t==='tong') { if (TQ.data) veTQ(); taiTQ(); taiAI(); }
   $('t-nh').classList.toggle('hide', t!=='nh'); if (t==='nh') { if (NH.data) veNH(); taiNH(); }
   $('t-db').classList.toggle('hide', t!=='db'); if (t==='db') { veDQ(); taiDQ(); }
@@ -926,7 +928,7 @@ var QL_EXEC = 'https://script.google.com/macros/s/AKfycbyn5RT0xOX4pNvnxKIBuAvgvb
 var QL_V = { tb: 'moi', pv: 'pv', bep: 'bep', vc: 'vc', ls: 'ls' }, QL_F = {};
 function qlKey(){ var k = ls.get('gam_ql_key'); if (k) return Promise.resolve(k);
   return apiThat('chu_vao').then(function(j){ if (j.qlKey) ls.set('gam_ql_key', j.qlKey); return j.qlKey || ''; }).catch(function(){ return ''; }); }
-function qlCao(){ var f = QL_F[TAB]; if (!f) return; var top = f.getBoundingClientRect().top + window.scrollY; f.style.height = Math.max(420, window.innerHeight - top - 14) + 'px'; }
+function qlCao(){ var f = QL_F[NVM()]; if (!f) return; var top = f.getBoundingClientRect().top + window.scrollY; f.style.height = Math.max(420, window.innerHeight - top - 14) + 'px'; }
 function qlMo(t){
   var box = $('qlBox');
   Object.keys(QL_F).forEach(function(k){ QL_F[k].style.display = k === t ? '' : 'none'; });
@@ -937,14 +939,32 @@ function qlMo(t){
     var c = box.querySelector('.ql-cho'); if (c) c.remove(); if (QL_F[t]) return;
     var f = document.createElement('iframe'); f.src = 'index.html?mo=1&nhung=' + QL_V[t]; f.title = t;
     f.setAttribute('allow', 'clipboard-write; web-share; fullscreen');
-    box.appendChild(f); QL_F[t] = f; if (TAB !== t) f.style.display = 'none'; qlCao();
+    box.appendChild(f); QL_F[t] = f; if (TAB !== 'nv' || NVM() !== t) f.style.display = 'none'; qlCao();
   });
 }
-window.addEventListener('resize', function(){ if (QL_V[TAB]) qlCao(); });
+window.addEventListener('resize', function(){ if (TAB === 'nv' && QL_V[NVM()]) qlCao(); });
 // số đỏ trên nút: thông báo mới chưa xem, phục vụ / bếp chờ duyệt
 var QL_J = null;
 function qlSo(){ var j = QL_J; if (!j) return; var seen = +ls.get('gam_ql_seen') || 0, moi = (j.moi || []).filter(function(r){ return r.ms > seen; }).length;
-  [['nTb', moi], ['nPv', j.choPV || 0], ['nBep', j.choBep || 0]].forEach(function(a){ var el = $(a[0]); if (!el) return; el.textContent = a[1] || ''; el.classList.toggle('hide', !a[1]); }); }
+  QL_SO = { tb: moi, pv: j.choPV || 0, bep: j.choBep || 0 };
+  var tong = TRONG_APP ? 0 : moi + QL_SO.pv + QL_SO.bep, el = $('nNv'); if (el) { el.textContent = tong || ''; el.classList.toggle('hide', !tong); }
+  if (TAB === 'nv') veNvMuc(); }
+var QL_SO = {};
+// Nhân viên = 1 chỗ: Thông báo mới · Phục vụ · Bếp · Voucher · Lịch sử (từ app Quản lý) · Nhân viên & PIN · Bảng lương
+var NV_MUC = [['tb', '🔔 Thông báo mới', 1], ['pv', 'Phục vụ', 1], ['bep', 'Bếp', 1], ['vc', 'Voucher', 1], ['ls', 'Lịch sử', 1], ['nv', '👥 Nhân viên & mã PIN'], ['luong', '💵 Bảng lương']];
+function NVM(){ var m = ls.get('gam_nv_muc') || 'tb'; if (TRONG_APP && QL_V[m]) m = 'nv'; return NV_MUC.some(function(x){ return x[0] === m; }) ? m : 'tb'; }
+function veNvMuc(){ var m = NVM();
+  $('nvMuc').innerHTML = NV_MUC.map(function(x){ var n = QL_SO[x[0]] || 0; return '<button class="chip' + (x[2] ? ' qlc' : '') + (m === x[0] ? ' on' : '') + '" data-nm="' + x[0] + '">' + x[1] + (n ? '<span class="n">' + n + '</span>' : '') + '</button>'; }).join('');
+  [].forEach.call($('nvMuc').querySelectorAll('[data-nm]'), function(b){ b.onclick = function(){ ls.set('gam_nv_muc', b.getAttribute('data-nm')); nvMuc(); }; }); }
+function nvMuc(){ var m = NVM(); veNvMuc();
+  $('nvGoc').classList.toggle('hide', m !== 'nv'); $('nvLuong').classList.toggle('hide', m !== 'luong'); $('qlBox').classList.toggle('hide', !QL_V[m]);
+  if (m === 'nv') taiNV(); else if (m === 'luong') veLuong(); else qlMo(m); }
+function veLuong(){
+  $('nvLuong').innerHTML = '<div class="card" style="max-width:760px"><h3 style="font-size:18px;color:var(--xanh)">💵 Bảng lương</h3>' +
+    '<p class="sub" style="margin:4px 0 12px">Lương từng tháng: chấm công, giờ làm, thưởng nóng, ứng lương, thực nhận từng bạn.</p>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:10px"><a class="btn" href="https://claude.ai/artifact/XgYsDewRsTQPMS5TCy7wKf" target="_blank" rel="noopener" style="text-decoration:none">Mở Phiếu lương Gặm ↗</a>' +
+    '<a class="btn o" href="https://docs.google.com/spreadsheets/d/1JQGGRceNehTqxxIZNy8-MhVCby4It407yCRNaYS2mXM/edit" target="_blank" rel="noopener" style="text-decoration:none">Mở file BẢNG_LƯƠNG (Google Sheet) ↗</a></div>' +
+    '<p class="sub" style="margin-top:12px">Mỗi tháng anh gửi file chấm công + doanh thu Sapo, Claude làm tháng mới vào 2 chỗ này.</p></div>'; }
 function qlPoll(lan){ if (document.hidden && lan !== 1) return; var k = ls.get('gam_ql_key'); if (!k) return;
   fetch(QL_EXEC + '?api=moi&since=0&key=' + encodeURIComponent(k) + '&_=' + Date.now()).then(function(r){ return r.json(); }).then(function(j){ if (j && j.ok) { QL_J = j; qlSo(); } }).catch(function(){}); }
 window.addEventListener('storage', function(e){ if (e.key === 'gam_ql_seen') qlSo(); });
@@ -1496,7 +1516,7 @@ function veTQ(){
   // sinh nhật: 1 dòng nhỏ ở trên, không nằm trong Việc cần xử lý
   var sn = j.viec.filter(function(v){ return /Sinh nhật/.test(v.loai); }); j = Object.assign({}, j, { viec: j.viec.filter(function(v){ return !/Sinh nhật/.test(v.loai); }) });
   $('tqSn').innerHTML = sn.map(function(v){ return '<button data-sn="1">🎂 ' + esc(v.text) + '</button>'; }).join('');
-  [].forEach.call($('tqSn').querySelectorAll('[data-sn]'), function(b){ b.onclick = function(){ moTab('nv'); window.scrollTo(0,0); }; });
+  [].forEach.call($('tqSn').querySelectorAll('[data-sn]'), function(b){ b.onclick = function(){ ls.set('gam_nv_muc', 'nv'); moTab('nv'); window.scrollTo(0,0); }; });
   // việc cần xử lý
   $('tqViecSub').textContent = j.viec.length ? j.viec.length + ' mục' : '';
   $('tqViec').innerHTML = j.viec.length ? j.viec.map(function(v, i){ return '<div class="al"><i class="'+v.muc+'"></i><div><span class="a">'+esc(v.loai)+'</span><p>'+esc(v.text)+'</p></div><button data-vi="'+i+'">Mở ›</button></div>'; }).join('') : '<p class="sub" style="padding:8px 0">Không có việc gì cần xử lý. 👍</p>';
