@@ -380,13 +380,13 @@ function sqDocAnh_(p) {
 }
 // Gọi Gemini: thử lại khi Google quá tải (429/500/503), rồi chuyển sang model nhẹ hơn.
 var SQ_MODEL_DU_PHONG = ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-flash-latest'];
-function sqGoiGemini_(key, model, parts, schema) {
+function sqGoiGemini_(key, model, parts, schema, toiDaMs) {
   var ds = [model].concat(SQ_MODEL_DU_PHONG.filter(function (m) { return m !== model; }));
   var batDau = Date.now(), loiCuoi = '', quaTai = false;
   for (var i = 0; i < ds.length; i++) {
     var gc = { temperature: 0, responseMimeType: 'application/json', responseSchema: schema, thinkingConfig: { thinkingLevel: 'low' } };
     for (var lan = 0; lan < 2; lan++) {
-      if (Date.now() - batDau > 100000) break; // tối đa ~100 giây
+      if (Date.now() - batDau > (toiDaMs || 100000)) break; // tối đa ~100 giây (đọc nền: 60 giây)
       var res = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + ds[i] + ':generateContent', {
         method: 'post', contentType: 'application/json', muteHttpExceptions: true,
         headers: { 'x-goog-api-key': key },
@@ -921,7 +921,7 @@ function sqDocLai_(id) {
   return sqDocNen_([id]);
 }
 function sqDocNen_(ids) {
-  var muon = {}; (ids || []).slice(0, 12).forEach(function (x) { muon[String(x)] = 1; });
+  var t0 = Date.now(), muon = {}; (ids || []).slice(0, 2).forEach(function (x) { muon[String(x)] = 1; });
   var now = Date.now(), viec = [];
   khoa_(function () { // nhận việc: đánh dấu đang đọc để 2 máy không đọc trùng
     sqMetaRows_().forEach(function (m) {
@@ -953,7 +953,7 @@ function sqDocNen_(ids) {
   var res = UrlFetchApp.fetchAll(reqs);
   var ketQua = viec.map(function (m, i) {
     try {
-      var body = res[i].getResponseCode() === 200 ? res[i].getContentText() : sqGoiGemini_(key, model, partsDs[i], schema).body; // lỗi/quá tải → thử lại + đổi model
+      var body = res[i].getResponseCode() === 200 ? res[i].getContentText() : (Date.now() - t0 > 150000 ? (function () { throw new Error('Máy đọc hóa đơn của Google đang quá tải. App sẽ tự đọc lại sau ít phút.'); })() : sqGoiGemini_(key, model, partsDs[i], schema, 60000).body); // lỗi/quá tải → thử lại 1 lần + đổi model (tối đa 60 giây mỗi hóa đơn)
       var j = JSON.parse(body), txt = j.candidates[0].content.parts.map(function (x) { return x.text || ''; }).join('');
       var doc = sqJ_(txt, null);
       if (!doc || !doc.dong) throw new Error('Không đọc được, chụp lại rõ hơn nhé.');

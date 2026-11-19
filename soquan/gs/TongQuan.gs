@@ -92,7 +92,7 @@ var SAPO_FILE = [['tt', 'Thanh toán'], ['mon', 'Mặt hàng'], ['kho', 'Tồn k
 // ngày nào đã có file nào (từ ngày tu): { 'yyyy-mm-dd': { tt: 'lúc · ai', mon:…, kho:…, tq:… } }
 function sqSapoCo_(tu) {
   var m = {};
-  sqSapoRows_().forEach(function (x) { if (x.ngay >= tu) (m[x.ngay] = m[x.ngay] || {})[x.loai] = x.luc; });
+  sqSapoIdx_().forEach(function (x) { if (x.ngay >= tu) (m[x.ngay] = m[x.ngay] || {})[x.loai] = x.luc; });
   try { sqKhoMeta_().forEach(function (x) { if (x.loai === 'kho' && x.ngay >= tu) (m[x.ngay] = m[x.ngay] || {}).kho = x.luc; }); } catch (e) { }
   return m;
 }
@@ -100,6 +100,13 @@ function sqSapoCo_(tu) {
 var DH_SAPO = 'DH_Sapo';
 var H_DH_SAPO = ['Ngày', 'Loại', 'Số liệu (JSON)', 'Tải lúc'];
 function sqTabSapo_() { return sqTab_(DH_SAPO, H_DH_SAPO, function (sh) { sh.getRange('A:B').setNumberFormat('@'); sh.getRange('D:D').setNumberFormat('@'); }); }
+// bản nhẹ: chỉ đọc Ngày, Loại, Tải lúc (không đọc cột số liệu JSON rất nặng) – dùng khi chỉ cần biết dòng nào / ngày nào đã có
+function sqSapoIdx_() {
+  var sh = sqTabSapo_(), n = sh.getLastRow();
+  if (n < 2) return [];
+  var ab = sh.getRange(2, 1, n - 1, 2).getValues(), d = sh.getRange(2, 4, n - 1, 1).getValues();
+  return ab.map(function (r, i) { return { row: i + 2, ngay: chuanNgay_(r[0]), loai: String(r[1]), luc: String(d[i][0] || '') }; }).filter(function (x) { return /^\d{4}-\d{2}-\d{2}$/.test(x.ngay); });
+}
 function sqSapoRows_() {
   var sh = sqTabSapo_(), n = sh.getLastRow();
   if (n < 2) return [];
@@ -111,7 +118,7 @@ function sqSapoLuu_(p, nguoi) {
   var ds = (Array.isArray(p.ds) ? p.ds : []).slice(0, 70);
   if (!ds.length) throw new Error('Chưa có số liệu.');
   return khoa_(function () {
-    var sh = sqTabSapo_(), rows = sqSapoRows_(), idx = {}, luc = bayGio_() + (nguoi ? ' · ' + nguoi : ''), n = 0;
+    var sh = sqTabSapo_(), rows = sqSapoIdx_(), idx = {}, luc = bayGio_() + (nguoi ? ' · ' + nguoi : ''), n = 0;
     rows.forEach(function (x) { idx[x.ngay + '|' + x.loai] = x.row; });
     var kho = ds.filter(function (x) { return x.loai === 'kho' || x.loai === 'khoky'; });
     n += sqKhoLuu_(kho, luc);
