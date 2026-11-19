@@ -945,7 +945,7 @@ window.addEventListener('resize', function(){ if (QL_V[TAB]) qlCao(); });
 var QL_J = null;
 function qlSo(){ var j = QL_J; if (!j) return; var seen = +ls.get('gam_ql_seen') || 0, moi = (j.moi || []).filter(function(r){ return r.ms > seen; }).length;
   [['nTb', moi], ['nPv', j.choPV || 0], ['nBep', j.choBep || 0]].forEach(function(a){ var el = $(a[0]); if (!el) return; el.textContent = a[1] || ''; el.classList.toggle('hide', !a[1]); }); }
-function qlPoll(){ if (document.hidden) return; var k = ls.get('gam_ql_key'); if (!k) return;
+function qlPoll(lan){ if (document.hidden && lan !== 1) return; var k = ls.get('gam_ql_key'); if (!k) return;
   fetch(QL_EXEC + '?api=moi&since=0&key=' + encodeURIComponent(k) + '&_=' + Date.now()).then(function(r){ return r.json(); }).then(function(j){ if (j && j.ok) { QL_J = j; qlSo(); } }).catch(function(){}); }
 window.addEventListener('storage', function(e){ if (e.key === 'gam_ql_seen') qlSo(); });
 /* ================= 📅 ĐẶT BÀN + MANG VỀ (anh Đạt) ================= */
@@ -3499,7 +3499,7 @@ $('cpTenB').onclick = function(){ moDatTen('moi'); };
 $('cpTongB').onclick = function(){ moTongMoi(); };
 function batDau(){
   $('login').classList.add('hide'); $('app').classList.remove('hide');
-  setTimeout(function(){ qlKey().then(qlPoll); }, 1500); setInterval(qlPoll, 45000);
+  setTimeout(function(){ qlKey().then(function(){ qlPoll(1); }); }, 1500); setInterval(qlPoll, 45000); document.addEventListener('visibilitychange', function(){ if (!document.hidden) qlPoll(); });
   moTab(TAB); if (TAB!=='db') setTimeout(function(){ api('chu_db_ds', {}).then(function(j){ if (!DQ.don) { DQ.don = j; dqDem(); } }).catch(function(){}); }, 3000); if (TAB!=='tm') taiTM(); if (TAB!=='cp') taiCP(); if (TAB!=='tong') taiTQ(); if (TAB!=='kho') setTimeout(function(){ if (!KH.data) taiKH(); }, 1500); setTimeout(taiSPO, 2200); if (TAB!=='huy') setTimeout(function(){ if (!H.data) api('chu_huy', hRange()).then(function(j){ H.data = j; $('nHuy').textContent = j.bangGia.filter(function(x){ return x.gia===''; }).length; $('nHuy').classList.toggle('hide', !+$('nHuy').textContent); }).catch(function(){}); }, 900);
 }
 if (PASS) batDau(); else dangNhap();
