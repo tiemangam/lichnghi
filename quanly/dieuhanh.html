@@ -350,7 +350,19 @@ table.ln input.t{text-align:left}
 @media (max-width:640px){.tabs .spmo{order:-1;margin-left:0;padding:7px 10px}.tabs .spmo .t{display:none}}
 /* kho */
 .khg{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
-@media (min-width:1100px){.khg{grid-template-columns:330px minmax(0,1fr) 320px}}
+@media (min-width:1100px){.khg.m-tq{grid-template-columns:minmax(0,1fr) 340px}.khg.m-can,.khg.m-nx,.khg.m-gv{grid-template-columns:minmax(0,900px)}.khg.m-kt{grid-template-columns:minmax(0,1000px)}}
+.kbtn{border:2px solid transparent;text-align:left;font:inherit;cursor:pointer;width:100%;display:block;color:inherit}.kbtn.on{border-color:var(--xanh);background:#f6f9e6}.kbtn i{float:right;font-style:normal;color:var(--muc2);font-size:13px}
+.khmuc{margin:0 0 12px}
+.ktg{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}.ktg button{flex:0 1 auto;min-width:130px;max-width:260px;border:1.5px solid var(--vien);background:#fff;border-radius:14px;padding:8px 12px;font:inherit;font-size:13px;cursor:pointer;text-align:left;color:inherit}.ktg button b{display:block;font:700 14px var(--B)}.ktg button.on{background:var(--xanh);border-color:var(--xanh);color:#fff}.ktg button small{color:var(--muc2)}.ktg button.on small{color:#E8ECD0}
+.ktp{height:7px;background:#EFE5CC;border-radius:9px;overflow:hidden;margin:4px 0 10px}.ktp i{display:block;height:100%;background:var(--xanh)}
+.kti{display:grid;grid-template-columns:minmax(120px,1.1fr) 1.8fr 110px minmax(150px,1fr);gap:10px;align-items:center;padding:9px 2px;border-bottom:1px solid #F0E6CF}.kti.h{font:600 12px var(--B);color:var(--muc2);border-bottom:1.5px solid var(--vien)}
+.kti .nm{border:0;background:none;padding:0;text-align:left;font:700 14px/1.3 var(--B);color:inherit;cursor:pointer}.kti .nm small{display:block;font:400 11.5px var(--B);color:var(--muc2)}
+.kti .cth{font-size:12.5px;color:var(--muc2)}.kti .cth b{color:inherit}
+.kti input{width:100%;border:2px solid var(--xanh);border-radius:10px;padding:7px 9px;text-align:right;background:#fff;font:700 16px var(--B)}.kti input.e{border:2px dashed var(--vien);font-weight:400}
+.kti .kq small{display:block;font-size:11.5px;color:var(--muc2);margin-top:2px}.kti .kq .pl{display:inline-block;padding:3px 9px}
+@media (max-width:760px){.ktg button{flex:1 1 calc(50% - 8px);max-width:none}.kti{grid-template-columns:1fr 110px}.kti.h{display:none}.kti .cth{grid-column:1 / -1;order:3}.kti .kq{grid-column:1 / -1;order:4}}
+.kdr{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;margin-bottom:6px;background:#fff;border:1.5px solid var(--vien);width:100%;text-align:left;cursor:pointer;font-size:13px;color:inherit}.kdr.r{background:#FCEFEB;border-color:#efc6bd}.kdr.y{background:#FDF6DD;border-color:#ecd8a2}.kdr b.t{font:700 15px var(--H)}.kdr small{display:block;color:var(--muc2);font-size:12px;margin-top:1px}.kdr .pl{white-space:nowrap;flex:none}
+.kdh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}.kdh h3{font-size:17px;color:var(--xanh)}
 .kr{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 8px;border-radius:11px;margin-bottom:5px;font-size:13.5px}
 .kr.r{background:#FCE6E2}.kr.y{background:#FDF3D2}.kr.done{opacity:.55}.kr.done .m b{text-decoration:line-through}
 .kr .ck{width:22px;height:22px;border-radius:6px;border:2px solid var(--xanh);background:#fff;padding:0;color:#fff;font-weight:800;font-size:12px;line-height:1}
@@ -639,8 +651,10 @@ table.plln button{border:0;background:none;color:var(--do);font-weight:800}
       <div class="bar" style="justify-content:space-between"><div class="cpnav"><button id="khTruoc">‹</button><b id="khTit">Kho</b><button id="khSau">›</button><button id="khMoi">Mới nhất</button><button id="khNg">📅 Chọn ngày</button></div>
         <div class="kpis" id="khKpi" style="margin:0;flex:1;max-width:680px"></div></div>
       <div id="khBao"></div>
-      <div class="khg"><div class="card" id="khCan"><div class="loading">Đang tải…</div></div>
-        <div><div class="card" id="khXd"></div><div class="card" id="khNx" style="margin-top:12px"></div></div>
+      <div class="card hide" id="khKd" style="margin-bottom:12px"></div>
+      <div class="chips khmuc" id="khMuc"></div>
+      <div class="khg m-tq" id="khG"><div class="card" id="khCan"><div class="loading">Đang tải…</div></div>
+        <div><div class="card" id="khKt"></div><div class="card" id="khXd"></div><div class="card" id="khGv"></div><div class="card" id="khNx"></div></div>
         <div class="card" id="khDc"></div></div>
       </div>
     </section>
@@ -2296,15 +2310,17 @@ function taiKH(){
 }
 function veKH(){
   var j = KH.data; if (!j) return;
-  if (j.trong) { $('khTit').textContent = 'Kho'; $('khKpi').innerHTML = ''; $('khBao').innerHTML = ''; $('khXd').innerHTML = ''; $('khNx').innerHTML = ''; $('khDc').innerHTML = '';
+  if (j.trong) { $('khTit').textContent = 'Kho'; $('khKpi').innerHTML = ''; $('khBao').innerHTML = ''; $('khKd').classList.add('hide'); $('khMuc').innerHTML = ''; $('khGv').innerHTML = ''; $('khXd').innerHTML = ''; $('khNx').innerHTML = ''; $('khDc').innerHTML = '';
     $('khCan').innerHTML = '<div class="empty">Chưa có số tồn kho từng ngày.<br>Sơn gửi file <b>Báo cáo kho hàng</b> mỗi tối (Sổ Quán → 📥 Gửi số Sapo), hoặc anh bấm <b>📥 Gửi số Sapo</b> trên thanh tab để tự gửi.'+(j.ky && j.ky.length ? '<br>Đã có '+j.ky.length+' file nhiều ngày để tính trung bình.' : '')+'</div>'; return; }
   var it = j.items, i0 = j.ngays.indexOf(j.ngay);
   $('khTit').textContent = THU[dow(j.ngay)] + ', ' + dm(j.ngay);
   $('khTruoc').disabled = i0 <= 0; $('khSau').disabled = i0 >= j.ngays.length-1;
   $('khBao').innerHTML = j.tuKy ? '<div class="cb i" style="margin-bottom:10px;line-height:1.55">Số tồn đang lấy từ <b>tồn cuối kỳ</b> của file kho nhiều ngày '+dm(j.tuKy.tu)+'–'+dm(j.tuKy.den)+'. Phần <b>nhập – xuất từng ngày</b> và <b>cảnh báo dùng đột biến</b> sẽ có khi Sơn (hoặc anh) gửi file <b>Báo cáo kho hàng 1 ngày</b> mỗi tối.</div>' : j.ngay < cong(j.homNay, -1) ? '<div class="cb i" style="margin-bottom:10px">Đang xem số kho ngày '+dmy(j.ngay)+(i0===j.ngays.length-1?' – ngày gần nhất có file tồn kho':'')+'.</div>' : '';
   var het = it.filter(function(x){ return x.tt==='het'; }), sap = it.filter(function(x){ return x.tt==='sap'; }), nhap = it.filter(function(x){ return x.them>0; }), bt = it.filter(function(x){ return x.muc; });
-  $('khKpi').innerHTML = [[het.length?'r':'g','Đã hết',het.length+' món'],['','Sắp hết',sap.length+' món'],['g','Nhập thêm',nhap.length+' món'],[bt.some(function(x){ return x.muc==='r'; })?'r':'','Dùng bất thường',bt.length+' món']]
-    .map(function(k){ return '<div class="kpi '+k[0]+'"><small>'+k[1]+'</small><b>'+k[2]+'</b></div>'; }).join('');
+  var KP = [['het', het.length?'r':'g', 'Đã hết', het.length], ['sap', '', 'Sắp hết', sap.length], ['nhap', 'g', 'Nhập thêm', nhap.length], ['bt', bt.some(function(x){ return x.muc==='r'; })?'r':'', 'Dùng bất thường', bt.length]];
+  $('khKpi').innerHTML = KP.map(function(k){ return '<button class="kpi kbtn '+k[1]+(KH.kp===k[0]?' on':'')+'" data-kp="'+k[0]+'"><small>'+k[2]+'</small><i>'+(KH.kp===k[0]?'▴':'▾')+'</i><b>'+k[3]+' món</b></button>'; }).join('');
+  [].forEach.call($('khKpi').querySelectorAll('[data-kp]'), function(b){ b.onclick = function(){ var k = b.getAttribute('data-kp'); KH.kp = KH.kp === k ? '' : k; veKH(); }; });
+  veKd(j, het, sap, nhap, bt);
   // cần đặt – theo nhóm
   var ds = gDs(j), can = it.filter(function(x){ return x.tt; });
   var sx = function(a, b){ return (a.tt===b.tt ? 0 : a.tt==='het' ? -1 : 1) || a.t.localeCompare(b.t, 'vi'); };
@@ -2318,7 +2334,7 @@ function veKH(){
         (mo ? o.it.slice().sort(sx).map(row).join('') : ''); }).join('') || '<p class="sub" style="padding:8px 0">Không có món nào cần đặt. 👍</p>') +
     '<p class="sub" style="margin-top:8px">☐ bấm để đánh dấu <b>đã đặt</b> · số <span class="mu">mức ✎</span> lấy từ "Tối thiểu" trên Sapo, anh bấm để sửa · bấm tên nhóm để mở / thu gọn</p>' +
     '<div class="acts2"><button class="btn" id="khChep">📋 Chép danh sách cần đặt</button></div>';
-  veXD();
+  veXD(); veMuc(j, can);
   // nhập – xuất
   $('khNx').innerHTML = '<h3 style="font-size:17px;color:var(--xanh)">Nhập – xuất trong ngày <span class="sub">· '+dmy(j.ngay)+(j.luc ? ' · gửi '+esc(j.luc) : '')+'</span></h3>' +
     '<div class="bar" style="margin:6px 0"><div class="khbt"><button id="khMoHet">Mở hết</button><button id="khGon">Thu gọn</button><button id="khNhom">✎ Sắp xếp nhóm</button></div><input id="khQ" placeholder="🔍 tìm món" value="'+esc(KH.q)+'"></div><div class="khgc" id="khGc"></div><div id="khNxT" style="overflow-x:auto"></div>' +
@@ -2352,6 +2368,48 @@ function veKH(){
   [].forEach.call(document.querySelectorAll('#t-kho [data-sua]'), function(b){ b.onclick = function(e){ e.stopPropagation(); moSuaKho(it[+b.getAttribute('data-sua')]); }; });
   $('khChep').onclick = chepKho;
   $('khQ').oninput = function(){ KH.q = this.value; veNxT(); };
+}
+/* ---------- KHO: ô tóm tắt bấm ra danh sách món · các mục (Tổng quan, Cần đặt, Nhập – xuất, Gia vị…) ---------- */
+KH.kp = ''; KH.muc = ls.get('gam_kh_muc') || 'tq'; KH.gvNh = '';
+function gvDs(j){
+  var td = j.items.filter(function(x){ return !x.lk && ['tuoi','kho','bb'].indexOf(x.loai) >= 0 && (x.theoDt || x.dung3 > 0); }), thu = gThu(gDs(j));
+  var tm = function(x){ return x.muc === 'r' ? 0 : x.muc === 'y' ? 1 : 2; };
+  td.sort(function(a, b){ return (tm(a) - tm(b)) || (tm(a) < 2 ? (b.tile || 0) - (a.tile || 0) : ((thu[a.nhom] || 0) - (thu[b.nhom] || 0)) || a.t.localeCompare(b.t, 'vi')); });
+  return td;
+}
+function gvNhan(x){ return x.muc === 'r' ? ['r', '🔴 nhiều hơn thường'] : x.muc === 'y' ? ['y', '🟡 hơi nhiều'] : x.tile != null ? ['g', 'bình thường'] : ['m', 'chưa đủ số']; }
+function kdDung(x){ return 'Dùng ' + kbSo(x.dung3) + ' trong ' + (x.soNgay3 || 3) + ' ngày' + (x.theoDt ? (x.exp3 != null ? ' · thường ≈ ' + soK(x.exp3) : '') : ' · định mức ' + dmTxt(x)); }
+function veKd(j, het, sap, nhap, bt){
+  var el = $('khKd'), k = KH.kp; if (!k) { el.classList.add('hide'); el.innerHTML = ''; return; }
+  var it = j.items, ds = gDs(j), thu = gThu(ds), ten = {}; ds.forEach(function(g){ ten[g.id] = g.ten; });
+  var nh = function(x){ return ten[x.nhom] ? ' · ' + esc(ten[x.nhom]) : ''; };
+  var sxn = function(a, b){ return ((thu[a.nhom] || 0) - (thu[b.nhom] || 0)) || a.t.localeCompare(b.t, 'vi'); };
+  var dc = {}; (j.doiChieu.them || []).forEach(function(x){ dc[kk(x.t)] = x; });
+  var hang = function(x, cl, note, pill){ return '<button class="kdr ' + cl + '" data-sua="' + it.indexOf(x) + '"><span><b class="t">' + esc(x.t) + '</b> <span class="sub">' + dvt(x) + '</span><small>' + note + '</small></span><span class="pl ' + (pill[0] || 'm') + '">' + pill[1] + '</span></button>'; };
+  var ton = function(x){ return 'Tồn ' + soK(x.cuoi) + ' / mức ' + soK(x.min) + ' ' + dvt(x) + nh(x) + (x.dat ? ' · ✓ đã đặt' : ' · chưa đặt') + (x.duNgay != null && x.tt !== 'het' ? ' · đủ dùng ≈' + soK(Math.round(x.duNgay * 10) / 10) + ' ngày' : ''); };
+  var tit, gt, rows;
+  if (k === 'het') { tit = 'Đã hết · ' + het.length + ' món'; gt = 'Tồn kho cuối ngày bằng 0 hoặc âm. Bấm 1 món để xem từng ngày hoặc chỉnh mức.'; rows = het.slice().sort(sxn).map(function(x){ return hang(x, 'r', ton(x), ['r', 'đã hết']); }); }
+  else if (k === 'sap') { tit = 'Sắp hết · ' + sap.length + ' món'; gt = 'Tồn còn ít hơn hoặc bằng mức tối thiểu. Bấm 1 món để xem từng ngày hoặc chỉnh mức.'; rows = sap.slice().sort(sxn).map(function(x){ return hang(x, 'y', ton(x), ['y', 'sắp hết']); }); }
+  else if (k === 'nhap') { tit = 'Nhập thêm hôm nay · ' + nhap.length + ' món'; gt = 'Món có nhập kho trên Sapo trong ngày, kèm đối chiếu với hóa đơn mua.'; rows = nhap.slice().sort(sxn).map(function(x){ var d = dc[kk(x.t)], p = d ? (d.s === 'no' ? ['r', '! cần hỏi'] : d.s === 'ok' ? ['g', '✓ khớp hóa đơn'] : ['m', 'không cần hóa đơn']) : ['m', 'chưa đối chiếu'];
+    return hang(x, d && d.s === 'no' ? 'y' : '', '+' + soK(x.them) + ' ' + dvt(x) + ' · tồn cuối ' + soK(x.cuoi) + nh(x) + (d && d.txt ? ' · ' + esc(d.txt) : ''), p); }); }
+  else { tit = 'Dùng bất thường · ' + bt.length + ' món'; gt = '🔴 dùng nhiều hơn thường (gấp đôi trở lên) · 🟡 hơi nhiều (+50%). So với mức dùng bình thường của chính món đó. Bấm 1 món để xem từng ngày.'; rows = bt.slice().sort(function(a, b){ return (a.muc === b.muc ? 0 : a.muc === 'r' ? -1 : 1) || (b.tile || 0) - (a.tile || 0); }).map(function(x){ var l = gvNhan(x); return hang(x, x.muc, kdDung(x) + nh(x), l); }); }
+  el.classList.remove('hide');
+  el.innerHTML = '<div class="kdh"><h3>' + tit + '</h3><button class="btn ph" id="kdDong">✕ Đóng</button></div><p class="sub" style="margin:0 0 8px">' + gt + '</p>' + (rows.join('') || '<p class="sub">Không có món nào. 👍</p>');
+  $('kdDong').onclick = function(){ KH.kp = ''; veKH(); };
+}
+function veMuc(j, can){
+  var nGv = gvDs(j).filter(function(x){ return x.muc; }).length;
+  KH.can = can; var kt = ktTheoDoi(), ktN = kt.filter(function(x){ return ktCua(x); }).length;
+  var ch = [['tq', 'Tổng quan'], ['can', 'Cần đặt <small>' + can.length + '</small>'], ['kt', '🧊 Kiểm tủ bếp' + (kt.length ? ' <small>' + ktN + '/' + kt.length + '</small>' : '')], ['nx', 'Nhập – xuất trong ngày'], ['gv', 'Gia vị · bao bì · đồ khô' + (nGv ? ' <small>' + nGv + ' bất thường</small>' : '')]];
+  $('khMuc').innerHTML = ch.map(function(c){ return '<button class="chip' + (KH.muc === c[0] ? ' on' : '') + '" data-mc="' + c[0] + '">' + c[1] + '</button>'; }).join('');
+  [].forEach.call($('khMuc').querySelectorAll('[data-mc]'), function(b){ b.onclick = function(){ KH.muc = b.getAttribute('data-mc'); ls.set('gam_kh_muc', KH.muc); veMuc(j, can); window.scrollTo(0, 0); }; });
+  apMuc();
+}
+function apMuc(){
+  var m = { tq: 1, can: 1, kt: 1, nx: 1, gv: 1 }[KH.muc] ? KH.muc : 'tq', sh = { tq: ['khXd', 'khDc'], can: ['khCan'], kt: ['khKt'], nx: ['khNx'], gv: ['khGv'] }[m];
+  ['khCan', 'khKt', 'khXd', 'khGv', 'khNx', 'khDc'].forEach(function(id){ $(id).style.display = sh.indexOf(id) >= 0 ? '' : 'none'; });
+  $('khG').className = 'khg m-' + m;
+  if (m === 'kt') veKt();
 }
 function veNxT(){
   var j = KH.data, it = j.items, q = kdv(KH.q), ds = gDs(j);
@@ -2518,21 +2576,20 @@ function veXD(){
       '<p class="sub" style="padding:4px 0">Chưa có nguyên liệu nào để tính.</p>';
     h += '<p class="sub" style="margin-top:6px">📦 Kho Sapo = số trên file kho · 🍳 Bếp = hàng đã xuất mà chưa bán hết, tính theo định lượng. 🔴 âm = bán nhiều hơn đã xuất (quên bấm xuất, hoặc định lượng sai) · 🔴 hụt = kiểm tủ đếm ít hơn · 🟡 tủ còn nhiều mà vẫn xuất thêm. Thanh xanh = xuất, vạch đen = bán quy ra.</p>';
   }
-  var td = it.filter(function(x){ return !x.lk && ['tuoi','kho','bb'].indexOf(x.loai) >= 0 && (x.theoDt || x.dung3 > 0); });
-  var lech = td.filter(function(x){ return x.muc; }).sort(function(a, b2){ return (a.muc===b2.muc ? 0 : a.muc==='r' ? -1 : 1) || b2.tile - a.tile; });
-  var con = td.filter(function(x){ return !x.muc && x.dung3 > 0; }).sort(function(a, b2){ return ((thu[a.nhom] || 0) - (thu[b2.nhom] || 0)) || a.t.localeCompare(b2.t, 'vi'); });
-  var nHien = KH.moXd ? con.length : 0, dt3 = (td.filter(function(x){ return x.dt3; })[0] || {}).dt3;
-  var gv = function(x){ var p = x.theoDt;
-    return '<button class="xm ' + (x.muc || '') + '" data-xk="' + esc(x.t) + '"><span><b class="t">' + esc(x.t) + '</b> <span class="sub">' + dvt(x) + '</span><small>' + (p ? 'Dùng ' + soK(x.dung3) + ' · mỗi 10 tr doanh thu: ' + soK(x.p10) + ' (thường ' + soK(x.p10b) + ')' : 'Dùng ' + kbSo(x.dung3) + ' trong ' + x.soNgay3 + ' ngày · định mức ' + esc(dmTxt(x))) + '</small></span>' +
-      '<span class="brw">' + bar(x.dung3, x.exp3) + '<small>dùng ' + kbSo(x.dung3) + (x.exp3 != null ? ' · ' + (p ? 'theo doanh thu ≈' : 'định mức ≈') + soK(x.exp3) : '') + '</small></span><span></span>' +
-      '<span class="pl ' + (x.muc || (x.tile != null ? 'g' : 'm')) + '">' + (x.muc === 'r' ? '🔴 gấp ' + soK(Math.round(x.tile * 10) / 10) : x.muc === 'y' ? '🟡 +' + Math.round((x.tile - 1) * 100) + '%' : x.tile != null ? 'bình thường' : 'chưa đủ số') + '</span></button>'; };
-  h += '<div class="sec" style="margin-top:14px"><span>Gia vị · bao bì · đồ khô – so với doanh thu</span><span>' + (dt3 ? '3 ngày: ' + tr(dt3) : '') + '</span></div>' +
-    (lech.map(gv).join('') || '<p class="sub" style="padding:4px 0">Không món nào dùng nhiều bất thường so với doanh thu. 👍</p>') + con.slice(0, nHien).map(gv).join('') +
-    (con.length > nHien ? '<button class="btn ph" id="khXdMo" style="width:100%;margin-top:4px">+ Xem thêm ' + (con.length - nHien) + ' món ›</button>' : KH.moXd && con.length ? '<button class="btn ph" id="khXdTat" style="width:100%;margin-top:4px">Thu gọn</button>' : '') +
-    '<p class="sub" style="margin-top:8px">Gia vị, bao bì: 🟡 dùng +50% · 🔴 gấp đôi so với doanh thu (chỉ báo khi dư từ 1 đơn vị).</p>';
   el.innerHTML = h;
-  [].forEach.call(el.querySelectorAll('[data-xk]'), function(r){ r.onclick = function(){ var k = kk(r.getAttribute('data-xk')), y = it.filter(function(z){ return kk(z.t) === k; })[0]; if (y) moSuaKho(y); }; });
-  var mo = $('khXdMo'), tat = $('khXdTat'); if (mo) mo.onclick = function(){ KH.moXd = true; veXD(); }; if (tat) tat.onclick = function(){ KH.moXd = false; veXD(); };
+  var eg = $('khGv'), td = gvDs(j), dt3 = (td.filter(function(x){ return x.dt3; })[0] || {}).dt3, hg = '';
+  var nR = td.filter(function(x){ return x.muc === 'r'; }).length, nY = td.filter(function(x){ return x.muc === 'y'; }).length, tenN = {}, dem2 = {};
+  ds.forEach(function(g){ tenN[g.id] = g.ten; }); td.forEach(function(x){ dem2[x.nhom] = (dem2[x.nhom] || 0) + 1; });
+  var gnh = KH.gvNh || ''; if (gnh && !dem2[gnh]) gnh = '';
+  var gv = function(x){ var l = gvNhan(x); return '<button class="kdr ' + (x.muc || '') + '" data-xk="' + esc(x.t) + '"><span><b class="t">' + esc(x.t) + '</b> <span class="sub">' + dvt(x) + '</span><small>' + kdDung(x) + '</small></span><span class="pl ' + l[0] + '">' + l[1] + '</span></button>'; };
+  hg = '<div class="kdh"><h3>Gia vị · bao bì · đồ khô</h3><span class="sub">' + (dt3 ? 'doanh thu 3 ngày: ' + tr(dt3) : '') + '</span></div>' +
+    '<p class="sub" style="margin:0 0 8px">So lượng dùng 3 ngày gần nhất với mức dùng bình thường của chính món đó' + (nR || nY ? ' · <b style="color:var(--do)">🔴 ' + nR + '</b> nhiều hơn thường · 🟡 ' + nY + ' hơi nhiều' : ' · đều bình thường 👍') + '. Bấm 1 món để xem từng ngày xuất / dùng.</p>' +
+    '<div class="khgc"><button class="' + (!gnh ? 'on' : '') + '" data-gn="">Tất cả <small>' + td.length + '</small></button>' + ds.filter(function(g){ return dem2[g.id]; }).map(function(g){ return '<button class="' + (gnh === g.id ? 'on' : '') + '" data-gn="' + g.id + '">' + esc(g.ten) + ' <small>' + dem2[g.id] + '</small></button>'; }).join('') + '</div>' +
+    (td.filter(function(x){ return !gnh || x.nhom === gnh; }).map(gv).join('') || '<p class="sub" style="padding:4px 0">Chưa có số liệu.</p>');
+  eg.innerHTML = hg;
+  [].forEach.call(eg.querySelectorAll('[data-gn]'), function(b){ b.onclick = function(){ KH.gvNh = b.getAttribute('data-gn'); veXD(); }; });
+  el.innerHTML = h;
+  [].forEach.call(document.querySelectorAll('#khXd [data-xk], #khGv [data-xk]'), function(r){ r.onclick = function(){ var k = kk(r.getAttribute('data-xk')), y = it.filter(function(z){ return kk(z.t) === k; })[0]; if (y) moSuaKho(y); }; });
   [].forEach.call(el.querySelectorAll('[data-kl]'), function(bt){ bt.onclick = function(){ KH.kbLoc = bt.getAttribute('data-kl'); ls.set('gam_kb_loc', KH.kbLoc); veXD(); }; });
   [].forEach.call(el.querySelectorAll('[data-ktu]'), function(bn){ bn.onclick = function(e){ e.stopPropagation(); var x = kbTim(bn.getAttribute('data-ktu')); if (x) moKiemTu(x); }; });
   var kf = $('kbFile'); if (kf) kf.onclick = function(){ $('dlFile').value = ''; $('dlFile').click(); };
@@ -2545,7 +2602,78 @@ function ktLichSu(x){
   return '<div style="overflow-x:auto"><table class="kt"><tr><th>Kiểm lúc</th><th>Người</th><th>App tính</th><th>Đếm thật</th><th>Lệch</th></tr>' + ds.map(function(e){
     var ng = e.luc === 'toi' ? 'tối ' + dm(e.ngay) : 'sáng ' + dm(cong(e.ngay, 1)), nguong = Math.max(0.25, 0.1 * (x.avg || 0)), l = e.lech;
     var pl = e.cho || l === '' || l == null ? '<span class="pl m">chờ file Sapo</span>' : l <= -nguong ? '<span class="pl ' + (e.ly && e.ly !== 'khong' ? 'y' : 'r') + '">hụt ' + soK(-l) + '</span>' : l >= nguong ? '<span class="pl y">thừa ' + soK(l) + '</span>' : '<span class="pl g">khớp</span>';
-    return '<tr><td><b>' + ng + '</b>' + (e.ly ? '<small style="display:block">' + esc(KT_LY[e.ly] || '') + '</small>' : '') + '</td><td>' + esc(e.nguoi || '') + '</td><td>' + (e.du === '' || e.du == null ? '–' : soK(e.du)) + '</td><td><b>' + soK(e.dem) + '</b></td><td>' + pl + '</td></tr>'; }).join('') + '</table></div><p class="sub" style="margin-top:4px">Đơn vị: ' + dvt(x) + '. Kiểm sáng = số cuối ngày hôm trước.</p>';
+    return '<tr><td><b>' + ng + '</b>' + (e.tao ? '<small style="display:block">lưu ' + esc(ktGio(e.tao)) + '</small>' : '') + (e.ly ? '<small style="display:block">' + esc(KT_LY[e.ly] || '') + '</small>' : '') + '</td><td>' + esc(e.nguoi || '') + '</td><td>' + (e.du === '' || e.du == null ? '–' : soK(e.du)) + '</td><td><b>' + soK(e.dem) + '</b></td><td>' + pl + '</td></tr>'; }).join('') + '</table></div><p class="sub" style="margin-top:4px">Đơn vị: ' + dvt(x) + '. Kiểm sáng = số cuối ngày hôm trước.</p>';
+}
+
+/* ---------- 🧊 KIỂM TỦ BẾP THEO NHÓM (đếm sáng nay / tối nay, lưu thì ghi giờ) ---------- */
+var KK2 = { luc: '', g: '', ly: {}, dang: {}, nhap: {} };
+function ktLuc(){ return KK2.luc || (new Date(Date.now() + 7 * 3600e3).getUTCHours() < 15 ? 'sang' : 'toi'); }
+function ktNgay(){ return ktLuc() === 'toi' ? homNay() : cong(homNay(), -1); }
+function ktTheoDoi(){ var b = KB.data; if (!b || b.trong || !b.coDL) return []; return (b.items || []).filter(function(x){ return !x.tuTru && x.quy && (x.links || []).some(function(l){ return l.bat; }); }); }
+function ktCua(x){ var n = ktNgay(); return (x.kiemDs || []).filter(function(e){ return e.ngay === n; })[0] || null; }
+function ktZ(x){ var n = ktNgay(); return (x.days || []).filter(function(z){ return z.d === n; })[0] || null; }
+function ktDu(x){ var z = ktZ(x); if (!z || z.thieu || x.bep == null) return null; return z.kiem ? z.kiem.du : z.bep; }
+function ktNg(x){ return Math.max(0.25, 0.1 * (x.avg || 0)); }
+function ktGio(tao){ var m = String(tao || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4}) (\d{1,2}:\d{2})/); if (!m) return String(tao || ''); var d = m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2); return (d === homNay() ? 'hôm nay ' : ('0' + m[1]).slice(-2) + '/' + ('0' + m[2]).slice(-2) + ' ') + ('0' + m[4]).slice(-5); }
+function ktKq(x, e){
+  if (!e) return '';
+  if (e.cho || e.lech === '' || e.lech == null) return '<span class="pl m">chờ file Sapo</span>';
+  var ng = ktNg(x), l = e.lech;
+  return l <= -ng ? '<span class="pl ' + (e.ly && e.ly !== 'khong' ? 'y' : 'r') + '">hụt ' + soK(-l) + ' ' + dvt(x) + '</span>' : l >= ng ? '<span class="pl y">thừa ' + soK(l) + ' ' + dvt(x) + '</span>' : '<span class="pl g">✓ khớp</span>';
+}
+function ktNum(v){ v = String(v == null ? '' : v).trim().replace(',', '.'); return v === '' || !isFinite(+v) ? '' : +v; }
+function veKt(){
+  var el = $('khKt'); if (!el) return;
+  var b = KB.data;
+  if (!b) { el.innerHTML = '<h3 style="font-size:17px;color:var(--xanh)">🧊 Kiểm tủ bếp</h3><div class="loading">Đang tính…</div>'; return; }
+  if (b.trong) { el.innerHTML = '<h3 style="font-size:17px;color:var(--xanh)">🧊 Kiểm tủ bếp</h3><div class="empty">Cần file kho + mặt hàng từng ngày (từ 10/11) mới kiểm tủ được.</div>'; return; }
+  if (!b.coDL) { el.innerHTML = '<h3 style="font-size:17px;color:var(--xanh)">🧊 Kiểm tủ bếp</h3><div class="empty">Chưa cài định lượng nên chưa tính tủ bếp được.</div>'; return; }
+  var td = ktTheoDoi(), nhom = gChia(gDs(KH.data && KH.data.nhomDs ? KH.data : b), td), nc = ktNgay();
+  if (!nhom.length) { el.innerHTML = '<h3 style="font-size:17px;color:var(--xanh)">🧊 Kiểm tủ bếp</h3><div class="empty">Chưa có nguyên liệu nào cần kiểm tủ.</div>'; return; }
+  if (!nhom.some(function(o){ return o.g.id === KK2.g; })) { var chua = nhom.filter(function(o){ return o.it.some(function(x){ return !ktCua(x); }); })[0]; KK2.g = (chua || nhom[0]).g.id; }
+  var cur = nhom.filter(function(o){ return o.g.id === KK2.g; })[0], xong = cur.it.filter(function(x){ return ktCua(x); }).length, nAll = td.filter(function(x){ return ktCua(x); }).length;
+  var row = function(x){
+    var e = ktCua(x), z = ktZ(x), du = ktDu(x), i = b.items.indexOf(x), L = KK2.ly[x.k], dv = dvt(x);
+    var cth = z && !z.thieu ? soK(z.prev) + ' + xuất ' + soK(z.xuat || 0) + ' − bán ' + soK(z.dung || 0) + (z.huy ? ' − hủy ' + soK(z.huy) : '') + ' = còn ≈ <b>' + soK(du) + ' ' + dv + '</b>' : 'chưa có file Sapo ngày ' + dm(nc) + ' – cứ đếm, có file app tự so';
+    var gt = KK2.nhap[x.k] !== undefined ? KK2.nhap[x.k] : L ? L.dem : e ? e.dem : '';
+    var kq = KK2.dang[x.k] ? '<small>Đang lưu…</small>' : L ? '<span class="pl r">hụt ' + soK(L.hut) + ' ' + dv + '</span><div class="chips" style="margin-top:5px">' + Object.keys(KT_LY).map(function(k){ return '<button class="chip" data-kly="' + i + '|' + k + '">' + KT_LY[k] + '</button>'; }).join('') + '</div><small>Chọn lý do để lưu</small>'
+      : e ? ktKq(x, e) + '<small>Đã lưu ' + (e.tao ? esc(ktGio(e.tao)) : '') + (e.nguoi ? ' · ' + esc(e.nguoi) : '') + (e.ly ? ' · ' + esc(KT_LY[e.ly] || '') : '') + '</small>' : '<small>Chưa kiểm</small>';
+    return '<div class="kti"><button class="nm" data-kxem="' + i + '">' + esc(x.t) + '<small>' + dv + '</small></button><span class="cth">' + cth + '</span>' +
+      '<input class="' + (e || L ? '' : 'e') + '" data-kdem="' + i + '" inputmode="decimal" value="' + (KK2.nhap[x.k] !== undefined ? esc(KK2.nhap[x.k]) : gt === '' ? '' : soK(gt)) + '" placeholder="nhập số"><span class="kq">' + kq + '</span></div>'; };
+  el.innerHTML = '<div class="kdh"><h3>🧊 Kiểm tủ bếp <span class="sub">· ' + nAll + '/' + td.length + ' món đã đếm</span></h3></div>' +
+    '<div class="chips"><button class="chip' + (ktLuc() === 'sang' ? ' on' : '') + '" data-kluc="sang">☀️ Sáng nay, trước khi xuất</button><button class="chip' + (ktLuc() === 'toi' ? ' on' : '') + '" data-kluc="toi">🌙 Tối nay, sau đóng cửa</button></div>' +
+    '<p class="sub" style="margin:6px 0 0">So với số cuối ngày ' + dm(nc) + '. Bấm 1 nhóm → đếm từng món → Enter để lưu. Lưu xong app ghi giờ đếm để anh biết lệch lúc nào.</p>' +
+    '<div class="ktg">' + nhom.map(function(o){ var n = o.it.filter(function(x){ return ktCua(x); }).length, hut = o.it.filter(function(x){ var e = ktCua(x); return e && !e.cho && e.lech !== '' && e.lech <= -ktNg(x); }).length;
+      return '<button class="' + (o.g.id === KK2.g ? 'on' : '') + '" data-kg="' + esc(o.g.id) + '"><b>' + esc(o.g.ten) + '</b><small>' + n + '/' + o.it.length + (n === o.it.length ? ' ✓' : '') + (hut ? ' · ' + hut + ' hụt' : '') + '</small></button>'; }).join('') + '</div>' +
+    '<div class="kdh"><h3 style="font-size:16px">' + esc(cur.g.ten) + ' · ' + (ktLuc() === 'toi' ? 'tối nay' : 'sáng nay') + '</h3><span class="sub">' + xong + '/' + cur.it.length + ' đã lưu</span></div><div class="ktp"><i style="width:' + Math.round(xong / cur.it.length * 100) + '%"></i></div>' +
+    '<div class="kti h"><span>Món</span><span>Theo sổ: tủ trước + xuất − bán = còn</span><span style="text-align:right">Đếm thật</span><span>Kết quả</span></div>' +
+    cur.it.slice().sort(function(a, c){ return a.t.localeCompare(c.t, 'vi'); }).map(row).join('');
+  [].forEach.call(el.querySelectorAll('[data-kluc]'), function(c){ c.onclick = function(){ KK2.luc = c.getAttribute('data-kluc'); KK2.ly = {}; veMuc(KH.data, KH.can); }; });
+  [].forEach.call(el.querySelectorAll('[data-kg]'), function(c){ c.onclick = function(){ KK2.g = c.getAttribute('data-kg'); veKt(); }; });
+  [].forEach.call(el.querySelectorAll('[data-kxem]'), function(c){ c.onclick = function(){ var x = b.items[+c.getAttribute('data-kxem')], y = KH.data.items.filter(function(z){ return kk(z.t) === kk(x.t); })[0]; if (y) moSuaKho(y); }; });
+  [].forEach.call(el.querySelectorAll('[data-kdem]'), function(ip){ var x = b.items[+ip.getAttribute('data-kdem')];
+    var luuNay = function(){ var v = ktNum(ip.value), e = ktCua(x), L = KK2.ly[x.k]; if (v === '' || v < 0) return;
+      if ((L && L.dem === v) || (!L && e && e.dem === v)) return;
+      var du = ktDu(x), lc = du != null ? Math.round((v - du) * 100) / 100 : null;
+      if (lc != null && lc <= -ktNg(x)) { KK2.ly[x.k] = { dem: v, hut: -lc }; ktGiu(); return; }
+      delete KK2.ly[x.k]; delete KK2.nhap[x.k]; ktLuu(x, v, ''); };
+    ip.oninput = function(){ KK2.nhap[x.k] = ip.value; };
+    ip.onkeydown = function(ev){ if (ev.key === 'Enter') { ev.preventDefault(); var all = [].slice.call(el.querySelectorAll('[data-kdem]')), k2 = all.indexOf(ip), nx = all[k2 + 1] ? all[k2 + 1].getAttribute('data-kdem') : null; luuNay(); if (nx != null) { var n2 = document.querySelector('#khKt [data-kdem="' + nx + '"]'); if (n2) n2.focus(); } } };
+    ip.onchange = luuNay; });
+  [].forEach.call(el.querySelectorAll('[data-kly]'), function(c){ c.onclick = function(){ var q = c.getAttribute('data-kly').split('|'), x = b.items[+q[0]], L = KK2.ly[x.k]; if (!L) return; delete KK2.ly[x.k]; delete KK2.nhap[x.k]; ktLuu(x, L.dem, q[1]); }; });
+}
+function ktGiu(){ var a = document.activeElement, k = a && a.getAttribute && a.getAttribute('data-kdem'); veKt(); if (k != null) { var n = document.querySelector('#khKt [data-kdem="' + k + '"]'); if (n) { n.focus(); try { n.setSelectionRange(n.value.length, n.value.length); } catch (e) {} } } }
+function ktRe(){ var a = document.activeElement, k = a && a.getAttribute && a.getAttribute('data-kdem'); if (KH.data && KH.can) veMuc(KH.data, KH.can); else veKt(); if (k != null) { var n = document.querySelector('#khKt [data-kdem="' + k + '"]'); if (n) { n.focus(); try { n.setSelectionRange(n.value.length, n.value.length); } catch (e) {} } } }
+function ktBayGio(){ var d = new Date(Date.now() + 7 * 3600e3), z = function(n){ return ('0' + n).slice(-2); }; return z(d.getUTCDate()) + '/' + z(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear() + ' ' + z(d.getUTCHours()) + ':' + z(d.getUTCMinutes()); }
+function ktLuu(x, v, ly){
+  var n = ktNgay(), lc = ktLuc(); KK2.dang[x.k] = 1; ktGiu();
+  api('chu_bep_kiem', { ten: x.t, ngay: n, luc: lc, dem: v, lyDo: ly }).then(function(r){
+    delete KK2.dang[x.k];
+    var e = { ngay: n, luc: lc, du: r.du, dem: r.dem, lech: r.lech, ly: ly, nguoi: 'anh Đạt', cho: !!r.cho, tao: r.tao || ktBayGio() };
+    x.kiemDs = [e].concat((x.kiemDs || []).filter(function(y){ return y.ngay !== n; }));
+    ktRe();
+    var ng = ktNg(x); toast(r.cho ? x.t + ': đã lưu – chờ file Sapo để so' : r.lech <= -ng ? x.t + ': hụt ' + soK(-r.lech) : r.lech >= ng ? x.t + ': thừa ' + soK(r.lech) : x.t + ': khớp ✓');
+  }).catch(function(e){ delete KK2.dang[x.k]; ktGiu(); toast('Chưa lưu được ' + x.t + ': ' + e.message); });
 }
 function moKiemTu(x, ovCha, apiTen, sau){
   var j = KB.data, b = kbTim(x.t) || x, dv = dvt(x), ov = moOv(false), p = ov.querySelector('.pane'), hn = homNay();
@@ -2601,7 +2729,7 @@ function kbTim(t){ var k = kk(t); return KB.data && KB.data.items ? KB.data.item
 function kbSo(v){ return v == null ? '–' : soK(v); }
 function kbTenGon(t){ return String(t).replace(/^Bánh Tráng Cuốn /, 'Mẹt ').replace(/^Chả Cuốn Cá Trích/, 'Mẹt cá trích').replace(/\s*\((Mẹt )?([^()]*)\)\s*$/i, ' $2'); }
 function veKB(){
-  $('khBep').classList.add('hide'); veXD(); return;
+  $('khBep').classList.add('hide'); veXD(); if (KH.data && !KH.data.trong && KH.can) veMuc(KH.data, KH.can); return;
 }
 function veKBcu(){
   var el = $('khBep'), j = KB.data; if (!j) return;
