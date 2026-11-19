@@ -325,6 +325,10 @@ textarea.vin{min-height:64px;resize:vertical}
   #bar .kxa{margin-left:auto;background:rgba(248,232,196,.14)}
 }
 @media (max-width:899px){ #bar,#bar.chu{grid-template-columns:repeat(4,1fr)} }
+/* nhúng trong Điều hành: chỉ hiện 1 mục, không có khung trên */
+body.nhung #top,body.nhung #bar{display:none!important}
+body.nhung #app{top:0}
+body.nhung{background:var(--giay)}
 </style>
 </head>
 <body>
@@ -446,7 +450,8 @@ textarea.vin{min-height:64px;resize:vertical}
   var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
   if (!standalone && !/[?&]mo=1/.test(location.search)) return;
-  document.body.className = 'app';
+  var NHUNG = (location.search.match(/[?&]nhung=(moi|pv|bep|vc|ls)\b/) || [])[1] || ''; // mở 1 mục bên trong Điều hành
+  document.body.className = 'app' + (NHUNG ? ' nhung' : '');
 
   var KEY = ls.get('gam_ql_key'), SEEN = Number(ls.get('gam_ql_seen')) || 0, LAST = null, VIEW = '', frames = {}, LS = null;
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]}); }
@@ -485,7 +490,7 @@ textarea.vin{min-height:64px;resize:vertical}
     if (v==='kho') KQ.show();
     if (v==='sapo') KQ.spShow();
     if (v==='vc' && window.vcShow) vcShow();
-    ls.set('gam_ql_view', v);
+    if (!NHUNG) ls.set('gam_ql_view', v);
   }
   [].forEach.call(document.querySelectorAll('#bar button'), function(b){ b.onclick=function(){ show(b.getAttribute('data-v')); }; });
   [].forEach.call(document.querySelectorAll('[data-go]'), function(b){ b.onclick=function(){ show(b.getAttribute('data-go')); }; });
@@ -1087,8 +1092,10 @@ textarea.vin{min-height:64px;resize:vertical}
   /* ---------- mã quản lý ---------- */
   function start(){
     $('login').classList.remove('on');
+    if (NHUNG) { show(NHUNG); if (NHUNG === 'moi') { poll(); setInterval(function(){ if (!document.hidden) poll(); }, 30000); } return; }
     var chu = !!ls.get('gam_chu_pass');
     $('btnDH').classList.toggle('hide', !chu); $('bar').classList.toggle('chu', chu);
+    if (chu) $('bar').querySelector('[data-v="moi"]').firstChild.textContent = 'Thông báo mới'; // chỉ máy anh Đạt
     if (chu) setTimeout(mkDH, 2500); // tải sẵn Điều hành để có số việc cần xử lý trên nút
     if (!KEY) { show('dh'); return; }
     var v = ls.get('gam_ql_view'); show(v==='pv'||v==='bep'||v==='ls'||v==='vc'||v==='kho'||v==='sapo'||(v==='dh'&&chu) ? v : 'moi');
