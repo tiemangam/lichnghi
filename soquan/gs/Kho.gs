@@ -518,9 +518,10 @@ function sqBepKiem_(p, nguoi) {
     var sh = sqTabKT_(), cu = sqKTRows_().filter(function (x) { return x.ngay === ngay && sqKhoK_(x.nvl) === k; })[0];
     var row = cu ? cu.row : sh.getLastRow() + 1, id = cu ? cu.id : 'KT' + Date.now().toString(36);
     var lech = du === '' ? '' : Math.round((dem - du) * 100) / 100;
-    sh.getRange(row, 1, 1, H_SQ_KT.length).setValues([[id, ngay, luc, ten, du, dem, lech, ly, chu_(nguoi, 40), bayGio_()]]);
+    var tao = bayGio_();
+    sh.getRange(row, 1, 1, H_SQ_KT.length).setValues([[id, ngay, luc, ten, du, dem, lech, ly, chu_(nguoi, 40), tao]]);
     sqBepCPXoa_(ngay);
-    return { ok: true, du: du, dem: dem, lech: lech, cho: du === '' };
+    return { ok: true, du: du, dem: dem, lech: lech, cho: du === '', tao: tao };
   });
 }
 function sqBepDat_(p) { return sqKhoCDLuu_({ ten: p.ten, bepSl: p.sl, bepNgay: p.sl === '' || p.sl === null || p.sl === undefined ? '' : p.ngay }); }
@@ -618,7 +619,7 @@ function sqKhoBep_(p) {
     var hut = ser.slice(-3).filter(function (z) { return z.kiem && z.muc !== 'g' && /^hụt/.test(z.nhan); }).pop();
     if (hut && mucL !== 'r' && !(L.kiem)) { mucL = hut.muc; nhanL = hut.nhan + ' (kiểm ' + sqDM_(hut.d) + ')'; }
     var kiemDs = (ktDs[k] || []).slice().sort(function (a, b) { return a.ngay < b.ngay ? 1 : -1; }).slice(0, 8).map(function (x) {
-      return { ngay: x.ngay, luc: x.luc, du: x.du, dem: x.dem, lech: x.lech, ly: x.ly, nguoi: x.nguoi, cho: x.ngay > ngMoi }; });
+      return { ngay: x.ngay, luc: x.luc, du: x.du, dem: x.dem, lech: x.lech, ly: x.ly, nguoi: x.nguoi, tao: x.tao, cho: x.ngay > ngMoi }; });
     items.push({ k: k, t: a0[0], dv: a0[1], nhom: nhom, quy: quy, dvg: dvg, hao: hao, tuTru: tuTru, cuoi: a0[7],
       links: tatCa.map(function (x) { return { mon: x.mon, sl: x.sl, bat: x.bat, src: x.src }; }),
       prev: L.prev, xuat: L.xuat, ban: L.ban, dung: L.dung, huy: L.huy, bep: tuTru ? null : L.bep, muc: mucL, nhan: nhanL, kiem: L.kiem, kiemDs: kiemDs,
