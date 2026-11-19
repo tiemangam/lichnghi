@@ -110,19 +110,29 @@ function sqLuongGhi_(docs) {
   });
 }
 function sqLuongLuu_(p) { var d = {}; d[sqLuongDuong_(p.path)] = p.body || {}; return sqLuongGhi_(d); }
-// Google Sheets cho nút "Lưu tổng": cùng tên công cụ như trang cũ
+// Google Sheets cho nút "Lưu tổng": cùng tên công cụ như trang cũ. Dùng dịch vụ nâng cao "Sheets" (Google Sheets API) nếu đã bật, không thì gọi thẳng API.
 function sqLuongGS_(p) {
-  var id = LUONG_SHEET_ID, base = 'https://sheets.googleapis.com/v4/spreadsheets/' + id, inp = p.input || {};
+  var id = LUONG_SHEET_ID, inp = p.input || {}, t = String(p.tool || '');
   if (inp.spreadsheetId && inp.spreadsheetId !== id) throw new Error('Chỉ ghi được file BẢNG_LƯƠNG.');
+  var loi = function (e) { var m = String(e && e.message || e); if (/permission|PERMISSION_DENIED|403|404|not found|caller does not have/i.test(m)) return new Error('Tài khoản chạy app (tiemangam2015) chưa sửa được file BẢNG_LƯƠNG: ' + m.slice(0, 160)); return new Error('Google Sheets báo lỗi: ' + m.slice(0, 200)); };
+  var sach = function (o) { return JSON.parse(JSON.stringify(o || {})); };
+  if (typeof Sheets !== 'undefined') {
+    try {
+      if (t === 'get_spreadsheet') return { payload: sach(Sheets.Spreadsheets.get(id, { fields: (inp.fields || []).join(',') })) };
+      if (t === 'update_spreadsheet') return { payload: sach(Sheets.Spreadsheets.batchUpdate({ requests: inp.requests || [] }, id)) };
+      if (t === 'batch_clear_values') return { payload: sach(Sheets.Spreadsheets.Values.batchClear({ ranges: inp.ranges || [] }, id)) };
+      if (t === 'update_formulas') return { payload: sach(Sheets.Spreadsheets.Values.update({ range: inp.range, majorDimension: 'ROWS', values: inp.formulas || [] }, id, inp.range, { valueInputOption: 'USER_ENTERED' })) };
+    } catch (e) { throw loi(e); }
+    throw new Error('Không rõ thao tác Google Sheets: ' + t);
+  }
+  var base = 'https://sheets.googleapis.com/v4/spreadsheets/' + id;
   var goi = function (method, url, body) {
     var o = { method: method, muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } };
     if (body) o.payload = JSON.stringify(body);
-    var r = UrlFetchApp.fetch(url, o), c = r.getResponseCode(), t = r.getContentText();
-    if (c === 403 || c === 404) throw new Error('Tài khoản chạy app chưa có quyền sửa file BẢNG_LƯƠNG – anh chia sẻ file đó (quyền Người chỉnh sửa) cho tài khoản tiemangam2015.');
-    if (c >= 300) throw new Error('Google Sheets báo lỗi ' + c + ': ' + t.slice(0, 200));
-    return t ? JSON.parse(t) : {};
+    var r = UrlFetchApp.fetch(url, o), c = r.getResponseCode(), tx = r.getContentText();
+    if (c >= 300) throw loi(new Error(c + ' ' + tx.slice(0, 300)));
+    return tx ? JSON.parse(tx) : {};
   };
-  var t = String(p.tool || '');
   if (t === 'get_spreadsheet') return { payload: goi('get', base + '?fields=' + encodeURIComponent((inp.fields || []).join(','))) };
   if (t === 'update_spreadsheet') return { payload: goi('post', base + ':batchUpdate', { requests: inp.requests || [] }) };
   if (t === 'batch_clear_values') return { payload: goi('post', base + '/values:batchClear', { ranges: inp.ranges || [] }) };
