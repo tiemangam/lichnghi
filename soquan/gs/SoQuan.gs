@@ -16,7 +16,7 @@
  */
 
 var SQ_NV = 'SQ_NhanVien', SQ_META = 'SQ_Phieu', SQ_ALIAS = 'SQ_TenGoiKhac';
-var H_SQ_NV = ['Tên', 'Mã PIN', 'Vai trò', 'Nghỉ làm (gõ x)', 'Chức năng', 'Sửa lúc'];
+var H_SQ_NV = ['Tên', 'Mã PIN', 'Vai trò', 'Nghỉ làm (gõ x)', 'Chức năng', 'Sửa lúc', 'Số điện thoại', 'Ngày sinh'];
 var H_SQ_META = ['ID phiếu', 'Loại', 'Ngày', 'Người nhập', 'Mối', 'Ảnh (file ID)', 'AI đọc (JSON)', 'Các dòng (JSON)',
   'Tổng trên ảnh', 'Cộng các dòng', 'Ghi chú NV', 'Trạng thái', 'Câu hỏi của anh', 'Trả lời NV', 'Duyệt lúc', 'Tạo lúc', 'Thông tin thêm (JSON)', 'Tổng'];
 var M = { ID: 0, LOAI: 1, NGAY: 2, NGUOI: 3, MOI: 4, ANH: 5, AI: 6, DONG: 7, TONGANH: 8, CONG: 9, GHICHU: 10, TT: 11, HOI: 12, TRALOI: 13, DUYETLUC: 14, TAOLUC: 15, THEM: 16, TONG: 17 };

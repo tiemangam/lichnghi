@@ -33,11 +33,12 @@ function sqDoiPass_(p) {
   props.setProperty('CHU_PASS', moi);
   return {};
 }
+function sqNgaySinh_(v) { var s = (v instanceof Date) ? chuanNgay_(v) : chuanNgay_(String(v || '').trim()); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : ''; }
 function sqNVDs_() {
   var v = layFile_().getSheetByName(SQ_NV).getDataRange().getValues().slice(1);
   return {
     chucNang: SQ_CHUC_NANG, vaiMacDinh: SQ_VAI_MAC_DINH,
-    ds: v.map(function (r, i) { return { row: i + 2, ten: String(r[0]).trim(), pin: String(r[1]).trim(), vai: String(r[2]).trim(), nghi: /x/i.test(String(r[3])), chucNang: sqTachCN_(r[4], r[2]), suaLuc: String(r[5] || '') }; })
+    ds: v.map(function (r, i) { return { row: i + 2, ten: String(r[0]).trim(), pin: String(r[1]).trim(), vai: String(r[2]).trim(), nghi: /x/i.test(String(r[3])), chucNang: sqTachCN_(r[4], r[2]), suaLuc: String(r[5] || ''), sdt: String(r[6] || '').trim(), sinh: sqNgaySinh_(r[7]) }; })
       .filter(function (x) { return x.ten; })
   };
 }
@@ -47,6 +48,8 @@ function sqNVLuu_(p) {
   if (!/^\d{4}$/.test(pin)) throw new Error('Mã PIN phải đúng 4 số.');
   var cn = (p.chucNang || []).filter(function (x) { return SQ_CHUC_NANG[x]; });
   if (!cn.length) throw new Error('Chọn ít nhất 1 chức năng cho ' + ten + '.');
+  var sdt = String(p.sdt || '').replace(/[^\d+ .\-]/g, '').trim().slice(0, 16), sinh = String(p.sinh || '').trim();
+  if (sinh && !/^\d{4}-\d{2}-\d{2}$/.test(sinh)) throw new Error('Ngày sinh chưa đúng (cần chọn đủ ngày/tháng/năm).');
   return khoa_(function () {
     var sh = layFile_().getSheetByName(SQ_NV), ds = sqNVDs_().ds, row = so_(p.row);
     ds.forEach(function (x) {
@@ -54,10 +57,26 @@ function sqNVLuu_(p) {
       if (x.pin === pin && !x.nghi) throw new Error('Mã PIN ' + pin + ' đang là của ' + x.ten + ', chọn số khác.');
       if (khongDau_(x.ten) === khongDau_(ten) && !x.nghi) throw new Error('Đã có nhân viên tên ' + x.ten + '.');
     });
-    var vals = [[ten, pin, vai, p.nghi ? 'x' : '', cn.join(','), bayGio_()]];
+    if (sh.getRange(1, 7).getValue() !== 'Số điện thoại') { sh.getRange(1, 1, 1, H_SQ_NV.length).setValues([H_SQ_NV]); sh.getRange('G:H').setNumberFormat('@'); }
+    var vals = [[ten, pin, vai, p.nghi ? 'x' : '', cn.join(','), bayGio_(), sdt, sinh]];
     if (row >= 2 && ds.some(function (x) { return x.row === row; })) sh.getRange(row, 1, 1, H_SQ_NV.length).setValues(vals);
     else { row = sh.getLastRow() + 1; sh.getRange(row, 1, 1, H_SQ_NV.length).setValues(vals); }
     sqCacheXoa_('sq_nv');
     return { row: row };
   });
+}
+
+// sinh nhật nhân viên: báo ở Tổng quan từ 3 ngày trước đến đúng ngày
+function sqSinhNhatViec_() {
+  var hn = homNay_(), y = +hn.slice(0, 4), out = [];
+  sqNVDs_().ds.forEach(function (x) {
+    if (x.nghi || !x.sinh) return;
+    var m = +x.sinh.slice(5, 7), d = +x.sinh.slice(8, 10), pad = function (n) { return ('0' + n).slice(-2); };
+    var ngay = y + '-' + pad(m) + '-' + pad(d), con = sqKhoSoNgay_(hn, ngay);
+    if (con < 0) { ngay = (y + 1) + '-' + pad(m) + '-' + pad(d); con = sqKhoSoNgay_(hn, ngay); }
+    if (con < 0 || con > 3) return;
+    var tuoi = +ngay.slice(0, 4) - (+x.sinh.slice(0, 4)), dm = pad(d) + '/' + pad(m);
+    out.push({ muc: 'i', loai: '🎂 Sinh nhật', tab: 'nv', ngay: ngay, con: con, text: (con === 0 ? 'Hôm nay là sinh nhật ' : con === 1 ? 'Ngày mai sinh nhật ' : 'Còn ' + con + ' ngày nữa là sinh nhật ') + x.ten + ' (' + dm + (tuoi > 0 && tuoi < 80 ? ', tròn ' + tuoi + ' tuổi' : '') + ')' + (x.sdt ? ' · ' + x.sdt : '') });
+  });
+  return out.sort(function (a, b) { return a.con - b.con; });
 }
