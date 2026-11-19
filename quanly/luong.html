@@ -259,20 +259,20 @@ table.cmp tr.cur td{font-weight:700;color:var(--green)}
 
   <nav class="monthbar" aria-label="Chọn tháng">
     <span id="mtabs"></span>
-    <button type="button" class="mtab add" id="bNewMonth">+ Tháng mới</button>
+    
     <div class="savebox">
       <small id="driveInfo"></small>
       <button type="button" class="btn primary sm" id="bDrive">Lưu tổng vào Google Sheets</button>
     </div>
   </nav>
 
-  <section class="panel" id="newPanel" hidden style="margin-top:14px">
-    <h3>Tạo tháng mới</h3>
-    <p>Tải lên 2 file xuất từ Sapo: <b>chấm công theo tổng giờ làm việc</b> và <b>doanh thu tổng quan</b>. Lương/giờ, phụ cấp và tiền ứng còn lại được lấy từ tháng trước.</p>
+  <section class="panel" id="newPanel" style="margin-top:14px">
+    <h3>📥 Gửi file chấm công (Excel)</h3>
+    <p>Chọn file Sapo <b>chấm công theo tổng giờ làm việc</b> (thêm file <b>doanh thu tổng quan</b> nếu có) rồi bấm <b>Tính lương</b>. Tháng chưa có thì app tạo tháng mới (lương/giờ, phụ cấp, tiền ứng lấy từ tháng trước); tháng đã có thì app cập nhật giờ làm, giữ nguyên các giờ anh đã chỉnh tay. Xong app tự lưu vào file BẢNG_LƯƠNG.</p>
     <div class="newm">
       <label>File chấm công (.xls)<input type="file" id="fAtt" accept=".xls,.xlsx"></label>
       <label>File doanh thu (.xls) – có thể bổ sung sau<input type="file" id="fRev" accept=".xls,.xlsx"></label>
-      <div class="field"><button type="button" class="btn primary" id="bCreate">Tạo tháng</button><button type="button" class="btn" id="bCancelNew" style="width:auto">Huỷ</button></div>
+      <div class="field"><button type="button" class="btn primary" id="bCreate">Tính lương</button></div>
       <div class="toast" id="newMsg" role="status"></div>
     </div>
   </section>
@@ -787,6 +787,27 @@ function processShifts(g, prof){
   });
   return shifts;
 }
+// cập nhật tháng đã có bằng file chấm công mới: thay giờ làm, giữ giờ chỉnh tay + lương/phụ cấp/ứng/trạng thái
+async function capNhatThang(mid, att, fr, msg){
+  S.cur = mid; const m = Object.assign({}, S.months[mid]); delete m._id;
+  m.ndays = Math.max(m.ndays || 0, att.ndays);
+  if (fr){ const rv = parseRevenueRows(await readSheet(fr)); if (rv.m === m.m && rv.y === m.y) m.revenue = rv.revenue; }
+  const cur = staffOf(mid), all = {[`months/${mid}`]: m}; let order = cur.length, nMoi = 0, nCap = 0;
+  att.groups.forEach(g => {
+    const old = cur.find(p => p.sapo && p.sapo.toLowerCase() === g.sapo.toLowerCase());
+    const isBep = /bếp/i.test(g.pos);
+    const prof = old ? Object.assign({}, old) : {name: g.sapo, pos: g.pos || (isBep ? 'Bếp' : 'Phục vụ'), grp: isBep ? 'BEP' : 'PV', order: order++, sapo: g.sapo,
+      round9: isBep && g.rows.some(r => r.ca === 'Full ca'), fixed: false, std: {}, rate: 0, base: 0, cc: 0, tn: 0, dt: 0, dtPending: false, khac: 0, khacNote: '', phone: '', ungTon: 0, ungTra: 0, status: 'wait', hidden: false};
+    const tay = (old && old.shifts || []).filter(s => s.flag && s.flag.startsWith('Chỉnh tay'));
+    const moi = processShifts(g, prof).filter(s => !tay.some(t => t.i === s.i && t.ca === s.ca)).concat(tay).sort((a, b) => a.i - b.i || a.ca.localeCompare(b.ca));
+    const id = old ? old._id : slug(g.sapo); const d = Object.assign({}, prof, {shifts: moi}); delete d._id;
+    all[`staff-${mid}/${id}`] = d; old ? nCap++ : nMoi++;
+  });
+  msg('Đang lưu…');
+  await db.setMany(all); dirtyDrive = true;
+  msg(`Đã cập nhật chấm công tháng ${m.label}: ${nCap} bạn${nMoi ? `, thêm ${nMoi} bạn mới (nhớ điền lương/giờ)` : ''}. Đang lưu vào file BẢNG_LƯƠNG…`);
+  luuSheet().then(ok => msg(`Đã cập nhật chấm công tháng ${m.label}${nMoi ? ` · ${nMoi} bạn mới cần điền lương/giờ` : ''}${ok ? ' · đã lưu vào file BẢNG_LƯƠNG ✓' : ''}`));
+}
 async function createMonth(){
   const msg = t => document.getElementById('newMsg').textContent = t;
   const fa = document.getElementById('fAtt').files[0], fr = document.getElementById('fRev').files[0];
@@ -796,7 +817,7 @@ async function createMonth(){
     msg('Đang đọc file…');
     const att = parseAttendance(await readSheet(fa));
     const mid = `${att.y}-${String(att.m).padStart(2,'0')}`;
-    if (S.months[mid]){ msg(`Tháng ${att.m}/${att.y} đã có. Chọn tháng đó ở thanh trên để sửa.`); return; }
+    if (S.months[mid]){ await capNhatThang(mid, att, fr, msg); return; }
     const prevId = monthIds().filter(x => x < mid).pop();
     const prev = prevId ? staffOf(prevId) : [];
     const month = {label: `${String(att.m).padStart(2,'0')}/${att.y}`, y: att.y, m: att.m, ndays: att.ndays, revenue: [], bonus: (prevId && S.months[prevId].bonus) || DEFAULT_BONUS, driveFileId: '', driveSavedAt: ''};
@@ -815,13 +836,12 @@ async function createMonth(){
     msg('Đang lưu tháng mới…');
     const all = {[`months/${mid}`]: month}; Object.entries(docs).forEach(([id, d]) => all[`staff-${mid}/${id}`] = d);
     S.cur = mid; subscribeStaff(mid);
-    await db.setMany(all); msg(`Đã tạo tháng ${month.label} với ${Object.keys(docs).length} nhân viên. Kiểm tra lại lương/giờ của bạn mới (nếu có).`);
+    await db.setMany(all); msg(`Đã tạo tháng ${month.label} với ${Object.keys(docs).length} nhân viên. Đang lưu vào file BẢNG_LƯƠNG…`);
     subscribeStaff(mid); dirtyDrive = true;
-    setTimeout(() => { document.getElementById('newPanel').hidden = true; }, 2500);
+    luuSheet().then(ok => msg(`Đã tạo tháng ${month.label} với ${Object.keys(docs).length} nhân viên. Kiểm tra lại lương/giờ của bạn mới (nếu có).${ok ? ' Đã lưu vào file BẢNG_LƯƠNG ✓' : ''}`));
   } catch(e){ msg(e.message || 'Không đọc được file.'); }
+  document.getElementById('fAtt').value = ''; document.getElementById('fRev').value = '';
 }
-document.getElementById('bNewMonth').onclick = () => { const p = document.getElementById('newPanel'); p.hidden = !p.hidden; };
-document.getElementById('bCancelNew').onclick = () => { document.getElementById('newPanel').hidden = true; };
 document.getElementById('bCreate').onclick = createMonth;
 document.getElementById('fRev2').addEventListener('change', async e => {
   const f = e.target.files[0], m = M(), out = document.getElementById('revMsg'); if (!f || !m) return;
@@ -1088,9 +1108,10 @@ window.__sheetPayload = (mid, ids, sep) => {
   return {names: tabNames(mid), lu: {values: L.values, requests: formatLuong(ids.lu, L, ids.luCf)}, cc: {values: Cg.values, requests: formatChamCong(ids.cc, Cg, ids.ccCf)}};
 };
 
-document.getElementById('bDrive').onclick = async () => {
-  const m = M(), btn = document.getElementById('bDrive'), el = document.getElementById('driveInfo'); if (!m) return;
-  if (!mcp){ el.className = 'dirty'; el.textContent = 'Chưa kết nối được máy chủ – tải lại trang.'; return; }
+document.getElementById('bDrive').onclick = () => luuSheet();
+async function luuSheet(){
+  const m = M(), btn = document.getElementById('bDrive'), el = document.getElementById('driveInfo'); if (!m) return false;
+  if (!mcp){ el.className = 'dirty'; el.textContent = 'Chưa kết nối được máy chủ – tải lại trang.'; return false; }
   btn.disabled = true; btn.textContent = 'Đang lưu vào Google Sheets…';
   const call = (tool, input) => mcp.callTool(GS, tool, input);
   try {
@@ -1117,7 +1138,7 @@ document.getElementById('bDrive').onclick = async () => {
     await call('update_spreadsheet', {spreadsheetId: SHEET_ID, requests: pl.cc.requests});
     m.sheetSavedAt = new Date().toISOString();
     await db.doc(`months/${S.cur}`).set(Object.fromEntries(Object.entries(m).filter(([k]) => k !== '_id')));
-    dirtyDrive = false; renderDriveInfo();
+    dirtyDrive = false; renderDriveInfo(); return true;
   } catch(e){
     el.className = 'dirty';
     const code = e && e.code;
@@ -1126,7 +1147,8 @@ document.getElementById('bDrive').onclick = async () => {
       : code === 'not_in_manifest' ? 'Anh chưa cho phép trang này dùng Google Sheets.'
       : ((e && e.message) || 'Chưa lưu được vào Google Sheets.');
   } finally { btn.disabled = false; btn.textContent = 'Lưu tổng vào Google Sheets'; }
-};
+  return false;
+}
 
 // ---------- message & image
 function message(m, p){
