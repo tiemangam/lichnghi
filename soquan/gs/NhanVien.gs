@@ -80,3 +80,52 @@ function sqSinhNhatViec_() {
   });
   return out.sort(function (a, b) { return a.con - b.con; });
 }
+
+/* ================= BẢNG LƯƠNG (chuyển từ trang Phiếu lương Gặm vào Điều hành) =================
+ * Mỗi "tài liệu" 1 dòng ở tab SQ_Luong: Đường dẫn | JSON | Sửa lúc
+ *   months/2026-10            → tháng (doanh thu ngày, ngày lễ, mốc thưởng nóng…)
+ *   staff-2026-10/<mã-nv>     → 1 nhân viên trong tháng (lương/giờ, ca làm, ứng…)
+ * Nút "Lưu tổng vào Google Sheets" ghi file BẢNG_LƯƠNG qua Sheets API (cần file được chia sẻ cho tài khoản chạy Apps Script). */
+var SQ_LUONG = 'SQ_Luong', H_SQ_LUONG = ['Đường dẫn', 'JSON', 'Sửa lúc'];
+var LUONG_SHEET_ID = '1JQGGRceNehTqxxIZNy8-MhVCby4It407yCRNaYS2mXM';
+function sqLuongTab_() { return sqTab_(SQ_LUONG, H_SQ_LUONG, function (sh) { sh.getRange('A:C').setNumberFormat('@'); }); }
+function sqLuongDuong_(p) { p = String(p || ''); if (!/^(months\/\d{4}-\d{2}|staff-\d{4}-\d{2}\/[a-z0-9-]{1,60})$/.test(p)) throw new Error('Đường dẫn bảng lương không hợp lệ: ' + p); return p; }
+function sqLuongDs_() {
+  var sh = sqLuongTab_(), n = sh.getLastRow(), docs = {};
+  if (n >= 2) sh.getRange(2, 1, n - 1, 2).getValues().forEach(function (r) { var k = String(r[0] || ''); if (k) { var o = sqJ_(String(r[1] || ''), null); if (o) docs[k] = o; } });
+  return { docs: docs };
+}
+function sqLuongGhi_(docs) {
+  var keys = Object.keys(docs || {}); if (!keys.length) return { ok: true, n: 0 };
+  keys.forEach(sqLuongDuong_);
+  return khoa_(function () {
+    var sh = sqLuongTab_(), n = sh.getLastRow(), cot = n >= 2 ? sh.getRange(2, 1, n - 1, 1).getValues() : [], hang = {}, luc = bayGio_(), moi = [];
+    cot.forEach(function (r, i) { if (r[0]) hang[String(r[0])] = i + 2; });
+    keys.forEach(function (k) {
+      var s = JSON.stringify(docs[k]); if (s.length > 48000) throw new Error('Dữ liệu ' + k + ' quá lớn.');
+      if (hang[k]) sh.getRange(hang[k], 2, 1, 2).setValues([[s, luc]]); else moi.push([k, s, luc]);
+    });
+    if (moi.length) sh.getRange(sh.getLastRow() + 1, 1, moi.length, 3).setValues(moi);
+    return { ok: true, n: keys.length };
+  });
+}
+function sqLuongLuu_(p) { var d = {}; d[sqLuongDuong_(p.path)] = p.body || {}; return sqLuongGhi_(d); }
+// Google Sheets cho nút "Lưu tổng": cùng tên công cụ như trang cũ
+function sqLuongGS_(p) {
+  var id = LUONG_SHEET_ID, base = 'https://sheets.googleapis.com/v4/spreadsheets/' + id, inp = p.input || {};
+  if (inp.spreadsheetId && inp.spreadsheetId !== id) throw new Error('Chỉ ghi được file BẢNG_LƯƠNG.');
+  var goi = function (method, url, body) {
+    var o = { method: method, muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } };
+    if (body) o.payload = JSON.stringify(body);
+    var r = UrlFetchApp.fetch(url, o), c = r.getResponseCode(), t = r.getContentText();
+    if (c === 403 || c === 404) throw new Error('Tài khoản chạy app chưa có quyền sửa file BẢNG_LƯƠNG – anh chia sẻ file đó (quyền Người chỉnh sửa) cho tài khoản tiemangam2015.');
+    if (c >= 300) throw new Error('Google Sheets báo lỗi ' + c + ': ' + t.slice(0, 200));
+    return t ? JSON.parse(t) : {};
+  };
+  var t = String(p.tool || '');
+  if (t === 'get_spreadsheet') return { payload: goi('get', base + '?fields=' + encodeURIComponent((inp.fields || []).join(','))) };
+  if (t === 'update_spreadsheet') return { payload: goi('post', base + ':batchUpdate', { requests: inp.requests || [] }) };
+  if (t === 'batch_clear_values') return { payload: goi('post', base + '/values:batchClear', { ranges: inp.ranges || [] }) };
+  if (t === 'update_formulas') return { payload: goi('put', base + '/values/' + encodeURIComponent(inp.range) + '?valueInputOption=USER_ENTERED', { range: inp.range, majorDimension: 'ROWS', values: inp.formulas || [] }) };
+  throw new Error('Không rõ thao tác Google Sheets: ' + t);
+}
