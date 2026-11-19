@@ -672,7 +672,6 @@ table.plln button{border:0;background:none;color:var(--do);font-weight:800}
     <section id="t-nv" class="hide">
       <div class="chips nvmuc" id="nvMuc"></div>
       <div id="qlBox" class="hide"></div>
-      <div id="nvLuong" class="hide"></div>
       <div class="split" id="nvGoc"><div>
         <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="font-size:17px;color:var(--xanh)">Nhân viên dùng Sổ Quán</h3><button class="btn" id="nvThem">＋ Thêm nhân viên</button></div>
           <p class="sub">Mỗi bạn 1 mã PIN 4 số để vào tab Sổ Quán trong app Nhà Gặm. Chọn vai trò thì app tự tick chức năng hay dùng, anh tick lại tuỳ ý.</p>
@@ -935,14 +934,14 @@ function qlMo(t){
   var cho = box.querySelector('.ql-cho'); if (cho) cho.remove();
   if (QL_F[t]) { qlCao(); return; }
   box.insertAdjacentHTML('beforeend', '<div class="ql-cho">Đang mở…</div>');
-  qlKey().then(function(){
+  (t === 'luong' ? Promise.resolve() : qlKey()).then(function(){
     var c = box.querySelector('.ql-cho'); if (c) c.remove(); if (QL_F[t]) return;
-    var f = document.createElement('iframe'); f.src = 'index.html?mo=1&nhung=' + QL_V[t]; f.title = t;
+    var f = document.createElement('iframe'); f.src = t === 'luong' ? 'luong.html' : 'index.html?mo=1&nhung=' + QL_V[t]; f.title = t;
     f.setAttribute('allow', 'clipboard-write; web-share; fullscreen');
     box.appendChild(f); QL_F[t] = f; if (TAB !== 'nv' || NVM() !== t) f.style.display = 'none'; qlCao();
   });
 }
-window.addEventListener('resize', function(){ if (TAB === 'nv' && QL_V[NVM()]) qlCao(); });
+window.addEventListener('resize', function(){ if (TAB === 'nv' && QL_F[NVM()]) qlCao(); });
 // số đỏ trên nút: thông báo mới chưa xem, phục vụ / bếp chờ duyệt
 var QL_J = null;
 function qlSo(){ var j = QL_J; if (!j) return; var seen = +ls.get('gam_ql_seen') || 0, moi = (j.moi || []).filter(function(r){ return r.ms > seen; }).length;
@@ -957,14 +956,8 @@ function veNvMuc(){ var m = NVM();
   $('nvMuc').innerHTML = NV_MUC.map(function(x){ var n = QL_SO[x[0]] || 0; return '<button class="chip' + (x[2] ? ' qlc' : '') + (m === x[0] ? ' on' : '') + '" data-nm="' + x[0] + '">' + x[1] + (n ? '<span class="n">' + n + '</span>' : '') + '</button>'; }).join('');
   [].forEach.call($('nvMuc').querySelectorAll('[data-nm]'), function(b){ b.onclick = function(){ ls.set('gam_nv_muc', b.getAttribute('data-nm')); nvMuc(); }; }); }
 function nvMuc(){ var m = NVM(); veNvMuc();
-  $('nvGoc').classList.toggle('hide', m !== 'nv'); $('nvLuong').classList.toggle('hide', m !== 'luong'); $('qlBox').classList.toggle('hide', !QL_V[m]);
-  if (m === 'nv') taiNV(); else if (m === 'luong') veLuong(); else qlMo(m); }
-function veLuong(){
-  $('nvLuong').innerHTML = '<div class="card" style="max-width:760px"><h3 style="font-size:18px;color:var(--xanh)">💵 Bảng lương</h3>' +
-    '<p class="sub" style="margin:4px 0 12px">Lương từng tháng: chấm công, giờ làm, thưởng nóng, ứng lương, thực nhận từng bạn.</p>' +
-    '<div style="display:flex;flex-wrap:wrap;gap:10px"><a class="btn" href="https://claude.ai/artifact/XgYsDewRsTQPMS5TCy7wKf" target="_blank" rel="noopener" style="text-decoration:none">Mở Phiếu lương Gặm ↗</a>' +
-    '<a class="btn o" href="https://docs.google.com/spreadsheets/d/1JQGGRceNehTqxxIZNy8-MhVCby4It407yCRNaYS2mXM/edit" target="_blank" rel="noopener" style="text-decoration:none">Mở file BẢNG_LƯƠNG (Google Sheet) ↗</a></div>' +
-    '<p class="sub" style="margin-top:12px">Mỗi tháng anh gửi file chấm công + doanh thu Sapo, Claude làm tháng mới vào 2 chỗ này.</p></div>'; }
+  $('nvGoc').classList.toggle('hide', m !== 'nv'); $('qlBox').classList.toggle('hide', m === 'nv');
+  if (m === 'nv') taiNV(); else qlMo(m); }
 function qlPoll(lan){ if (document.hidden && lan !== 1) return; var k = ls.get('gam_ql_key'); if (!k) return;
   fetch(QL_EXEC + '?api=moi&since=0&key=' + encodeURIComponent(k) + '&_=' + Date.now()).then(function(r){ return r.json(); }).then(function(j){ if (j && j.ok) { QL_J = j; qlSo(); } }).catch(function(){}); }
 window.addEventListener('storage', function(e){ if (e.key === 'gam_ql_seen') qlSo(); });
