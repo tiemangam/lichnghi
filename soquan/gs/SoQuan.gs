@@ -189,12 +189,16 @@ var SQ_API = {
 /* ======================= ĐĂNG NHẬP ======================= */
 function sqNV_(pin) {
   pin = String(pin || '').trim();
-  if (!/^\d{4,6}$/.test(pin)) throw new Error('Sai mã PIN.');
+  var ql = PropertiesService.getScriptProperties().getProperty('QL_KEY') || '';
+  // app quản lý (trên máy tính) gửi mã quản lý thay cho PIN → vào như vai Quản lý
+  var qlNV = function () { return { ten: 'Quản lý', vai: 'Quản lý', chucNang: sqTachCN_('', 'Quản lý') }; };
+  if (!/^\d{4,6}$/.test(pin)) { if (ql && pin === ql) return qlNV(); throw new Error('Sai mã PIN.'); }
   var rows = sqCacheGet_('sq_nv');
   if (!rows) { rows = layFile_().getSheetByName(SQ_NV).getDataRange().getValues().map(function (r) { return r.map(String); }); sqCachePut_('sq_nv', rows, 300); }
   for (var i = 1; i < rows.length; i++) {
     if (String(rows[i][1]).trim() === pin && !/x/i.test(String(rows[i][3]))) return { ten: String(rows[i][0]).trim(), vai: String(rows[i][2]).trim(), chucNang: sqTachCN_(rows[i][4], rows[i][2]) };
   }
+  if (ql && pin === ql) return qlNV();
   throw new Error('Sai mã PIN.');
 }
 function sqChu_(pass) {

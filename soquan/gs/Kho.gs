@@ -636,7 +636,7 @@ function sqKhoBep_(p) {
 
 /* ---------- SỔ QUÁN: quản lý xem kho (chức năng "kho", anh Đạt bật trong Điều hành → Nhân viên) ---------- */
 function sqKhoQuyen_(nv) { if ((nv.chucNang || []).indexOf('kho') < 0) throw new Error('Em chưa được mở chức năng Xem kho. Nhờ anh Đạt bật trong Điều hành → Nhân viên.'); }
-function sqKhoNV_(nv, p) { sqKhoQuyen_(nv); var j = sqKhoTinh_(p || {}); delete j.doiChieu; return j; }
+function sqKhoNV_(nv, p) { sqKhoQuyen_(nv); var j = sqKhoTinh_(p || {}); if (khongDau_(nv.vai) !== 'quan ly') delete j.doiChieu; return j; } // quản lý xem được Đối chiếu nhập – xuất
 function sqKhoBepNV_(nv, p) { sqKhoQuyen_(nv); return sqKhoBep_({ ngay: p && p.ngay }); }
 function sqKhoTuanNV_(nv, p) {
   sqKhoQuyen_(nv);
