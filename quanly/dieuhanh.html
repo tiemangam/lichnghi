@@ -1328,19 +1328,22 @@ var NV = { data:null, chon:null };
 function taiNV(){ return api('chu_nv_ds').then(function(j){ NV.data = j; veNV(); }).catch(function(e){ $('nvDs').innerHTML = '<div class="empty">'+esc(e.message)+'</div>'; }); }
 function veNV(){
   var j = NV.data, ds = j.ds.slice().sort(function(a,b){ return (a.nghi?1:0)-(b.nghi?1:0) || a.ten.localeCompare(b.ten,'vi'); });
-  $('nvDs').innerHTML = ds.length ? ds.map(function(x){ return '<button class="nvr'+(x.nghi?' nghi':'')+(NV.chon===x.row?' on':'')+'" data-r="'+x.row+'"><span><b>'+esc(x.ten)+'</b>'+(x.nghi?' <span class="pill m">nghỉ làm</span>':'')+'<small>'+esc(x.vai||'–')+' · '+x.chucNang.map(function(k){ return esc(j.chucNang[k]); }).join(', ')+'</small></span><span class="pin">'+esc(x.pin)+'</span></button>'; }).join('') : '<div class="empty">Chưa có nhân viên. Bấm "Thêm nhân viên".</div>';
+  $('nvDs').innerHTML = ds.length ? ds.map(function(x){ return '<button class="nvr'+(x.nghi?' nghi':'')+(NV.chon===x.row?' on':'')+'" data-r="'+x.row+'"><span><b>'+esc(x.ten)+'</b>'+(x.nghi?' <span class="pill m">nghỉ làm</span>':'')+'<small>'+esc(x.vai||'–')+(x.sinh?' · 🎂 '+sinhDM(x.sinh):'')+(x.sdt?' · '+esc(x.sdt):'')+'</small><small>'+x.chucNang.map(function(k){ return esc(j.chucNang[k]); }).join(', ')+'</small></span><span class="pin">'+esc(x.pin)+'</span></button>'; }).join('') : '<div class="empty">Chưa có nhân viên. Bấm "Thêm nhân viên".</div>';
   [].forEach.call($('nvDs').querySelectorAll('.nvr'), function(b){ b.onclick = function(){ NV.chon = +b.getAttribute('data-r'); veNV(); formNV(j.ds.filter(function(x){ return x.row===NV.chon; })[0]); }; });
 }
+function sinhDM(s){ return s && s.length===10 ? s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4) : ''; }
 var VAI = ['Kế toán','Đi chợ','Thu ngân','Bếp','Quản lý','Phục vụ'];
 function kdv(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').trim(); }
 function formNV(x){
-  var j = NV.data, moi = !x; x = x || { ten:'', pin:'', vai:'', chucNang:[], nghi:false };
+  var j = NV.data, moi = !x; x = x || { ten:'', pin:'', vai:'', chucNang:[], nghi:false, sdt:'', sinh:'' };
   var noi = $('nvForm'), ov = null;
   if (MOBILE()) { ov = document.createElement('div'); ov.className='ov'; ov.innerHTML='<div class="pane"><div class="card"></div></div>'; ov.onclick=function(e){ if (e.target===ov) ov.remove(); }; document.body.appendChild(ov); noi = ov.querySelector('.card'); }
   var dungPin = j.ds.filter(function(z){ return !z.nghi && z.row!==x.row; }).map(function(z){ return z.pin; });
   var goiY = ''; for (var t=0; t<50 && !goiY; t++) { var c = String(Math.floor(1000+Math.random()*9000)); if (dungPin.indexOf(c)<0 && !/^(\d)\1{3}$/.test(c)) goiY = c; }
   noi.innerHTML = (ov?'<button class="x">‹ Đóng</button>':'')+'<h3 style="font-size:18px;color:var(--xanh)">'+(moi?'Thêm nhân viên':'Sửa: '+esc(x.ten))+'</h3><div class="nvf">'+
     '<span class="nvlb">Tên</span><input id="fTen" maxlength="40" value="'+esc(x.ten)+'" placeholder="VD: Thảo">'+
+    '<span class="nvlb">Số điện thoại</span><input id="fSdt" type="tel" inputmode="tel" maxlength="16" value="'+esc(x.sdt||'')+'" placeholder="VD: 0917 203 778">'+
+    '<span class="nvlb">Ngày sinh <small style="font-weight:400">(đến gần sinh nhật 3 ngày, Tổng quan sẽ báo mỗi ngày)</small></span><input id="fSinh" type="date" value="'+esc(x.sinh||'')+'">'+
     '<span class="nvlb">Mã PIN 4 số</span><div style="display:flex;gap:8px"><input id="fPin" inputmode="numeric" maxlength="4" value="'+esc(x.pin||goiY)+'" style="letter-spacing:.3em;font-weight:700">'+(moi?'':'<button class="btn o" id="fPinMoi" style="width:auto;white-space:nowrap;margin-top:8px">Đổi PIN</button>')+'</div>'+
     '<span class="nvlb">Vai trò</span><div class="cnc" id="fVai">'+VAI.map(function(v){ return '<label class="'+(kdv(x.vai)===kdv(v)?'on':'')+'"><input type="radio" name="vai" value="'+v+'">'+v+'</label>'; }).join('')+'</div>'+
     '<span class="nvlb">Được dùng trong Sổ Quán</span><div class="cnc" id="fCn">'+Object.keys(j.chucNang).map(function(k){ return '<label class="'+(x.chucNang.indexOf(k)>=0?'on':'')+'"><input type="checkbox" value="'+k+'">'+esc(j.chucNang[k])+'</label>'; }).join('')+'</div>'+
@@ -1361,7 +1364,7 @@ function formNV(x){
     var cn = [].map.call(q('fCn').querySelectorAll('label.on input'), function(i){ return i.value; });
     var nghi = q('fNghi') ? (q('fNghi').querySelector('label.on input')||{}).value==='1' : false;
     var b = this; b.disabled = true; q('fErr').textContent = '';
-    api('chu_nv_luu', { row: x.row||0, ten: q('fTen').value.trim(), pin: q('fPin').value.trim(), vai: vai, chucNang: cn, nghi: nghi }).then(function(k){
+    api('chu_nv_luu', { row: x.row||0, ten: q('fTen').value.trim(), pin: q('fPin').value.trim(), vai: vai, chucNang: cn, nghi: nghi, sdt: q('fSdt').value.trim(), sinh: q('fSinh').value }).then(function(k){
       toast((moi?'Đã thêm ':'Đã lưu ')+q('fTen').value.trim()+' · PIN '+q('fPin').value.trim()); NV.chon = k.row; if (ov) ov.remove(); taiNV().then(function(){ if (!ov) formNV(NV.data.ds.filter(function(z){ return z.row===k.row; })[0]); });
     }).catch(function(e){ b.disabled = false; q('fErr').textContent = e.message; });
   };
