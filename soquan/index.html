@@ -637,10 +637,19 @@ function dmy(s){ var p=String(s||'').split('-'); return p.length===3 ? p[2]+'/'+
 function maPhieu(tien_to){ var d = homNay().replace(/-/g,''); var r = Math.random().toString(36).slice(2,6).toUpperCase(); return tien_to + d + r; }
 function toast(m, ms){ var t=$('toast'); t.textContent=m; t.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(function(){ t.style.display='none'; }, ms||2800); }
 function busy(msg){ var b = document.createElement('div'); b.className='busy'; b.innerHTML='<div class="spin"></div><div>'+esc(msg)+'</div>'; document.body.appendChild(b); return function(){ b.remove(); }; }
-function api(name, body){
+function api(name, body, han){
   body = body || {}; body.api = name; if (S.pin && !body.pin) body.pin = S.pin;
-  return fetch(EXEC, { method:'POST', body: JSON.stringify(body) }).then(function(r){ return r.json(); }).then(function(j){ if (!j.ok) throw new Error(j.error||'Lỗi'); return j; });
+  // han (ms): quá thời gian thì ngắt để thử lại – điện thoại tắt màn hình / chuyển app / mạng chập chờn làm lệnh gửi treo mãi
+  var ac = han && window.AbortController ? new AbortController() : null, t = ac ? setTimeout(function(){ ac.abort(); }, han) : null;
+  if (ac) { API_DANG.push(ac); ac.bd = Date.now(); }
+  var xong = function(){ if (t) clearTimeout(t); if (ac) API_DANG = API_DANG.filter(function(x){ return x !== ac; }); };
+  return fetch(EXEC, ac ? { method:'POST', body: JSON.stringify(body), signal: ac.signal } : { method:'POST', body: JSON.stringify(body) })
+    .then(function(r){ return r.json(); }).then(function(j){ xong(); if (!j.ok) throw new Error(j.error||'Lỗi'); return j; },
+      function(e){ xong(); throw new Error(e && e.name === 'AbortError' ? 'Mạng chậm hoặc app bị tắt giữa chừng' : 'Mất mạng (' + ((e && e.message) || 'không gửi được') + ')'); });
 }
+var API_DANG = [];
+// quay lại app sau khi tắt màn hình / chuyển app: lệnh gửi nào đã chờ quá 15 giây thì ngắt để tự gửi lại ngay
+document.addEventListener('visibilitychange', function(){ if (document.hidden) return; API_DANG.forEach(function(ac){ if (Date.now() - ac.bd > 15000) ac.abort(); }); });
 var lsJ = { get: function(k){ try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch(e){ return null; } }, set: function(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} } };
 var S = { pin: ls.get('gam_sq_pin'), ten: ls.get('gam_sq_ten'), vai: ls.get('gam_sq_vai'), cn: (ls.get('gam_sq_cn')||'').split(',').filter(String), D: null };
 
@@ -902,7 +911,7 @@ function guiLo(lo){
   for (i = 0; i < lo.hd.length; i += 3) lots.push(lo.hd.slice(i, i + 3));   // app tự chia lô nhỏ (3 hóa đơn) cho nhẹ đường truyền – nhân viên vẫn chỉ bấm gửi 1 lần
   var cho = function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
   var gui1 = function(ch, thu){
-    return api('nv_gui_hd', { ngay: lo.ngay, hd: ch }).then(function(j){
+    return api('nv_gui_hd', { ngay: lo.ngay, hd: ch }, 120000).then(function(j){
       lo.hd = lo.hd.filter(function(h){ return ch.indexOf(h) < 0; });
       ch.forEach(function(h){ ((j.fids||{})[h.id]||[]).forEach(function(fid, n){ if (h.anh[n]) ganAnh(fid, 'data:'+(h.anh[n].mime||'image/jpeg')+';base64,'+h.anh[n].b64, true); }); });
       docNen(j.ids); datCoDoc();
@@ -2061,8 +2070,8 @@ function veSP(){
   var b = $('spGui'); if (b) b.onclick = function(){ b.disabled = true; b.textContent = 'Đang gửi…';
     // nhân viên bấm gửi 1 lần: app tự gửi từng file một, lỗi thì tự thử lại 3 lần (không báo lỗi ngay)
     var cho = function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }, gui = ok.slice(), tong = gui.length, xong = 0, lastDs = null, loiCuoi = '';
-    var mot = function(x, thu){ return api('nv_sapo_luu', { ds: [{ ngay: x.ngay, loai: x.loai, d: x.d }] }).catch(function(e){ if (thu < 3) return cho(3000 * (thu + 1)).then(function(){ return mot(x, thu + 1); }); throw e; }); };
-    var chay = function(){ var x = gui[0]; if (!x) return Promise.resolve(); b.textContent = 'Đang gửi ' + (xong + 1) + '/' + tong + '…';
+    var mot = function(x, thu){ return api('nv_sapo_luu', { ds: [{ ngay: x.ngay, loai: x.loai, d: x.d }] }, 60000).catch(function(e){ if (thu < 4) { var bb = $('spGui'); if (bb) bb.textContent = 'Đang gửi ' + (xong + 1) + '/' + tong + ' · thử lại lần ' + (thu + 1) + '…'; return cho(3000 * (thu + 1)).then(function(){ return mot(x, thu + 1); }); } throw e; }); };
+    var chay = function(){ var x = gui[0]; if (!x) return Promise.resolve(); b.textContent = 'Đang gửi ' + (xong + 1) + '/' + tong + '… (để màn hình sáng, đừng chuyển app)';
       return mot(x, 0).then(function(j){ lastDs = j.ds; gui.shift(); SP.ds = SP.ds.filter(function(y){ return y !== x; }); xong++; return chay(); }); };
     chay().then(function(){
       SP.ds = []; veSP(); if (lastDs) { lsJ.set('gam_sp_ngay', lastDs); veSPNgay(lastDs); } toast('Đã gửi số Sapo ✓ Cảm ơn em!');
