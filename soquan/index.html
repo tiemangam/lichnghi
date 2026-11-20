@@ -499,6 +499,45 @@ body.footcao #toast{bottom:calc(200px + env(safe-area-inset-bottom))}
   <div class="foot"><div><button class="btn" id="huyLuu">💾 Lưu phiếu hủy</button></div></div>
 </section>
 
+<section id="v-be" class="v hide">
+  <div class="top"><button class="back" data-back>‹</button><div class="sp"><b>🍽 Báo bể / hư dụng cụ</b><small>Chén, ly, đĩa… bể là báo ngay để trừ kho</small></div></div>
+  <div class="pg">
+    <div class="lbl">Món bể / hư</div>
+    <select class="in" id="beMon"></select>
+    <div class="row2" style="margin-top:8px;align-items:center"><input class="in num" inputmode="decimal" id="beSl" placeholder="Số lượng" style="flex:1"><span id="beDv" style="flex:1;font-weight:600;color:var(--muc2)"></span></div>
+    <div class="lbl">Ai làm bể</div>
+    <div class="seg" id="beAi"><button data-v="nv" class="on">Nhân viên</button><button data-v="khach">Khách</button></div>
+    <select class="in" id="beNg" style="margin-top:8px"></select>
+    <input class="in hide" id="beNgK" maxlength="40" placeholder="Bàn mấy / ghi chú khách (không bắt buộc)" style="margin-top:8px">
+    <div class="lbl">Lý do <em style="color:var(--do);font-style:normal">*bắt buộc</em></div>
+    <input class="in" id="beLy" maxlength="150" placeholder="vd: rơi lúc dọn bàn, nứt sẵn, khách làm rớt…">
+    <div class="lbl">Ảnh đồ bể <em style="color:var(--do);font-style:normal">*bắt buộc</em></div>
+    <div class="row2"><label class="btn o" style="cursor:pointer"><input type="file" accept="image/*" capture="environment" id="beCam" class="hide">📷 Chụp ảnh</label><label class="btn ph" style="cursor:pointer"><input type="file" accept="image/*" multiple id="beLib" class="hide">🖼️ Chọn ảnh</label></div>
+    <div class="thumbs" id="beAnh"></div>
+    <div class="note">Báo đúng để kho trừ đúng, cuối tháng anh Đạt biết món nào bể nhiều. Không phạt nếu báo thật.</div>
+  </div>
+  <div class="foot"><div><button class="btn" id="beLuu">💾 Báo bể</button></div></div>
+</section>
+<section id="v-dodung" class="v hide">
+  <div class="top"><button class="back" data-back>‹</button><div class="sp"><b>👕 Xuất đồ dùng</b><small>Cấp áo, tạp dề cho bạn mới · thu lại · báo hủy</small></div></div>
+  <div class="pg">
+    <div class="seg" id="ddLoai"><button data-v="cap" class="on">Cấp mới</button><button data-v="thu">Thu lại</button><button data-v="huy_dung">Báo hủy</button></div>
+    <div class="lbl">Nhân viên</div>
+    <select class="in" id="ddNg"></select>
+    <div class="lbl" id="ddMonLb">Món cấp (chọn size)</div>
+    <select class="in" id="ddMon"></select>
+    <div class="row2" style="margin-top:8px;align-items:center"><input class="in num" inputmode="decimal" id="ddSl" placeholder="Số lượng" value="1" style="flex:1"><input class="in" type="date" id="ddNgay" style="flex:1.3"></div>
+    <div class="lbl">Lý do / ghi chú <span id="ddLyBb" style="color:var(--do)"></span></div>
+    <input class="in" id="ddLy" maxlength="150" placeholder="vd: cấp cho bạn mới · nghỉ việc trả áo · áo rách">
+    <div id="ddAnhBox" class="hide"><div class="lbl">Ảnh <em style="color:var(--do);font-style:normal">*bắt buộc</em></div>
+    <div class="row2"><label class="btn o" style="cursor:pointer"><input type="file" accept="image/*" capture="environment" id="ddCam" class="hide">📷 Chụp ảnh</label><label class="btn ph" style="cursor:pointer"><input type="file" accept="image/*" multiple id="ddLib" class="hide">🖼️ Chọn ảnh</label></div>
+    <div class="thumbs" id="ddAnh"></div></div>
+    <div class="note" id="ddNote"></div>
+    <div id="ddDang"></div>
+  </div>
+  <div class="foot"><div><button class="btn" id="ddLuu">💾 Ghi lại</button></div></div>
+</section>
+
 <!-- KIỂM CHI PHÍ NGÀY (kế toán) -->
 <section id="v-db" class="v hide">
   <div class="top"><button class="back" data-back>‹</button><div class="sp"><b>📅 Đặt bàn · Mang về</b><small id="dbSub"></small></div><button class="who" id="dbTai" style="width:38px;height:38px;padding:0">↻</button></div>
@@ -656,7 +695,7 @@ var lsJ = { get: function(k){ try { var v = localStorage.getItem(k); return v ? 
 var S = { pin: ls.get('gam_sq_pin'), ten: ls.get('gam_sq_ten'), vai: ls.get('gam_sq_vai'), cn: (ls.get('gam_sq_cn')||'').split(',').filter(String), D: null };
 
 /* ---------- điều hướng ---------- */
-var VIEWS = ['db','pin','home','hd','ds','quen','hd2','td','bill','huy','xong','tn','tnx','tnd','tnc','tnt','sapo','kho','kc'];
+var VIEWS = ['db','pin','home','hd','ds','quen','hd2','td','bill','huy','xong','tn','tnx','tnd','tnc','tnt','sapo','kho','kc','be','dodung'];
 function show(v, push){
   VIEWS.forEach(function(x){ $('v-'+x).classList.toggle('hide', x!==v); });
   document.body.classList.toggle('footcao', ['tnd','tnc','tnt'].indexOf(v) >= 0);
@@ -707,18 +746,21 @@ var TILES = {
   sapo: { ic:'📥', ten:'Gửi số Sapo', mo:'Cuối ngày gửi 4 file Excel từ Sapo' },
   kho:  { ic:'📦', ten:'Kho', mo:'Cần đặt, tủ bếp, kiểm tủ, theo tuần' },
   kc:   { ic:'🔎', ten:'Kiểm chi phí ngày', mo:'Dò hóa đơn, đi chợ, chi tại quầy' },
+  be:   { ic:'🍽', ten:'Báo bể / hư dụng cụ', mo:'Chén, ly, đĩa bể: chọn món + chụp ảnh' },
+  dodung:{ ic:'👕', ten:'Xuất đồ dùng', mo:'Cấp / thu áo, tạp dề cho nhân viên' },
   db:   { ic:'📅', ten:'Đặt bàn · Mang về', mo:'Khách đặt qua link: xác nhận, gọi, xếp bàn' }
 };
 // chức năng (anh Đạt giao trong Điều hành) → các ô trên trang chính
-var CN_O = { hd:['hd','ds'], td:['quen'], dicho:['dicho'], huy:['huy'], tn:['tn'], sapo:['sapo'], kho:['kho'], kiemchi:['kc'] };
+var CN_O = { hd:['hd','ds'], td:['quen'], dicho:['dicho'], huy:['huy'], tn:['tn'], sapo:['sapo'], kho:['kho'], kiemchi:['kc'], dodung:['dodung'] };
 var THEO_VAI = { 'ke toan':['kiemchi','hd','dicho','td','huy'], 'di cho':['dicho','hd','td','huy'], 'thu ngan':['tn','sapo','hd','td','huy'], 'quan ly':['tn','sapo','kho','hd','dicho','td','huy'], 'bep':['huy','hd','td','dicho'], 'phuc vu':['huy'] };
 function vaoHome(){
   show('home');
   $('doiNguoi').textContent = S.ten + (S.vai ? ' · ' + S.vai : '') + ' ▾';
   $('homeNgay').textContent = dmy(homNay());
   var cn = (S.cn && S.cn.length) ? S.cn : (THEO_VAI[kd(S.vai)] || ['hd','dicho','td','huy']), ds = [];
-  ['tn','kho','hd','td','dicho','huy','sapo','kiemchi'].forEach(function(c){ if (cn.indexOf(c)>=0) (CN_O[c]||[]).forEach(function(o){ if (ds.indexOf(o)<0) ds.push(o); }); });
+  ['tn','kho','hd','td','dicho','huy','sapo','kiemchi','dodung'].forEach(function(c){ if (cn.indexOf(c)>=0) (CN_O[c]||[]).forEach(function(o){ if (ds.indexOf(o)<0) ds.push(o); }); });
   ds.splice(1, 0, 'db'); // đặt bàn: ai cũng thấy
+  if (ds.indexOf('be') < 0) ds.push('be'); // báo bể dụng cụ: ai cũng thấy
   $('tiles').innerHTML = ds.map(function(k2, i){ var t = TILES[k2];
     return '<button class="tile'+(i===0?' main':'')+'" data-t="'+k2+'"><span class="ic">'+t.ic+'</span><b>'+t.ten+'</b><small>'+t.mo+'</small><span class="dot hide" id="dot-'+k2+'"></span></button>'; }).join('');
   [].forEach.call($('tiles').querySelectorAll('.tile'), function(b){ b.onclick = function(){ moTile(b.getAttribute('data-t')); }; });
@@ -766,6 +808,8 @@ function moTile(t){
   if (t==='kho') return moKho();
   if (t==='kc') return moKC();
   if (t==='db') return moDB();
+  if (t==='be') return moBe();
+  if (t==='dodung') return moDodung();
 }
 function moDiCho(){
   var url = S.D && S.D.diCho; if (!url) { toast('Chưa tải xong, thử lại nhé'); return; }
@@ -1490,6 +1534,95 @@ $('huyLuu').onclick = function(){
   var ngay = $('huyNgay').value || homNay();
   luuNen('huy', this, 'nv_huy_luu', { id:HUY.id, ngay:ngay, ca:HUY.ca, dong:dong, anh: HUY.anh.map(function(a){ return { b64:a.b64, mime:a.mime }; }) },
     { huy:true, loai:'PHIẾU HỦY HÀNG', ten:'Hủy hàng · '+HUY.ca, sub:'Ghi bởi '+S.ten+' · '+dong.length+' món', ngay:ngay, id:HUY.id, dong:dong, anh:HUY.anh });
+};
+
+
+/* ---------- DỤNG CỤ: báo bể (mọi nhân viên) + xuất đồ dùng (quản lý) ---------- */
+var DCS = null, BE = { anh: [] }, DD = { anh: [], loai: 'cap' };
+function taiDC(){ return api('nv_dc_ds').then(function(j){ DCS = j; return j; }); }
+function dcOpt(m, bo){ return '<option value="'+esc(m.id)+'">'+esc(m.ten)+(bo ? '' : ' · còn '+soVN(m.ton)+' '+esc(m.dv||''))+'</option>'; }
+function dcSelMon(ds, ten){
+  var g = [], by = {}; ds.slice().sort(function(a,b){ return a.thuTu-b.thuTu; }).forEach(function(m){ if (!by[m.nhom]) { by[m.nhom] = []; g.push(m.nhom); } by[m.nhom].push(m); });
+  return '<option value="">'+(ten||'— Chọn món —')+'</option>' + g.map(function(n){ return '<optgroup label="'+esc(n)+'">'+by[n].map(function(m){ return dcOpt(m); }).join('')+'</optgroup>'; }).join('');
+}
+function dcAnhThem(O, files, ve){
+  var ds = [].slice.call(files||[]).slice(0, 3 - O.anh.length);
+  if (!ds.length) { if (files && files.length) toast('Tối đa 3 ảnh'); return; }
+  var done = busy('Đang chuẩn bị ảnh…');
+  Promise.all(ds.map(nen)).then(function(a){ O.anh = O.anh.concat(a); done(); ve(); }).catch(function(e){ done(); toast(e.message); });
+}
+function dcAnhVe(O, id, ve){
+  $(id).innerHTML = O.anh.map(function(a,i){ return '<div class="thumb"><img src="'+a.url+'"><button data-x="'+i+'">✕</button></div>'; }).join('');
+  [].forEach.call($(id).querySelectorAll('[data-x]'), function(b){ b.onclick = function(){ O.anh.splice(+b.getAttribute('data-x'),1); ve(); }; });
+}
+function dcNvOpt(ds, chon){ return '<option value="">— Chọn tên —</option>' + ds.map(function(n){ return '<option'+(n===chon?' selected':'')+'>'+esc(n)+'</option>'; }).join(''); }
+/* báo bể */
+function moBe(){
+  BE = { anh: [] }; $('beSl').value = ''; $('beLy').value = ''; $('beNgK').value = ''; $('beAnh').innerHTML = '';
+  setBeAi('nv'); show('be');
+  $('beMon').innerHTML = '<option value="">Đang tải…</option>';
+  taiDC().then(function(j){ if (S.view !== 'be') return; $('beMon').innerHTML = dcSelMon(j.mon); $('beNg').innerHTML = dcNvOpt(j.nv, j.nv.indexOf(S.ten) >= 0 ? S.ten : ''); beDv(); })
+    .catch(function(e){ $('beMon').innerHTML = '<option value="">Chưa tải được</option>'; toast('Chưa tải được: ' + e.message); });
+}
+function setBeAi(v){ BE.ai = v; [].forEach.call($('beAi').querySelectorAll('button'), function(b){ b.classList.toggle('on', b.getAttribute('data-v')===v); }); $('beNg').classList.toggle('hide', v==='khach'); $('beNgK').classList.toggle('hide', v!=='khach'); }
+[].forEach.call($('beAi').querySelectorAll('button'), function(b){ b.onclick = function(){ setBeAi(b.getAttribute('data-v')); }; });
+function beDv(){ var m = DCS && DCS.mon.filter(function(x){ return x.id === $('beMon').value; })[0]; $('beDv').textContent = m ? m.dv + ' (còn ' + soVN(m.ton) + ')' : ''; }
+$('beMon').onchange = beDv;
+function beVeAnh(){ dcAnhVe(BE, 'beAnh', beVeAnh); }
+$('beCam').onchange = function(){ dcAnhThem(BE, this.files, beVeAnh); this.value=''; };
+$('beLib').onchange = function(){ dcAnhThem(BE, this.files, beVeAnh); this.value=''; };
+$('beLuu').onclick = function(){
+  var mon = $('beMon').value, sl = soLuong($('beSl').value), ly = $('beLy').value.trim(), ng = BE.ai === 'khach' ? $('beNgK').value.trim() : $('beNg').value;
+  if (!mon) { toast('Chọn món bị bể / hư'); return; }
+  if (sl === '' || sl <= 0) { toast('Ghi số lượng'); $('beSl').focus(); return; }
+  if (BE.ai !== 'khach' && !ng) { toast('Chọn tên người làm bể'); return; }
+  if (ly.length < 4) { toast('Ghi lý do vì sao bể / hư'); $('beLy').focus(); return; }
+  if (!BE.anh.length) { toast('Phải chụp ảnh đồ bể nhé'); return; }
+  var b = this; b.disabled = true; var done = busy('Đang gửi…');
+  api('nv_dc_be', { dong: [{ mon: mon, sl: sl }], ai: BE.ai, nguoi: ng, ly: ly, ngay: homNay(), anh: BE.anh.map(function(a){ return { b64:a.b64, mime:a.mime }; }) }, 90000).then(function(){
+    done(); b.disabled = false; toast('Đã báo bể ✓ kho đã trừ', 3500); DCS = null; history.back();
+  }).catch(function(e){ done(); b.disabled = false; toast('Chưa gửi được: ' + e.message + ' – bấm lại nhé', 9000); });
+};
+/* xuất đồ dùng (quản lý) */
+function moDodung(){
+  DD = { anh: [], loai: 'cap' }; $('ddSl').value = '1'; $('ddLy').value = ''; $('ddNgay').value = homNay(); $('ddAnh').innerHTML = '';
+  show('dodung'); setDdLoai('cap');
+  $('ddMon').innerHTML = '<option value="">Đang tải…</option>';
+  taiDC().then(function(j){ if (S.view !== 'dodung') return;
+    if (!j.xuat) { toast('Em chưa được mở chức năng này, nhờ anh Đạt bật trong Điều hành → Nhân viên', 6000); history.back(); return; }
+    $('ddNg').innerHTML = dcNvOpt(j.nv, ''); ddVe(); })
+    .catch(function(e){ toast('Chưa tải được: ' + e.message); });
+}
+function setDdLoai(v){ DD.loai = v; [].forEach.call($('ddLoai').querySelectorAll('button'), function(b){ b.classList.toggle('on', b.getAttribute('data-v')===v); }); if (DCS) ddVe(); }
+[].forEach.call($('ddLoai').querySelectorAll('button'), function(b){ b.onclick = function(){ setDdLoai(b.getAttribute('data-v')); }; });
+function ddDangDung(){ var ng = $('ddNg').value; return (DCS.dung || []).filter(function(x){ return x.ten === ng; }); }
+function ddVe(){
+  if (!DCS) return; var cap = DD.loai === 'cap', M = {}; DCS.mon.forEach(function(m){ M[m.id] = m; });
+  $('ddMonLb').textContent = cap ? 'Món cấp (chọn đúng size)' : (DD.loai === 'thu' ? 'Món thu lại (đang giữ)' : 'Món báo hủy (đang giữ)');
+  if (cap) $('ddMon').innerHTML = dcSelMon(DCS.mon.filter(function(m){ return /^(áo|tạp dề)/i.test(m.ten) || m.nhom === 'Đồng phục'; }), '— Chọn áo / tạp dề —');
+  else { var ds = ddDangDung(); $('ddMon').innerHTML = '<option value="">'+(ds.length ? '— Chọn món —' : ($('ddNg').value ? 'Bạn này chưa được cấp gì' : 'Chọn nhân viên trước'))+'</option>' + ds.map(function(x){ var m = M[x.mon] || { ten: x.mon }; return '<option value="'+esc(x.mon)+'">'+esc(m.ten)+' · đang giữ '+soVN(x.sl)+'</option>'; }).join(''); }
+  $('ddAnhBox').classList.toggle('hide', DD.loai !== 'huy_dung'); $('ddLyBb').textContent = DD.loai === 'huy_dung' ? '*bắt buộc' : '';
+  $('ddNote').textContent = cap ? 'Cấp mới: trừ 1 áo mới khỏi kho, ghi tên + ngày bạn được cấp.' : DD.loai === 'thu' ? 'Thu lại: áo về kho "áo cũ còn dùng được", có thể cấp lại cho bạn khác.' : 'Báo hủy: áo không dùng được nữa (rách, hỏng…), phải chụp ảnh.';
+  $('ddDang').innerHTML = '';
+  var ng = $('ddNg').value, ds2 = ng ? ddDangDung() : [];
+  if (ng) $('ddDang').innerHTML = '<div class="lbl">'+esc(ng)+' đang giữ</div>' + (ds2.length ? ds2.map(function(x){ var m = M[x.mon] || { ten: x.mon }; return '<div class="mine"><span><b>'+esc(m.ten)+'</b></span><span class="pill g">'+soVN(x.sl)+'</span></div>'; }).join('') : '<p class="sub">Chưa được cấp gì.</p>');
+}
+$('ddNg').onchange = ddVe;
+function ddVeAnh(){ dcAnhVe(DD, 'ddAnh', ddVeAnh); }
+$('ddCam').onchange = function(){ dcAnhThem(DD, this.files, ddVeAnh); this.value=''; };
+$('ddLib').onchange = function(){ dcAnhThem(DD, this.files, ddVeAnh); this.value=''; };
+$('ddLuu').onclick = function(){
+  var ng = $('ddNg').value, mon = $('ddMon').value, sl = soLuong($('ddSl').value), ly = $('ddLy').value.trim();
+  if (!ng) { toast('Chọn nhân viên'); return; }
+  if (!mon) { toast('Chọn món'); return; }
+  if (sl === '' || sl <= 0) { toast('Ghi số lượng'); return; }
+  if (DD.loai === 'huy_dung' && !DD.anh.length) { toast('Phải chụp ảnh nhé'); return; }
+  if (DD.loai === 'huy_dung' && ly.length < 4) { toast('Ghi lý do hủy'); return; }
+  if (DD.loai === 'cap') { var mm = DCS.mon.filter(function(x){ return x.id === mon; })[0]; if (mm && mm.ton < sl && !confirm('Kho đang ghi còn ' + soVN(Math.max(0, mm.ton)) + ' ' + (mm.ten) + ' thôi. Vẫn cấp?')) return; }
+  var b = this; b.disabled = true; var done = busy('Đang ghi…');
+  api('nv_dc_xuat', { loai: DD.loai, dong: [{ mon: mon, sl: sl }], nguoi: ng, ly: ly || (DD.loai === 'cap' ? 'Cấp mới' : DD.loai === 'thu' ? 'Thu lại' : ''), ngay: $('ddNgay').value || homNay(), anh: DD.anh.map(function(a){ return { b64:a.b64, mime:a.mime }; }) }, 90000).then(function(){
+    done(); b.disabled = false; toast('Đã ghi ✓', 3000); DCS = null; history.back();
+  }).catch(function(e){ done(); b.disabled = false; toast('Chưa ghi được: ' + e.message, 9000); });
 };
 
 /* logo màu kem cho phiếu (html2canvas không vẽ được CSS mask → tô màu sẵn bằng canvas) */
