@@ -149,7 +149,7 @@ function sqLuongGS_(p) {
  * Mỗi lần ghi, app ghi thêm 1 dòng vào tab "Nhật ký" của file Sheet "Kiểm tra dụng cụ" (công thức trong tab Tổng tự tính). */
 var SQ_DC = 'SQ_DungCu', H_SQ_DC = ['ID', 'Nhóm', 'Tên', 'Đơn vị', 'Giá nhập', 'Tồn đầu', 'Thứ tự', 'Ẩn', 'Sửa lúc'];
 var SQ_DCNK = 'SQ_DungCuNK', H_SQ_DCNK = ['ID', 'Ngày', 'Mã món', 'Tên món', 'Loại', 'SL', 'Ai', 'Tên người', 'Lý do', 'Ảnh', 'Người ghi', 'Tạo lúc', 'Sheet', 'Thêm'];
-var DC_SHEET_ID = '1R2G6qoymY1VpmsD1qINju27qMRPJJdREgKm_lDw31zI', DC_LOAI = { nhap: 1, cap: 1, thu: 1, huy_dung: 1, be: 1 };
+var DC_SHEET_ID = '1rgjs1zqoPwAh82p-vkhH-pmb7aNjlYbjUMus8YFsEEk', DC_LOAI = { nhap: 1, cap: 1, thu: 1, huy_dung: 1, be: 1 };
 function sqDcTab_() { return sqTab_(SQ_DC, H_SQ_DC, function (sh) { sh.getRange('A:D').setNumberFormat('@'); sh.getRange('I:I').setNumberFormat('@'); }); }
 function sqDcNKTab_() { return sqTab_(SQ_DCNK, H_SQ_DCNK, function (sh) { sh.getRange('A:E').setNumberFormat('@'); sh.getRange('G:N').setNumberFormat('@'); }); }
 function sqDcId_(t) { return khongDau_(t).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || ('mon-' + Date.now().toString(36)); }
@@ -254,7 +254,7 @@ function sqDcNhap_(p) {
     return { ok: true, mon: mon.length, nk: nk.length };
   });
 }
-/* ---- ghi sang file Sheet "Kiểm tra dụng cụ" (cần quyền chỉnh sửa cho tài khoản chạy app) ---- */
+/* ---- ghi sang Google Sheet "Dụng cụ Tiệm Ăn Gặm (app ghi tự động)" trong Drive của anh Đạt (chia sẻ chỉnh sửa cho tài khoản chạy app) ---- */
 function sqDcSheet_() { return SpreadsheetApp.openById(DC_SHEET_ID); }
 function sqDcTongDong_(ss, ten, dv, tonDau) { // tìm / thêm dòng món trong tab Tổng (giữ công thức)
   var sh = ss.getSheetByName('Tổng'), n = sh.getLastRow(), a = sh.getRange(1, 1, Math.max(n, 1), 1).getValues();
@@ -275,7 +275,7 @@ function sqDcDongBo_() {
   var props = PropertiesService.getScriptProperties();
   var nk = sqDcNK_().filter(function (e) { return e.sheet !== 'ok'; }); if (!nk.length) { props.deleteProperty('DC_SHEET_LOI'); return { n: 0 }; }
   var ss;
-  try { ss = sqDcSheet_(); } catch (e) { props.setProperty('DC_SHEET_LOI', 'Chưa có quyền sửa file Sheet "Kiểm tra dụng cụ" – nhờ chủ file chia sẻ quyền chỉnh sửa cho tiemangam2015@gmail.com'); throw new Error(props.getProperty('DC_SHEET_LOI')); }
+  try { ss = sqDcSheet_(); } catch (e) { props.setProperty('DC_SHEET_LOI', 'Chưa ghi được sang Sheet "Dụng cụ Tiệm Ăn Gặm (app ghi tự động)" – kiểm tra file còn chia sẻ quyền chỉnh sửa cho tiemangam2015@gmail.com'); throw new Error(props.getProperty('DC_SHEET_LOI')); }
   var mon = sqDcMon_(), byId = {}; mon.forEach(function (m) { byId[m.id] = m; });
   var sh = ss.getSheetByName('Nhật ký'), out = [];
   nk.forEach(function (e) {
