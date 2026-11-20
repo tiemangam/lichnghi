@@ -222,6 +222,8 @@ table.tnm td.r{color:var(--do);font-weight:700}table.tnm td.y{color:#8a5d10;font
 .spb span{font-size:34px}.spb small{font-weight:500;font-size:12.5px;color:var(--kem)}
 .spf{border-radius:12px;padding:9px 11px;margin-top:8px;font-size:13.5px;font-weight:600;background:var(--xanhn);color:var(--xanh)}
 .spf.r{background:var(--don);color:var(--do)}.spf.i{background:#efe7d6;color:var(--muc2)}
+.spf .stt{display:block;margin-top:4px;font-size:12.5px;font-weight:700}.spf.dang{background:#FBEFD2;color:#7A5512}.spf.cho{background:#f4efe3;color:var(--muc2)}
+.spf .spn2{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:xoay .8s linear infinite;vertical-align:-2px;margin-right:5px}@keyframes xoay{to{transform:rotate(360deg)}}
 .spn{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px dashed var(--vien);font-size:13.5px}
 .spn:last-child{border-bottom:0}
 .spn small{display:block;color:var(--muc2);font-size:11.5px}
@@ -2062,23 +2064,31 @@ function veSPNgay(ds){
     return '<div class="spn"'+(cu?' style="opacity:.6"':'')+'><span><b>'+dmy(x.ngay).slice(0,5)+'</b>'+(x.ngay===homNay()?' · hôm nay':'')+'<small>'+F.map(function(f){ return (x[f[0]]?'✓ ':cu?'– ':'✗ ')+f[1]; }).join(' · ')+(ai?' · '+esc(ai)+' gửi':'')+'</small></span><span class="pill '+(co===4?'g':cu?'m':co?'y':'m')+'">'+(co===4?'Đủ':cu?'Số cũ':co?'Thiếu '+(4-co)+' file':'Chưa gửi')+'</span></div>'; }).join('');
 }
 function veSP(){
-  var ok = SP.ds.filter(function(x){ return !x.loi; });
-  $('spDs').innerHTML = SP.ds.map(function(x){ return '<div class="spf '+(x.loi?(x.loai==='cc'?'i':'r'):'')+'">'+(x.loi ? '⚠ '+esc(x.loi) : '✓ '+esc(x.mo))+'</div>'; }).join('') +
-    (function(){ if (!ok.length || ok.every(function(x){ return x.loai==='khoky' || x.loai==='monky' || x.loai==='monkg'; })) return ''; var th = [['tt','Phương thức thanh toán'],['mon','Danh mục mặt hàng'],['kho','Báo cáo kho hàng'],['tq','Doanh thu tổng quan']].filter(function(f){ return !ok.some(function(x){ return x.loai===f[0]; }); }).map(function(f){ return f[1]; });
+  var ok = SP.ds.filter(function(x){ return !x.loi && x.tt !== 'ok'; });
+  var TT = { cho: ['cho', '⏳ Chờ gửi'], dang: ['dang', '<span class="spn2"></span>Đang gửi…'], ok: ['', '✅ Đã gửi thành công'], loi: ['r', '❌ Chưa gửi được'] };
+  $('spDs').innerHTML = SP.ds.map(function(x){ if (x.loi) return '<div class="spf '+(x.loai==='cc'?'i':'r')+'">⚠ '+esc(x.loi)+'</div>';
+      var t = x.tt ? TT[x.tt] : null;
+      return '<div class="spf '+(t ? t[0] : '')+'">'+(t ? '' : '✓ ')+esc(x.mo)+(t ? '<span class="stt">'+t[1]+(x.tt==='loi' && x.loiGui ? ': '+esc(x.loiGui) : '')+(x.tt==='dang' && x.thu ? ' (thử lại lần '+x.thu+')' : '')+'</span>' : '')+'</div>'; }).join('') +
+    (SP.ds.length && SP.ds.every(function(x){ return x.loi || x.tt === 'ok'; }) && SP.ds.some(function(x){ return x.tt === 'ok'; }) ? '<div class="spf" style="text-align:center;font-size:15px">🎉 Đã gửi xong '+SP.ds.filter(function(x){ return x.tt === 'ok'; }).length+' file. Cảm ơn em!</div>' : '') +
+    (function(){ var hop = SP.ds.filter(function(x){ return !x.loi; }); if (!hop.length || hop.every(function(x){ return x.loai==='khoky' || x.loai==='monky' || x.loai==='monkg'; })) return ''; var th = [['tt','Phương thức thanh toán'],['mon','Danh mục mặt hàng'],['kho','Báo cáo kho hàng'],['tq','Doanh thu tổng quan']].filter(function(f){ return !hop.some(function(x){ return x.loai===f[0]; }); }).map(function(f){ return f[1]; });
       return th.length ? '<div class="spf i">Còn thiếu: '+th.join(', ')+' (gửi trước phần đã có cũng được).</div>' : ''; })() +
-    (ok.length ? '<button class="btn" id="spGui" style="margin-top:10px">📤 Gửi cho anh Đạt ('+ok.length+' file)</button>' : '');
-  var b = $('spGui'); if (b) b.onclick = function(){ b.disabled = true; b.textContent = 'Đang gửi…';
-    // nhân viên bấm gửi 1 lần: app tự gửi từng file một, lỗi thì tự thử lại 3 lần (không báo lỗi ngay)
-    var cho = function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }, gui = ok.slice(), tong = gui.length, xong = 0, lastDs = null, loiCuoi = '';
-    var mot = function(x, thu){ return api('nv_sapo_luu', { ds: [{ ngay: x.ngay, loai: x.loai, d: x.d }] }, 60000).catch(function(e){ if (thu < 4) { var bb = $('spGui'); if (bb) bb.textContent = 'Đang gửi ' + (xong + 1) + '/' + tong + ' · thử lại lần ' + (thu + 1) + '…'; return cho(3000 * (thu + 1)).then(function(){ return mot(x, thu + 1); }); } throw e; }); };
-    var chay = function(){ var x = gui[0]; if (!x) return Promise.resolve(); b.textContent = 'Đang gửi ' + (xong + 1) + '/' + tong + '… (để màn hình sáng, đừng chuyển app)';
-      return mot(x, 0).then(function(j){ lastDs = j.ds; gui.shift(); SP.ds = SP.ds.filter(function(y){ return y !== x; }); xong++; return chay(); }); };
-    chay().then(function(){
-      SP.ds = []; veSP(); if (lastDs) { lsJ.set('gam_sp_ngay', lastDs); veSPNgay(lastDs); } toast('Đã gửi số Sapo ✓ Cảm ơn em!');
-    }).catch(function(e){ veSP(); var bb = $('spGui'); if (bb) { bb.textContent = '📤 Gửi lại (' + gui.length + ' file còn lại)'; } toast('Đã gửi ' + xong + '/' + tong + ' file. Còn ' + gui.length + ' file chưa gửi được: ' + e.message + ' – bấm gửi lại', 7000); }); };
+    (ok.length ? '<button class="btn" id="spGui" style="margin-top:10px"'+(SP.dang?' disabled':'')+'>'+(SP.dang ? 'Đang gửi… (để màn hình sáng, đừng chuyển app)' : ok.some(function(x){ return x.tt === 'loi'; }) ? '📤 Gửi lại ('+ok.length+' file chưa gửi được)' : '📤 Gửi cho anh Đạt ('+ok.length+' file)')+'</button>' : '');
+  var b = $('spGui'); if (b) b.onclick = function(){
+    // nhân viên bấm gửi 1 lần: app gửi từng file, mỗi file hiện ✅ đã gửi / ❌ chưa gửi được; lỗi thì tự thử lại 4 lần
+    var cho = function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }, gui = ok.slice(), lastDs = null;
+    SP.dang = true; gui.forEach(function(x){ x.tt = 'cho'; x.thu = 0; x.loiGui = ''; }); veSP();
+    var mot = function(x, thu){ x.thu = thu; veSP(); return api('nv_sapo_luu', { ds: [{ ngay: x.ngay, loai: x.loai, d: x.d }] }, 60000).catch(function(e){ if (thu < 4) return cho(3000 * (thu + 1)).then(function(){ return mot(x, thu + 1); }); throw e; }); };
+    var chay = function(k){ var x = gui[k]; if (!x) return Promise.resolve(); x.tt = 'dang'; veSP();
+      return mot(x, 0).then(function(j){ lastDs = j.ds; x.tt = 'ok'; }, function(e){ x.tt = 'loi'; x.loiGui = e.message; }).then(function(){ veSP(); return chay(k + 1); }); };
+    chay(0).then(function(){
+      SP.dang = false; veSP(); if (lastDs) { lsJ.set('gam_sp_ngay', lastDs); veSPNgay(lastDs); } else taiSPNgay();
+      var n = gui.filter(function(x){ return x.tt === 'ok'; }).length, hong = gui.length - n;
+      toast(hong ? 'Đã gửi ' + n + '/' + gui.length + ' file. ' + hong + ' file chưa gửi được – bấm Gửi lại' : 'Đã gửi số Sapo ✓ Cảm ơn em!', hong ? 7000 : 3500);
+    }); };
 }
 $('spFile').onchange = function(){
   var fs = [].slice.call(this.files || []); this.value = '';
+  if (SP.dang) { toast('Đang gửi – chờ gửi xong rồi chọn file mới nhé'); return; }
   if (!fs.length) return;
   $('spDs').innerHTML = '<div class="spf i">Đang đọc file…</div>';
   napXlsx().then(function(){ return Promise.all(fs.map(function(f){ return f.arrayBuffer().then(function(buf){
