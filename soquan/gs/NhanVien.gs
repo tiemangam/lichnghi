@@ -149,7 +149,7 @@ function sqLuongGS_(p) {
  * Mỗi lần ghi, app ghi thêm 1 dòng vào tab "Nhật ký" của file Sheet "Kiểm tra dụng cụ" (công thức trong tab Tổng tự tính). */
 var SQ_DC = 'SQ_DungCu', H_SQ_DC = ['ID', 'Nhóm', 'Tên', 'Đơn vị', 'Giá nhập', 'Tồn đầu', 'Thứ tự', 'Ẩn', 'Sửa lúc'];
 var SQ_DCNK = 'SQ_DungCuNK', H_SQ_DCNK = ['ID', 'Ngày', 'Mã món', 'Tên món', 'Loại', 'SL', 'Ai', 'Tên người', 'Lý do', 'Ảnh', 'Người ghi', 'Tạo lúc', 'Sheet', 'Thêm'];
-var DC_SHEET_ID = '1rgjs1zqoPwAh82p-vkhH-pmb7aNjlYbjUMus8YFsEEk', DC_LOAI = { nhap: 1, cap: 1, thu: 1, huy_dung: 1, be: 1 };
+var DC_SHEET_ID = '1rgjs1zqoPwAh82p-vkhH-pmb7aNjlYbjUMus8YFsEEk', DC_LOAI = { nhap: 1, cap: 1, thu: 1, huy_dung: 1, be: 1, co_san: 1 };
 function sqDcTab_() { return sqTab_(SQ_DC, H_SQ_DC, function (sh) { sh.getRange('A:D').setNumberFormat('@'); sh.getRange('I:I').setNumberFormat('@'); }); }
 function sqDcNKTab_() { return sqTab_(SQ_DCNK, H_SQ_DCNK, function (sh) { sh.getRange('A:E').setNumberFormat('@'); sh.getRange('G:N').setNumberFormat('@'); }); }
 function sqDcId_(t) { return khongDau_(t).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || ('mon-' + Date.now().toString(36)); }
@@ -178,6 +178,7 @@ function sqDcTinh_(mon, nk) {
     else if (e.loai === 'cap') { ton[e.mon] -= e.sl; dung[k] = (dung[k] || 0) + e.sl; }
     else if (e.loai === 'thu') { dung[k] = (dung[k] || 0) - e.sl; var v = e.vao || e.mon; ton[v] = (ton[v] || 0) + e.sl; }
     else if (e.loai === 'huy_dung') dung[k] = (dung[k] || 0) - e.sl;
+    else if (e.loai === 'co_san') dung[k] = (dung[k] || 0) + e.sl; // đang mặc từ trước: không trừ kho
   });
   var nguoi = [];
   Object.keys(dung).forEach(function (k) { if (dung[k] > 0) { var p = k.split('|'); nguoi.push({ ten: p[0], mon: p[1], sl: dung[k] }); } });
@@ -210,10 +211,10 @@ function sqDcMonLuu_(p) {
 // ghi nhật ký: dong = [{mon, sl}] + loai, ngay, nguoi, ai, ly, anh (b64)
 function sqDcGhi_(p, ghiBoi) {
   var loai = String(p.loai || ''); if (!DC_LOAI[loai]) throw new Error('Loại không hợp lệ.');
-  var ngay = sqKiemNgay_(p.ngay || homNay_()), nguoi = chu_(p.nguoi, 40), ai = p.ai === 'khach' ? 'Khách' : (loai === 'be' || loai === 'cap' || loai === 'thu' || loai === 'huy_dung' ? 'Nhân viên' : ''), ly = chu_(p.ly, 150);
+  var ngay = sqKiemNgay_(p.ngay || homNay_()), nguoi = chu_(p.nguoi, 40), ai = p.ai === 'khach' ? 'Khách' : (loai === 'be' || loai === 'cap' || loai === 'thu' || loai === 'huy_dung' || loai === 'co_san' ? 'Nhân viên' : ''), ly = chu_(p.ly, 150);
   var dong = (p.dong || []).slice(0, 30).map(function (d) { return { mon: String(d.mon || ''), sl: Math.round(so_(d.sl) * 100) / 100 }; }).filter(function (d) { return d.mon && d.sl > 0; });
   if (!dong.length) throw new Error('Chưa chọn món / số lượng.');
-  if ((loai === 'cap' || loai === 'thu' || loai === 'huy_dung') && !nguoi) throw new Error('Chưa ghi tên nhân viên.');
+  if ((loai === 'cap' || loai === 'thu' || loai === 'huy_dung' || loai === 'co_san') && !nguoi) throw new Error('Chưa ghi tên nhân viên.');
   if (loai === 'be' && ai === 'Nhân viên' && !nguoi) throw new Error('Chưa ghi tên người làm bể.');
   var canAnh = loai === 'be' || loai === 'huy_dung', anh = (p.anh || []).slice(0, 3);
   if (canAnh && !anh.length && !p.khongAnh) throw new Error('Phải chụp ảnh nhé.');
@@ -285,6 +286,7 @@ function sqDcDongBo_() {
     else if (e.loai === 'cap') out.push([d, m.ten, '', e.sl, '', 'Nhân viên', e.nguoi, e.ly || 'Cấp cho ' + e.nguoi]);
     else if (e.loai === 'be') out.push([d, m.ten, '', '', e.sl, e.ai || 'Nhân viên', e.nguoi, e.ly]);
     else if (e.loai === 'thu') { var v = byId[e.vao] || m; sqDcTongDong_(ss, v.ten, v.dv, 0); out.push([d, v.ten, e.sl, '', '', 'Nhân viên', e.nguoi, 'Thu lại của ' + e.nguoi + (e.ly ? ': ' + e.ly : '')]); }
+    else if (e.loai === 'co_san') return; // ghi nhận đang mặc từ trước: không đổi kho nên không ghi Nhật ký
     else if (e.loai === 'huy_dung') out.push([d, m.ten, '', '', '', 'Nhân viên', e.nguoi, 'Hủy đồ đang dùng (' + e.sl + ' ' + (m.dv || 'cái') + ')' + (e.ly ? ': ' + e.ly : '')]);
   });
   if (out.length) {
