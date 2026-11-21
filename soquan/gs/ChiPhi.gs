@@ -181,3 +181,184 @@ function sqCpTong_(p) {
   });
   return { tu: tu, den: den, tuT: tuT, denT: denT, homNay: hn, moi: moiDs, p: ph, d: dong, truoc: truoc };
 }
+
+/* =====================================================================
+ * TỔNG QUAN CHI PHÍ THEO NHÓM (Điều hành → Chi phí & Hóa đơn → 📊 Tổng quan)
+ *  - mọi khoản chi trong khoảng ngày (hóa đơn ảnh, phiếu đi chợ, hóa đơn quen, chi tại quầy, cúng kiến, sửa quán, ship, lương, điện nước…)
+ *    gom theo NHÓM → MÓN → NGÀY MUA; kèm % doanh thu (Sapo) và % tổng chi, so cùng kỳ tháng trước
+ *  - nhóm của từng món: anh đã xếp (nhớ) → theo loại chi anh chọn → app đoán theo tên → "Chưa xếp nhóm"
+ *  - đổi tên / gộp tên món chỉ đổi trong màn tổng quan, KHÔNG sửa hóa đơn gốc (P&L không đổi)
+ * ===================================================================== */
+var CPN_NHOM = 'DH_NhomChi', H_CPN_NHOM = ['Mã', 'Tên', 'Icon', 'Thứ tự', 'Gộp vào', 'Sửa lúc'];
+var CPN_MON = 'DH_NhomMon', H_CPN_MON = ['Kiểu', 'Khóa', 'Tên chuẩn', 'Nhóm', 'Sửa lúc'];   // Kiểu: mon (đúng tên món) | chua (tên món có chứa chữ này)
+var CPN_MAC_DINH = [
+  ['changa', 'Chân gà', '🍗'], ['bo', 'Bò', '🥩'], ['heo', 'Heo & thịt khác', '🐷'], ['ca', 'Cá & hải sản', '🐟'],
+  ['giavi', 'Gia vị · hành tỏi ớt · xay', '🌶'], ['rau', 'Rau củ · trái cây', '🥬'], ['gao', 'Gạo · bún · bánh tráng · trứng', '🍚'],
+  ['nuoc', 'Nước uống · sữa chua', '🥤'], ['baobi', 'Bao bì · giấy · vật tư', '📦'], ['ship', 'Tiền ship', '🛵'],
+  ['cung', 'Cúng kiến', '🙏'], ['sua', 'Sửa quán · vật dụng', '🔧'], ['ga', 'Ga · gas', '🔥'], ['luong', 'Lương · thưởng', '👥'],
+  ['codinh', 'Tiền nhà · điện nước · cố định', '🏠'], ['khac', 'Chi khác', '📌']
+];
+// loại chi anh đã chọn ở hóa đơn → nhóm (nvl / khác để app đoán theo tên món)
+var CPN_THEO_LOAI = { cd: 'codinh', luongkhac: 'luong', sua: 'sua', ga: 'ga', banhmi: 'gao' };
+// app đoán theo tên món (so trên chữ có dấu, chữ thường). Thứ tự = ưu tiên.
+var CPN_DOAN = [
+  ['cung', /cúng|nhang|hương|vàng mã|tiền vàng|(^| )nến( |$)|(^| )hoa( |$)/],
+  ['ship', /ship|vận chuyển|phí giao|giao hàng|grab|ahamove|(^| )bế( |$)|xe ôm/],
+  ['ga', /(^| )(ga|gas)( |$)|bình ga|bình gas/],
+  ['sua', /sửa|(^| )sơn( |$)|(^| )thợ( |$)|bóng đèn|ổ cắm|dây điện|ống nước|xi măng|đinh|ốc vít|bản lề|ổ khóa|công thợ|vòi nước|quạt|máy lạnh|ghế|(^| )bàn( |$)|kệ |nồi|chảo|(^| )dao( |$)|thớt|chén|dĩa|đĩa|(^| )tô( |$)|(^| )khay( |$)|rổ|(^| )thau( |$)|xô|vá|keo dán/],
+  ['gao', /trứng|bánh mì|bột mì/],
+  ['rau', /húng|rau răm|tía tô/],
+  ['changa', /chân gà|cánh gà|đùi gà|sụn gà|(^| )gà( |$)|gà ta|gà cắt|rút xương/],
+  ['bo', /(^| )bò( |$)|gân bò|bắp bò|(^| )nạm( |$)|thăn bò|(^| )gầu( |$)|đuôi bò|xương bò|lá lách|bắp hoa/],
+  ['ca', /(^| )cá( |$)|(^| )tôm( |$)|(^| )mực( |$)|(^| )cua( |$)|(^| )ghẹ( |$)|(^| )ốc( |$)|nghêu|(^| )sò( |$)|hải sản|lươn|(^| )ếch( |$)|chả cá|cá viên/],
+  ['giavi', /gia vị|(^| )hành|(^| )tỏi|(^| )ớt|(^| )xay( |$)|(^| )sả( |$)|gừng|tiêu|(^| )muối|(^| )đường|nước mắm|nước tương|dầu ăn|(^| )bột( |$)|hạt nêm|bột ngọt|mì chính|sa tế|nghệ|riềng|(^| )quế( |$)|(^| )hồi( |$)|tương ớt|tương cà|giấm|dầu hào|mắm|(^| )me( |$)|ớt bột|sa tê|tương/],
+  ['nuoc', /(^| )nước( |$)|sữa|coca|pepsi|(^| )bia( |$)|(^| )trà( |$)|cà phê|(^| )đá( |$)|sting|7up|number one|(^| )c2( |$)|yaourt|soda|nước mía|nước suối|lavie|aquafina|rượu|lipton|tắc|(^| )lon( |$)|sương sáo/],
+  ['baobi', /(^| )(bao|túi|hộp|ly|giấy|màng|ống hút|khăn|nilon|ni lông|găng|bọc|đũa|muỗng|thìa|nĩa|tăm|bột giặt|chổi|cước|dây thun|băng keo|decal|cuộn|khẩu trang|pin)( |$)|nước rửa|nước lau|xà phòng|giấy in|mực in|bao tay|bao rác|bao bì/],
+  ['gao', /(^| )gạo( |$)|(^| )bún( |$)|(^| )phở( |$)|bánh tráng|bánh phở|(^| )miến( |$)|(^| )mì( |$)|(^| )nui( |$)|trứng|bánh mì|bột mì|(^| )nếp( |$)|hủ tiếu|bánh canh|(^| )xôi( |$)|bánh/],
+  ['rau', /(^| )rau|(^| )củ( |$)|(^| )cải|dưa leo|dưa chuột|cà chua|cà rốt|(^| )cà( |$)|(^| )húng|(^| )ngò|thì là|(^| )hẹ( |$)|(^| )giá( |$)|(^| )đậu|(^| )nấm|khoai|(^| )bí( |$)|chanh|(^| )cam( |$)|dưa hấu|trái cây|chuối|xoài|(^| )thơm( |$)|(^| )dứa( |$)|(^| )bơ( |$)|(^| )dâu( |$)|(^| )nho( |$)|(^| )táo( |$)|(^| )ổi( |$)|mướp|(^| )măng|su hào|su su|xà lách|(^| )lá( |$)|(^| )tía tô|diếp cá|kinh giới|răm|(^| )dưa( |$)|bắp cải|mồng tơi|(^| )mơ( |$)/],
+  ['heo', /heo|sườn|ba chỉ|ba rọi|3 rọi|(^| )thịt|(^| )giò( |$)|(^| )chả|(^| )lòng( |$)|(^| )tim( |$)|(^| )cật( |$)|móng giò|(^| )nạc|(^| )dồi|tai heo|(^| )xương|(^| )mỡ( |$)|(^| )nem|(^| )vịt|(^| )ngan|(^| )ngỗng|(^| )dê( |$)|(^| )cừu|lạp xưởng|xúc xích/]
+];
+function cpnKhoa_(s) { return khongDau_(String(s || '')).toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+function cpnTab_(ten, head) { return sqTab_(ten, head, function (sh) { sh.getRange('A:C').setNumberFormat('@'); }); }
+function cpnNhomDoc_() {
+  var sh = cpnTab_(CPN_NHOM, H_CPN_NHOM), n = sh.getLastRow();
+  if (n < 2) {
+    var luc = bayGio_();
+    sh.getRange(2, 1, CPN_MAC_DINH.length, 6).setValues(CPN_MAC_DINH.map(function (g, i) { return [g[0], g[1], g[2], i + 1, '', luc]; }));
+    n = sh.getLastRow();
+  }
+  return sh.getRange(2, 1, n - 1, 6).getValues().map(function (r, i) { return { id: String(r[0]), ten: String(r[1]), icon: String(r[2] || '📌'), tt: so_(r[3]) || (i + 1), gop: String(r[4] || ''), row: i + 2 }; });
+}
+function cpnLuat_() {
+  var sh = cpnTab_(CPN_MON, H_CPN_MON), n = sh.getLastRow(), ex = {}, chua = [];
+  if (n >= 2) sh.getRange(2, 1, n - 1, 5).getValues().forEach(function (r, i) {
+    var k = String(r[1] || ''); if (!k) return;
+    var o = { kieu: String(r[0]), khoa: k, ten: String(r[2] || ''), nhom: String(r[3] || ''), row: i + 2 };
+    if (o.kieu === 'chua') chua.push(o); else ex[k] = o;
+  });
+  chua.sort(function (a, b) { return b.khoa.length - a.khoa.length; });
+  return { ex: ex, chua: chua, sh: sh };
+}
+function cpnDoan_(ten) {
+  var t = ' ' + String(ten || '').toLowerCase().normalize('NFC') + ' ';
+  for (var i = 0; i < CPN_DOAN.length; i++) if (CPN_DOAN[i][1].test(t)) return CPN_DOAN[i][0];
+  return '';
+}
+// → { g: mã nhóm, src: 't' (anh đã xếp) | 'k' (theo loại chi) | 'd' (app đoán) | 'c' (chưa xếp), ten: tên hiển thị }
+function cpnXep_(ten, k, L, gopMap) {
+  var kh = cpnKhoa_(ten), r = L.ex[kh], disp = ten, g = '', src = 'c';
+  if (r && r.ten) { disp = r.ten; }
+  var dk = r && r.ten ? cpnKhoa_(r.ten) : kh;
+  var r2 = r || L.ex[dk];
+  if (r2 && r2.nhom) { g = r2.nhom; src = 't'; }
+  if (!g) for (var i = 0; i < L.chua.length; i++) if (L.chua[i].nhom && (' ' + dk + ' ').indexOf(' ' + L.chua[i].khoa + ' ') >= 0) { g = L.chua[i].nhom; src = 't'; break; }
+  if (!g && CPN_THEO_LOAI[k]) { g = CPN_THEO_LOAI[k]; src = 'k'; }
+  if (!g) { var d = cpnDoan_(disp) || cpnDoan_(ten); if (d) { g = d; src = 'd'; } }
+  if (!g && k === 'khac') { g = 'khac'; src = 'k'; }
+  if (g) { for (var s = 0; s < 6 && gopMap[g] && gopMap[g].gop; s++) g = gopMap[g].gop; if (!gopMap[g]) { g = ''; src = 'c'; } }
+  return { g: g || 'chua', src: g ? src : 'c', ten: disp };
+}
+function cpnGopMap_(ds) { var m = {}; ds.forEach(function (g) { m[g.id] = g; }); return m; }
+
+// các dòng chi trong khoảng ngày: [{pi, ngay, ten, sl, dv, tien, k}] + danh sách phiếu
+function cpnDong_(tu, den, metas) {
+  var ph = [], dong = [], boDauTu = 0;
+  sqPhieuTrong_(tu, den).forEach(function (x) {
+    if (x.loai === LOAI.BILL || !x.tong) return;
+    var parts = []; try { parts = plTach_(Object.assign({}, x, { meta: metas[x.id] || null })); } catch (e) { parts = [{ k: 'nvl', tien: x.tong, dong: x.mon }]; }
+    var kp = function (p) { return p.k === 'cd' && p.khoan === 'luong' ? 'luongkhac' : p.k; };
+    var kOf = []; parts.forEach(function (p) { (p.dong || []).forEach(function (d) { var i = x.mon.indexOf(d); if (i >= 0) kOf[i] = kp(p); }); });
+    var k0 = parts[0] ? kp(parts[0]) : 'nvl', moi = sqCpKhoaMoi_(x).ten;
+    var pi = ph.length, tong = 0, co = 0, bo = 0;
+    var them = function (ten, sl, dv, tien, k) { if (k === 'dautu') { bo += tien; return; } dong.push([pi, ten, sl, dv, tien, k]); tong += tien; co++; };
+    x.mon.forEach(function (d, i) { var t = so_(d.tien); if (!t || !d.ten) return; them(d.ten, d.sl === '' || d.sl == null ? '' : so_(d.sl), d.dv || '', t, kOf[i] || k0); });
+    if (!co && !bo) them(moi || x.nhom, '', '', so_(x.tong), k0);
+    boDauTu += bo;
+    if (co) ph.push([x.id, x.ngay, moi, tong, (x.anh || []).slice(0, 3), x.loai === LOAI.HD ? 'hd' : x.loai === LOAI.TD ? 'td' : x.loai === LOAI_CHU ? 'chu' : 'dc', x.nguoi || '']);
+  });
+  var doi = sqQuayDoi_();
+  sqTnRows_().forEach(function (x) {
+    if (x.ngay < tu || x.ngay > den) return;
+    var pi = -1, tong = 0;
+    (x.chi || []).forEach(function (r) {
+      if (!r.amount) return;
+      var auto = !CP_LUAN_CHUYEN.test(khongDau_(r.note)), kk = x.ngay + '|' + x.ca + '|' + khongDau_(r.note);
+      if (!(doi[kk] === undefined ? auto : doi[kk])) return;
+      if (pi < 0) { pi = ph.length; ph.push(['q:' + x.ngay + '|' + x.ca, x.ngay, 'Chi tại quầy · ca ' + x.ca, 0, [], 'quay', x.nguoi || '']); }
+      var k = plQuayLoai_(r.note); dong.push([pi, r.note, '', '', r.amount, k]); tong += r.amount; ph[pi][3] = tong;
+    });
+  });
+  return { ph: ph, dong: dong, boDauTu: boDauTu };
+}
+
+function sqCpNhom_(p) {
+  var hn = homNay_(), N = /^\d{4}-\d{2}-\d{2}$/;
+  var den = N.test(String(p.den || '')) ? p.den : hn, tu = N.test(String(p.tu || '')) ? p.tu : den.slice(0, 8) + '01';
+  if (tu > den) { var t0 = tu; tu = den; den = t0; }
+  if (tu < congNgay_(den, -95)) tu = congNgay_(den, -95);
+  var tuT = sqThangLui_(tu), denT = sqThangLui_(den);
+  var metas = {}; sqMetaRows_().forEach(function (m) { metas[m.id] = m; });
+  var ds = cpnNhomDoc_(), gop = cpnGopMap_(ds), L = cpnLuat_();
+  var A = cpnDong_(tu, den, metas), B = cpnDong_(tuT, denT, metas);
+  var phTruoc = {}; // cùng kỳ tháng trước: chỉ cần tổng theo nhóm
+  var truoc = {}, truocTong = 0;
+  B.dong.forEach(function (r) { var x = cpnXep_(r[1], r[5], L, gop); truoc[x.g] = (truoc[x.g] || 0) + r[4]; truocTong += r[4]; });
+  var dong = A.dong.map(function (r) { var x = cpnXep_(r[1], r[5], L, gop); return [r[0], r[1], x.g, r[2], r[3], r[4], x.src, x.ten === r[1] ? '' : x.ten]; });
+  var dt = 0, dtNgay = 0, thieu = 0, dtT = 0;
+  try { var m = plNapDT_(tu, den); Object.keys(m).forEach(function (d) { if (m[d]) { dt += m[d].R; dtNgay++; } else thieu++; }); } catch (e) { }
+  try { var mt = plNapDT_(tuT, denT); Object.keys(mt).forEach(function (d) { if (mt[d]) dtT += mt[d].R; }); } catch (e) { }
+  return { tu: tu, den: den, tuT: tuT, denT: denT, homNay: hn, dt: Math.round(dt), dtNgay: dtNgay, dtThieu: thieu, dtTruoc: Math.round(dtT),
+    nhom: ds.filter(function (g) { return !g.gop; }).sort(function (a, b) { return a.tt - b.tt; }).map(function (g) { return { id: g.id, ten: g.ten, icon: g.icon }; }),
+    ph: A.ph, d: dong, truoc: truoc, truocTong: truocTong, boDauTu: A.boDauTu };
+}
+
+// Gán món vào nhóm / đổi tên món (anh Đạt). mon: danh sách tên gốc trên hóa đơn; ten: tên chuẩn mới (bỏ trống = giữ); nho: nhớ cả chữ này
+function sqCpNhomGan_(p) {
+  var mon = (Array.isArray(p.mon) ? p.mon : []).map(function (s) { return chu_(s, 120); }).filter(function (s) { return cpnKhoa_(s); }).slice(0, 60);
+  var nhom = chu_(p.nhom, 20), ten = chu_(p.ten, 120), nho = p.nho === true;
+  if (!mon.length) throw new Error('Chưa chọn món.');
+  if (nhom && nhom !== 'chua' && !cpnNhomDoc_().some(function (g) { return g.id === nhom; })) throw new Error('Không có nhóm này.');
+  if (nhom === 'chua') nhom = '';
+  return khoa_(function () {
+    var L = cpnLuat_(), sh = L.sh, luc = bayGio_(), n = 0;
+    var ghi = function (kieu, khoa, tenChuan, nh) {
+      var cu = kieu === 'chua' ? L.chua.filter(function (o) { return o.khoa === khoa; })[0] : L.ex[khoa], row = [kieu, khoa, tenChuan, nh, luc];
+      if (cu) sh.getRange(cu.row, 1, 1, 5).setValues([row]);
+      else { var r = sh.getLastRow() + 1; sh.getRange(r, 1, 1, 5).setValues([row]); var o = { kieu: kieu, khoa: khoa, ten: tenChuan, nhom: nh, row: r }; if (kieu === 'chua') L.chua.push(o); else L.ex[khoa] = o; }
+      n++;
+    };
+    var tenKhoa = ten ? cpnKhoa_(ten) : '';
+    mon.forEach(function (t) {
+      var kh = cpnKhoa_(t), cu = L.ex[kh] || {};
+      ghi('mon', kh, ten || cu.ten || '', nhom || cu.nhom || '');
+    });
+    if (ten && tenKhoa && !mon.some(function (t) { return cpnKhoa_(t) === tenKhoa; })) { var cu2 = L.ex[tenKhoa] || {}; ghi('mon', tenKhoa, '', nhom || cu2.nhom || ''); }
+    if (nho && nhom) { var kk = cpnKhoa_(ten || mon[0]); if (kk.length >= 3) ghi('chua', kk, '', nhom); }
+    return { luu: n };
+  });
+}
+
+// Danh sách nhóm: đổi tên / icon / thứ tự / thêm nhóm mới / gộp. ds: [{id, ten, icon}] theo thứ tự mới; gop: {tu, vao}
+function sqCpNhomDs_(p) {
+  var ds = Array.isArray(p.ds) ? p.ds.slice(0, 40) : null, gop = p.gop && p.gop.tu ? { tu: chu_(p.gop.tu, 20), vao: chu_(p.gop.vao, 20) } : null;
+  return khoa_(function () {
+    var cu = cpnNhomDoc_(), sh = cpnTab_(CPN_NHOM, H_CPN_NHOM), luc = bayGio_(), byId = cpnGopMap_(cu);
+    if (gop) {
+      if (!byId[gop.tu] || !byId[gop.vao] || gop.tu === gop.vao) throw new Error('Không gộp được 2 nhóm này.');
+      var r = byId[gop.tu]; sh.getRange(r.row, 5, 1, 2).setValues([[gop.vao, luc]]);
+      var L = cpnLuat_();
+      var n = L.sh.getLastRow(); if (n >= 2) { var v = L.sh.getRange(2, 4, n - 1, 1).getValues(), ch = false; v.forEach(function (x) { if (String(x[0]) === gop.tu) { x[0] = gop.vao; ch = true; } }); if (ch) L.sh.getRange(2, 4, n - 1, 1).setValues(v); }
+      return { gop: true };
+    }
+    if (!ds) throw new Error('Thiếu danh sách nhóm.');
+    var tt = 0, them = [];
+    ds.forEach(function (g) {
+      var ten = chu_(g.ten, 40), icon = chu_(g.icon, 4) || '📌'; if (!ten) return; tt++;
+      var id = chu_(g.id, 20), r = byId[id];
+      if (r) sh.getRange(r.row, 2, 1, 5).setValues([[ten, icon, tt, r.gop, luc]]);
+      else them.push(['n' + Date.now().toString(36) + tt, ten, icon, tt, '', luc]);
+    });
+    if (them.length) sh.getRange(sh.getLastRow() + 1, 1, them.length, 6).setValues(them);
+    return { luu: ds.length, moi: them.length };
+  });
+}
