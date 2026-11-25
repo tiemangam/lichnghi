@@ -143,6 +143,26 @@ function sqCpQuay_(p) {
   });
 }
 
+// Sổ thu ngân trong khoảng ngày, để tìm theo từ khóa (chi, nhận thêm như bán ve chai / dầu cặn, chuyển khoản, lý do két thiếu)
+// [ngày, ca, loại (chi|nhan|ck|lydo), nội dung, tiền, người, tính chi phí (chỉ với chi: 1 có, 0 không)]
+function sqCpQuayDs_(tu, den) {
+  var doi = {}; try { doi = sqQuayDoi_(); } catch (e) { }
+  var out = [];
+  sqTnRows_().forEach(function (x) {
+    if (x.ngay < tu || x.ngay > den) return;
+    (x.chi || []).forEach(function (r) {
+      if (!r.note && !r.amount) return;
+      var auto = !CP_LUAN_CHUYEN.test(khongDau_(r.note)), k = x.ngay + '|' + x.ca + '|' + khongDau_(r.note);
+      out.push([x.ngay, x.ca, 'chi', r.note, r.amount, x.nguoi, (doi[k] === undefined ? auto : doi[k]) ? 1 : 0]);
+    });
+    (x.nhan || []).forEach(function (r) { if (r.note || r.amount) out.push([x.ngay, x.ca, 'nhan', r.note, r.amount, x.nguoi, 1]); });
+    (x.ck || []).forEach(function (r) { if (r.note || r.amount) out.push([x.ngay, x.ca, 'ck', r.note, r.amount, x.nguoi, 1]); });
+    if (x.lyDo) out.push([x.ngay, x.ca, 'lydo', x.lyDo, x.lech, x.nguoi, 1]);
+  });
+  out.sort(function (a, b) { return a[0] < b[0] ? 1 : a[0] > b[0] ? -1 : a[1] - b[1]; });
+  return out;
+}
+
 // Tổng theo mối: mọi hóa đơn (ảnh, quen, anh nhập) + phiếu đi chợ trong khoảng ngày, kèm cùng kỳ tháng trước.
 // Trả dòng thô để Điều hành tự cộng theo mối / theo món / tìm món.
 function sqThangLui_(d) { var p = d.split('-'), y = +p[0], m = +p[1] - 1; if (!m) { m = 12; y--; } var cuoi = new Date(Date.UTC(y, m, 0)).getUTCDate(); return y + '-' + ('0' + m).slice(-2) + '-' + ('0' + Math.min(+p[2], cuoi)).slice(-2); }
@@ -179,7 +199,7 @@ function sqCpTong_(p) {
     var pi = ph.length; ph.push([x.id, x.ngay, mi, x.tong]);
     x.mon.forEach(function (d) { if (d.ten) dong.push([pi, d.ten, d.sl === '' ? '' : so_(d.sl), d.dv || '', d.gia === '' ? '' : so_(d.gia), so_(d.tien)]); });
   });
-  return { tu: tu, den: den, tuT: tuT, denT: denT, homNay: hn, moi: moiDs, p: ph, d: dong, truoc: truoc };
+  return { tu: tu, den: den, tuT: tuT, denT: denT, homNay: hn, moi: moiDs, p: ph, d: dong, truoc: truoc, quay: sqCpQuayDs_(tu, den) };
 }
 
 /* =====================================================================
@@ -309,7 +329,7 @@ function sqCpNhom_(p) {
   try { var mt = plNapDT_(tuT, denT); Object.keys(mt).forEach(function (d) { if (mt[d]) dtT += mt[d].R; }); } catch (e) { }
   return { tu: tu, den: den, tuT: tuT, denT: denT, homNay: hn, dt: Math.round(dt), dtNgay: dtNgay, dtThieu: thieu, dtTruoc: Math.round(dtT),
     nhom: ds.filter(function (g) { return !g.gop; }).sort(function (a, b) { return a.tt - b.tt; }).map(function (g) { return { id: g.id, ten: g.ten, icon: g.icon }; }),
-    ph: A.ph, d: dong, truoc: truoc, truocTong: truocTong, boDauTu: A.boDauTu };
+    ph: A.ph, d: dong, truoc: truoc, truocTong: truocTong, boDauTu: A.boDauTu, quay: sqCpQuayDs_(tu, den) };
 }
 
 // Gán món vào nhóm / đổi tên món (anh Đạt). mon: danh sách tên gốc trên hóa đơn; ten: tên chuẩn mới (bỏ trống = giữ); nho: nhớ cả chữ này
