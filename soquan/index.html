@@ -1929,7 +1929,7 @@ function tnChiaTinh(cnt, gc, cho){
   MG.forEach(function(m){ if (b.con[m]) son[m] = b.con[m]; });
   return { giaoCa: a, cho: b, son: { to: son, tong: tnTongTo(son) } };
 }
-var CHIA = null;
+var CHIA = null, TN_LECH_DO_APP = 50000;
 var TN_GC_RX = /^(giao ca|giao ca ngay mai)$/, TN_CHO_RX = /^(cho|di cho|tien cho|dua cho|tien di cho|cho doan|dua doan di cho)$/;
 function tnDongChi(c, rx){ return (c.chi||[]).filter(function(r){ return rx.test(kd(r.note)); }).reduce(function(s,r){ return s + (Number(r.amount)||0); }, 0); }
 function moChia(thay){
@@ -1947,13 +1947,18 @@ function veChia(){
     if (!ms.length) return '<span class="rong">Không có tờ nào</span>';
     return ms.map(function(m){ var k = phan + '|' + m, on = CHIA.tick[k]; return '<button class="ch'+(on?' ok':'')+(tick?'':' k')+'" data-k="'+(tick?k:'')+'">'+(tick?'<i>'+(on?'✓':'')+'</i>':'')+'<b>'+mgTen(m)+'</b> × '+to[m]+'</button>'; }).join(''); };
   var thieuGc = CHIA.gc - kq.giaoCa.tong, thieuCho = CHIA.cho - kq.cho.tong;
+  // so số đếm với số sổ dự kiến: két phải có = TM dự kiến (gồm tip) + giao ca + tiền chợ chưa rút
+  var kt = tnTinh(c), dkTong = kt.duKienTip + tnDongChi(c, TN_GC_RX) + tnDongChi(c, TN_CHO_RX), lechDem = c.dem.tong - dkTong, coSo = c.dttm || c.giaoCa;
+  var banner = !coSo ? '' : Math.abs(lechDem) < TN_LECH_DO_APP ? '<div class="note" style="font-size:12px;margin-top:0">✓ Số đếm khớp với sổ (sổ dự kiến két có ' + tnD(dkTong) + ')</div>'
+    : '<div style="border-radius:12px;margin-bottom:10px;padding:10px 12px;line-height:1.5;font-size:13px;font-weight:600;' + (lechDem > 0 ? 'background:#fbf0d4;color:#7a5a00' : 'background:var(--don);color:var(--do)') + '">⚠ Đếm được ' + tnD(c.dem.tong) + ' nhưng sổ dự kiến két có ' + tnD(dkTong) + ' → ' + (lechDem < 0 ? 'thiếu ' : 'dư ') + tnD(Math.abs(lechDem)) +
+      '. Kiểm tra đã đếm đủ cả két chưa (kể cả tiền chợ, giao ca chưa rút).<br><button class="chip" id="tncDemLai" style="margin-top:6px">🧮 Đếm lại</button></div>';
   var lyThieu = function(t){ return t > 0 ? '<div class="thieu">Thiếu ' + tnD(t) + (kq.son.tong > 0 ? ' – két không có tờ ráp vừa, lấy thêm tờ khác hoặc đổi tiền lẻ' : ' – két không đủ tiền') + '</div>' : ''; };
-  $('tncBody').innerHTML =
+  $('tncBody').innerHTML = banner +
     '<div class="env ca"><div class="hd"><span><b>🟢 Giao ca</b><small>gom hết tiền lẻ để thối khách</small></span><span class="s">'+tnHien(kq.giaoCa.tong)+'</span></div>' + lyThieu(thieuGc) + '<div class="chs">'+chip('gc', kq.giaoCa.to, true)+'</div></div>' +
     '<div class="env cho"><div class="hd"><span><b>🛒 Đi chợ</b><small>đưa Đoàn tối nay</small></span><span class="s">'+(tnHien(kq.cho.tong)||'0')+'</span></div>' + lyThieu(thieuCho) + '<div class="chs">'+chip('cho', kq.cho.to, true)+'</div></div>' +
     '<div class="env son"><div class="hd"><span><b>💼 Gửi anh Sơn</b><small>phần còn lại · cũng là ô TMTT</small></span><span class="s">'+(tnHien(kq.son.tong)||'0')+'</span></div><div class="chs">'+chip('son', kq.son.to, false)+'</div></div>' +
     '<div class="sub" style="text-align:center;margin-top:8px;color:var(--xanh);font-weight:600">'+tnHien(kq.giaoCa.tong)+' + '+(tnHien(kq.cho.tong)||'0')+' + '+(tnHien(kq.son.tong)||'0')+' = '+tnHien(c.dem.tong)+' ✓</div>' +
-    '<div class="note" style="font-size:12px">Rút xấp nào thì bấm tick xấp đó. Lưu xong app tự ghi <b>Giao ca</b> và <b>Đi chợ</b> vào Các khoản chi, phần còn lại điền vào TMTT.</div>';
+    '<div class="note" style="font-size:12px">Rút xấp nào thì bấm tick xấp đó. Lưu xong app tự ghi <b>Giao ca</b> và <b>Đi chợ</b> vào Các khoản chi (đúng số dự định, TM dự kiến không đổi), phần còn lại điền vào TMTT.' + (thieuGc + thieuCho > 0 ? '<br><b style="color:var(--do)">Két đang thiếu nên ô TMTT sẽ ghi ' + tnD(c.dem.tong - CHIA.gc - CHIA.cho) + ' (số âm = phần két hụt so với giao ca + chợ).</b>' : '') + '</div>';
   veChiaNut();
 }
 function veChiaNut(){
@@ -1962,7 +1967,7 @@ function veChiaNut(){
   $('tncXong').disabled = da < can;
   $('tncXong').textContent = da < can ? 'Tick đủ các xấp đã rút (' + da + '/' + can + ')' : '✓ Đã soạn xong';
 }
-$('tncBody').addEventListener('click', function(e){ var b = e.target.closest('[data-k]'); if (!b || !b.getAttribute('data-k')) return; var k = b.getAttribute('data-k'); CHIA.tick[k] = !CHIA.tick[k];
+$('tncBody').addEventListener('click', function(e){ if (e.target.closest('#tncDemLai')) { history.back(); setTimeout(moDem, 200); return; } var b = e.target.closest('[data-k]'); if (!b || !b.getAttribute('data-k')) return; var k = b.getAttribute('data-k'); CHIA.tick[k] = !CHIA.tick[k];
   b.classList.toggle('ok', !!CHIA.tick[k]); b.querySelector('i').textContent = CHIA.tick[k] ? '✓' : ''; veChiaNut(); });
 ['tncGc','tncCho'].forEach(function(id){ $(id).addEventListener('input', function(){ var n = Math.max(0, tnSo(this.value)); if (id==='tncGc') CHIA.gc = n; else CHIA.cho = n; CHIA.tick = {}; clearTimeout(veChia._t); veChia._t = setTimeout(veChia, 250); });
   $(id).addEventListener('focusout', function(){ this.value = tnHien(tnSo(this.value)) || '0'; }); });
@@ -1970,12 +1975,14 @@ $('tncXong').onclick = function(){
   var c = tnCa(), kq = CHIA.kq;
   var bo = function(r){ var n = kd(r.note); return !(TN_GC_RX.test(n) || TN_CHO_RX.test(n)); };
   var chi = c.chi.filter(function(r){ return (r.note || r.amount) && bo(r); }), dau = [];
-  if (kq.giaoCa.tong) dau.push({ note:'Giao ca', amount: kq.giaoCa.tong });
-  if (kq.cho.tong) dau.push({ note:'Đi chợ', amount: kq.cho.tong });
+  // Ghi Giao ca / Đi chợ theo SỐ DỰ ĐỊNH (không theo số tờ rút được) để TM dự kiến không bị nhảy khi két đếm thiếu.
+  // TMTT = tiền đếm − giao ca − chợ (thiếu thì ra số âm, đúng với phần két đang hụt).
+  if (CHIA.gc) dau.push({ note:'Giao ca', amount: CHIA.gc });
+  if (CHIA.cho) dau.push({ note:'Đi chợ', amount: CHIA.cho });
   c.chi = dau.concat(chi); if (!c.chi.length) c.chi = [{ note:'', amount:0 }];
-  c.tmtt = kq.son.tong;
+  c.tmtt = c.dem.tong - CHIA.gc - CHIA.cho;
   c.chia = { giaoCa: kq.giaoCa.tong, cho: kq.cho.tong, son: kq.son.tong, muonGiaoCa: CHIA.gc, muonCho: CHIA.cho, to: { giaoCa: kq.giaoCa.to, cho: kq.cho.to, son: kq.son.to } };
-  tnGiuNhap(); history.back(); toast('Đã ghi Giao ca, Đi chợ vào khoản chi · TMTT ' + tnD(kq.son.tong), 4000);
+  tnGiuNhap(); history.back(); toast('Đã ghi Giao ca, Đi chợ vào khoản chi · TMTT ' + tnD(c.tmtt), 4000);
 };
 
 /* ---- THƯỞNG NÓNG ---- */
