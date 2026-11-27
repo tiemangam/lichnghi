@@ -2684,13 +2684,30 @@ function tmNgocGhep(){
       tra.push({ ngay: x.ngay, ca: x.ca, nguoi: x.nguoi || '', tien: r.amount, cho: cho, u: null }); } });
   });
   var dau = ds.length ? ds[0].ngay : '';
+  tra.forEach(function(t, i){ t.id = i; t.pieces = []; t.du = t.tien; t.u = null; });
+  /* 1 khoản trả có thể trả nhiều khoản ứng (299k = 100k + 199k) → tách thành từng phần */
+  var gan = function(t, u, so){ if (!(so > 0)) return; u.con -= so; t.du -= so; u.tra.push({ ngay: t.ngay, ca: t.ca, nguoi: t.nguoi, tien: so, goc: t.tien, id: t.id }); t.pieces.push({ u: u, tien: so }); if (!t.u) t.u = u; };
+  /* Lượt 1: nhãn có ghi ngày → ghép đúng khoản ứng ngày đó (phần dư để lượt 2 chuyển sang khoản cũ) */
   tra.forEach(function(t){
-    var u = null;
-    if (t.cho) u = ung.filter(function(a){ return a.ngay === t.cho && a.con > 0 && a.ngay <= t.ngay; })[0] || ung.filter(function(a){ return a.ngay === t.cho && a.ngay <= t.ngay; })[0];
-    if (!u && t.cho && t.cho < dau) { t.truoc = true; return; }
-    if (!u) u = ung.filter(function(a){ return a.con > 0 && a.ngay <= t.ngay; })[0];
-    if (!u) { t.le = true; return; }
-    u.con -= t.tien; u.tra.push(t); t.u = u; });
+    if (!t.cho) return;
+    var theoNgay = ung.filter(function(a){ return a.ngay === t.cho && a.ngay <= t.ngay; });
+    t.neo = theoNgay[0] || null;
+    var u = theoNgay.filter(function(a){ return a.con > 0; })[0];
+    if (u) gan(t, u, Math.min(t.du, u.con));
+    else if (!t.neo && t.cho < dau) { t.truoc = true; t.du = 0; }
+  });
+  /* Lượt 2: phần còn lại (trả dư của khoản có ngày + khoản không ghi ngày) → khoản cũ nhất chưa trả */
+  tra.forEach(function(t){
+    while (t.du > 0) {
+      var u = ung.filter(function(a){ return a.con > 0 && a.ngay <= t.ngay; })[0];
+      if (!u) break;
+      gan(t, u, Math.min(t.du, u.con));
+    }
+    if (t.du > 0) {
+      var neo = t.neo || (t.pieces.length ? t.pieces[t.pieces.length - 1].u : null);
+      if (neo) gan(t, neo, t.du); else t.le = true;
+    }
+  });
   return { ung: ung, tra: tra };
 }
 function veTMNgoc(){
@@ -2698,26 +2715,26 @@ function veTMNgoc(){
   if (!g || (!g.ung.length && !g.tra.length)) { el.innerHTML = ''; return; }
   var th = TM.ngay.slice(0,7), hn = homNay(), dn = function(a, b){ return ngSoNgay(a, b) - 1; };
   var ungT = g.ung.filter(function(a){ return a.ngay.slice(0,7) === th; }), traT = g.tra.filter(function(t){ return t.ngay.slice(0,7) === th; });
-  var conNo = g.ung.reduce(function(s, a){ return s + Math.max(0, a.con); }, 0);
-  var tongU = ungT.reduce(function(s, a){ return s + a.tien; }, 0), traU = ungT.reduce(function(s, a){ return s + a.tra.reduce(function(s2, t){ return s2 + t.tien; }, 0); }, 0), soTraU = ungT.reduce(function(s, a){ return s + a.tra.length; }, 0);
+  var conNo = Math.max(0, g.ung.reduce(function(s, a){ return s + a.con; }, 0));
+  var tongU = ungT.reduce(function(s, a){ return s + a.tien; }, 0), traU = ungT.reduce(function(s, a){ return s + a.tra.reduce(function(s2, t){ return s2 + t.tien; }, 0); }, 0), soTraU = Object.keys(ungT.reduce(function(m, a){ a.tra.forEach(function(t){ m[t.id] = 1; }); return m; }, {})).length;
   var ca = function(x){ return 'Ca ' + x.ca + (x.nguoi ? ' · ' + esc(x.nguoi) : ''); };
   var o = function(cls, d, sub, m){ return '<div class="nqo ' + cls + '"><span><b>' + THU2[dow(d)] + ' ' + dm(d) + '</b><small>' + sub + '</small></span><span class="m">' + tmD(m) + '</span></div>'; };
   var rows = ungT.slice().reverse().map(function(a){
-    var tr = a.tra.length ? a.tra.map(function(t){ return o('t', t.ngay, ca(t), t.tien); }).join('') : '<div class="nqo no">chưa trả</div>', kq;
+    var tr = a.tra.length ? a.tra.map(function(t){ return o('t', t.ngay, ca(t) + (t.goc > t.tien ? ' · trong khoản ' + tmD(t.goc) : ''), t.tien); }).join('') : '<div class="nqo no">chưa trả</div>', kq;
     var cuoi = a.tra.length ? a.tra[a.tra.length - 1].ngay : '';
     if (a.con === 0) kq = '<div class="nqk ok">✓ Khớp<br><small>' + (dn(a.ngay, cuoi) ? 'sau ' + dn(a.ngay, cuoi) + ' ngày' : 'trong ngày') + '</small></div>';
     else if (a.con < 0) kq = '<div class="nqk y">🟡 Trả dư<br><small>' + tmD(-a.con) + '</small></div>';
     else if (a.tra.length) kq = '<div class="nqk r">🔴 Trả thiếu<br><small>còn ' + tmD(a.con) + '</small></div>';
     else { var n = dn(a.ngay, hn); kq = '<div class="nqk ' + (n >= 1 ? 'r' : 'y') + '">' + (n >= 1 ? '🔴 Chưa trả<br><small>' + n + ' ngày</small>' : '🟡 Chưa trả<br><small>hôm nay</small>') + '</div>'; }
     return '<div class="nqr">' + o('u', a.ngay, ca(a), a.tien) + '<div class="nqc">' + tr + '</div>' + kq + '</div>'; }).join('');
-  var le = traT.filter(function(t){ return t.truoc || t.le || (t.u && t.u.ngay.slice(0,7) !== th); });
+  var le = traT.filter(function(t){ return t.truoc || t.le || (t.pieces.length && t.pieces.every(function(p){ return p.u.ngay.slice(0,7) !== th; })); });
   if (le.length) rows += le.map(function(t){ var kh = t.truoc ? 'trả khoản ứng ' + dm(t.cho) + ' (ghi sổ cũ, trước khi có app)' : t.le ? 'không thấy khoản ứng nào chưa trả' : 'trả khoản ứng ' + dm(t.u.ngay) + ' tháng trước';
     return '<div class="nqr"><div class="nqo u cu"><span><b>' + (t.cho ? THU2[dow(t.cho)] + ' ' + dm(t.cho) : '–') + '</b><small>' + (t.truoc ? 'sổ cũ' : t.le ? 'không rõ' : 'tháng trước') + '</small></span><span class="m">' + (t.u ? tmD(t.u.tien) : t.truoc ? tmD(t.tien) : '–') + '</span></div><div class="nqc">' + o('t', t.ngay, ca(t), t.tien) + '</div><div class="nqk ' + (t.le ? 'y' : 'ok') + '"><small>' + kh + '</small></div></div>'; }).join('');
   el.innerHTML = '<div class="card ngoc"><h3>🤝 Ứng giùm chị Ngọc <span class="sub">· ' + pThang(th) + ' · app tự đọc ghi chú "Hàng chị Ngọc" trong sổ thu ngân</span></h3>' +
     '<div class="nqs"><div><small>Quán ứng ra</small><b style="color:#8a6414">' + tmD(tongU) + '</b><span>' + ungT.length + ' lần</span></div><i>−</i><div><small>Chị Ngọc đã trả</small><b style="color:var(--xanh)">' + tmD(traU) + '</b><span>' + soTraU + ' lần</span></div><i>=</i>' +
     '<div class="' + (conNo > 0 ? 'no' : 'ok') + '"><small>Còn nợ quán</small><b>' + (conNo > 0 ? tmD(conNo) : '0đ ✓') + '</b><span>' + (conNo > 0 ? g.ung.filter(function(a){ return a.con > 0; }).length + ' khoản chưa trả xong' : 'khớp hết') + '</span></div></div>' +
     (rows ? '<div class="nqh"><span>⬆ Quán ứng ra</span><span>⬇ Chị Ngọc trả lại</span><span>Kết quả</span></div>' + rows : '<p class="sub">' + pThang(th) + ' chưa có lần ứng nào.</p>') +
-    '<p class="sub" style="margin-top:6px">Nhận lại có ghi ngày (vd "Hàng chị Ngọc 15/11") → ghép đúng ngày đó; không ghi ngày → ghép khoản cũ nhất chưa trả. Ứng / trả không tính vào chi phí, P&L.</p></div>';
+    '<p class="sub" style="margin-top:6px">Nhận lại có ghi ngày (vd "Hàng chị Ngọc 15/11") → ghép đúng ngày đó; phần trả dư và khoản không ghi ngày → trả khoản cũ nhất chưa trả. Còn nợ = tổng ứng − tổng trả. Ứng / trả không tính vào chi phí, P&L.</p></div>';
 }
 function veTM(){
   var j = TM.data; if (!j) return; setTimeout(veTMNgoc, 0);
